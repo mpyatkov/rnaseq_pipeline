@@ -1,0 +1,9 @@
+Comparison_Number; Condition_1; Condition_2
+1;                 A;           B
+2;                 A;           C
+3;                 A;           D
+4;                 B;           C
+5;                 B;           D
+6;                 C;           D
+
+

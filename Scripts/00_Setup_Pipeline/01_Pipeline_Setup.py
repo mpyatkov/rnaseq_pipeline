@@ -1,0 +1,349 @@
+#!/usr/bin/env python3
+
+# Input:
+# 3 config files listed below
+# Output:
+# option1: export - export env. variables from PIPELINE_CONFIG
+# option2: samples - return bash array of triples (DIR,ID,DESCR)
+#          from SAMPLES_CONFIG
+# option3: generate Diff.Ex directories from SAMPLES and COMPARISONS
+
+
+from collections import namedtuple
+import os
+import sys
+import configparser
+from distutils.dir_util import copy_tree
+import fileinput
+import argparse
+
+PIPELINE_CONFIG ="Pipeline_Setup.conf"
+SAMPLES_CONFIG = "Sample_Labels.txt"
+COMPARISON_CONFIG = "Comparisons.txt"
+
+DEFAULT_COMPARISON_CONFIG="""
+Comparison_Number; Condition_1; Condition_2
+1;                 A;           B
+2;                 A;           C
+3;                 A;           D
+4;                 B;           C
+5;                 B;           D
+6;                 C;           D
+""".strip()
+
+DEFAULT_SAMPLES_CONFIG="""
+Group;  Condition_Name;      Sample_DIR;  Sample_ID;  Description;                 Color
+A;      E0771_Untreated_T72; G180_M1;     G180_M1;    E0771_Untreated_72h;         255,0,0
+A;      E0771_Untreated_T72; G180_M2;     G180_M2;    E0771_Untreated_72h;         255,0,0
+A;      E0771_Untreated_T72; G180_M3;     G180_M3;    E0771_Untreated_72h;         255,0,0
+B;      E0771_4HC_T72;       G180_M4;     G180_M4;    E0771_5uM_4HC_72h;           0,255,0
+B;      E0771_4HC_T72;       G180_M5;     G180_M5;    E0771_5uM_4HC_72h;           0,255,0
+B;      E0771_4HC_T72;       G180_M6;     G180_M6;    E0771_5uM_4HC_72h;           0,255,0
+C;      E0771_4HC_Ab_T72;    G180_M7;     G180_M7;    E0771_5uM_4HC_AntiIFNAR_72h; 0,0,255
+C;      E0771_4HC_Ab_T72;    G180_M8;     G180_M8;    E0771_5uM_4HC_AntiIFNAR_72h; 0,0,255
+C;      E0771_4HC_Ab_T72;    G180_M9;     G180_M9;    E0771_5uM_4HC_AntiIFNAR_72h; 0,0,255
+D;      E0771_IFNB_T6;       G180_M10;    G180_M10;   E0771_IFNB_6h;               127,0,255
+D;      E0771_IFNB_T6;       G180_M11;    G180_M11;   E0771_IFNB_6h;               127,0,255
+D;      E0771_IFNB_T6;       G180_M12;    G180_M12;   E0771_IFNB_6h;               127,0,255
+""".strip()
+
+DEFAULT_PIPELINE_CONFIG="""
+[USER]
+Dataset_DIR=/restricted/projectnb/waxmanlab/Cam/G180
+BU_User=CHANGE_USER_NAME
+Dataset_Label=G180
+GTF_Files_DIR=/unprotected/projects/waxmanlab/routines/GTF_Files
+
+# wax-dk,waxmanlab,wax-es
+PROJECT=wax-dk 
+
+# [STEPS]
+# Bioanalyzer length (from Bioanalyzer tracings)
+BIOANALYZER_LEN=330
+# Usually the adaptor length is 60bp (60bp on each end: 120bp total
+ADAPTOR_LEN=60
+# Input the adaptor length (bp) for one end
+READ_LEN=150	
+
+# 0="unstranded"
+# 1="firststrand"
+# 2="secondstrand"
+STRANDEDNESS=1
+
+# Refer to the Parameter_Descriptions.txt in the Extract_Counts folder for more
+# detailed information
+# 0="union"
+# 1="intersection-strict"
+# 2="intersection-nonempty"
+MODE=2
+
+[SYSTEM]
+Bowtie2Index_DIR=/restricted/projectnb/waxmanlab/routines/BowtieIndex
+Sample_Labels_DIR=${USER:Dataset_DIR}/Scripts/00_Setup_Pipeline
+ANNOTATION_FILE=RefSeq_GeneBody.gtf
+VM_DIR_FASTQC=/net/waxman-server/mnt/data/waxmanlabvm_home/waxmanlab/FASTQC/${USER:Dataset_Label}
+VM_DIR_UCSC=/net/waxman-server/mnt/data/waxmanlabvm_home/${USER:BU_User}/${USER:Dataset_Label}
+TIME_LIMIT=96:00:00
+""".strip()
+
+class SampleConfig:
+    separator = ";"
+    def __init__(self, configpath):
+        generate_example(configpath, DEFAULT_SAMPLES_CONFIG)
+        self.samples = self.__read_config(configpath, self.separator)
+        
+    def __read_config(self, configpath, separator):
+
+        with open(configpath, "r") as config:
+            header_and_data = map(lambda x: x.strip(), config.readlines())
+            header_and_data = list(filter(lambda x: len(x)!=0, header_and_data))
+            # print(header_and_data)
+            header = header_and_data[0].replace(separator,",")
+            Sample = namedtuple('Sample', header)
+            result = []
+            for sample in header_and_data[1:]:
+                sample = sample.split(separator)
+                sample = list(map(lambda s: s.strip(), sample))
+                result.append(Sample(*sample))
+            return result
+
+    def samplesByGroup(self,group):
+        result = []
+        for sample in self.samples:
+            if sample.Group == group:
+                result.append(sample)
+        return result
+                
+
+    def groups(self):
+        return set(map(lambda s: s.Group, self.samples))
+
+    def samplesToBash(self):
+        #only Sample_DIR, Sample_ID, Description
+        result = [() for s in self.samples]
+        result = []
+        for sample in self.samples:
+            result.append(sample.Sample_DIR)
+            result.append(sample.Sample_ID)
+            result.append(sample.Description)
+        return " ".join(result)
+        
+    def __str__(self):
+        return "\n".join(map(lambda x: str(x), self.samples))
+
+class ComparisonsConfig:
+    separator = ";"
+    def __init__(self, configpath):
+        generate_example(configpath, DEFAULT_COMPARISON_CONFIG)
+        self.comparisons = self.__read_config(configpath, self.separator)
+
+    def __read_config(self, configpath, separator):
+        with open(configpath, "r") as config:
+            header_and_data = map(lambda x: x.strip(), config.readlines())
+
+            # ignore empty lines
+            header_and_data = list(filter(lambda s: len(s) > 0, header_and_data))
+            
+            header = header_and_data[0].replace(separator,",")
+            Comparison = namedtuple('Comparison', header)
+            result = []
+            for comparison in header_and_data[1:]:
+                comparison = comparison.split(separator)
+
+                # TODO: too hart 
+                # if len(comparison) != 3:
+                #     continue
+                
+                # strip trailing spaces
+                comparison = list(map(lambda s: s.strip(), comparison))
+                result.append(Comparison(*comparison))
+                
+            return result
+
+    def __str__(self):
+        return "\n".join(map(lambda x: str(x), self.comparisons))
+    
+    def groups(self):
+        groups = set()
+        for comparison in self.comparisons:
+            groups = groups.union(set(comparison.Condition_1.split(",")))
+            groups = groups.union(set(comparison.Condition_2.split(",")))
+        return groups
+
+class EnvInterpolation(configparser.ExtendedInterpolation):
+    """Interpolation which expands environment variables in values."""
+
+    def before_get(self, parser, section, option, value, defaults):
+        value = super().before_get(parser, section, option, value, defaults)
+        return os.path.expandvars(value)
+    
+class SystemConfig:
+
+    def __init__(self, filename = PIPELINE_CONFIG ):
+        generate_example(filename, DEFAULT_PIPELINE_CONFIG)
+        self.current_path = os.path.dirname(os.path.abspath(__file__))
+        os.environ['SCRIPT_DIR'] = self.current_path
+
+        # read config with case sensitive option
+        config = configparser.RawConfigParser(interpolation=EnvInterpolation())
+        config.optionxform = lambda option: option
+        config.read(os.getenv('SCRIPT_DIR')+"/"+filename)
+        self.config = config
+
+    def setup_env_variables(self):
+        exports = []
+
+        for section in self.config.sections():
+            keys = list(self.config[section].keys())
+            for key in keys:
+                exports.append((key, self.config[section][key]))
+
+        exports.append(('SCRIPT_DIR', self.current_path))
+        exports = [f"export {e[0]}={e[1]}" for e in exports]
+        return "\n".join(exports)
+
+class DiffExpression():
+    """
+    Generate folders for step 9a,9b,9c according to configuration and
+    TEMPLATES directories
+    """
+    def __init__(self, templates, comp_config, sample_config, sys_config):
+        # check template path
+        self.templates = templates
+        self.comp_config = comp_config
+        self.sample_config = sample_config
+        self.sys_config = sys_config
+
+    def create_dir(self, dirpath):
+        try:
+            os.mkdir(path)
+        except OSError:
+            print (f"Creation of the directory {path} failed ")
+            exit(1)
+
+    def remove_dir(self, dirpath):
+        try:
+            os.rmdir(path)
+        except OSError:
+            print (f"Deletion of the directory {path} failed ")
+            exit(1)
+
+    def copy_dir(self, src, dest):
+        try:
+            destination = copy_tree(src, dest)  
+        except OSError:
+            print (f"Copying of the directory {src} failed ")
+            exit(1)
+
+    def write_condition(self, path, sample_config, compar_config, condition_num):
+        """
+        Write files Condition_{1,2}
+        return Condition_Name
+        """
+
+        cond_value = getattr(compar_config, condition_num)
+        cond_samples = sample_config.samplesByGroup(cond_value)
+        condition_name = cond_samples[0].Condition_Name
+        
+        with open(path+"/"+condition_num+".txt", "w") as Condition:
+            header = "Sample_DIR\tSample_ID\tDescription\n"
+            Condition.write(header)
+            samples = [f"{s.Sample_DIR}\t{s.Sample_ID}\t{s.Condition_Name}" for s in cond_samples]
+            samples = "\n".join(samples)
+            Condition.write(samples)
+        return condition_name
+
+    def generate(self):
+
+        for CMP in self.comp_config.comparisons:
+            for TMPL in self.templates:
+                DIR_NAME = os.path.basename(TMPL).replace('TEMPLATE_','')
+                DIR_NAME = DIR_NAME.replace('NN', CMP.Comparison_Number)
+
+                SCRIPT_PATH = os.getenv('SCRIPT_DIR')
+
+                # TODO: change it to OUTPUT path
+                DIR_PATH = SCRIPT_PATH+"/"+DIR_NAME 
+
+                # create 
+                self.copy_dir(TMPL, DIR_PATH)
+                
+                # go to inside diff.ex task directory
+                os.chdir(DIR_PATH)
+
+                # write Condition_{1,2} files, return condition_name
+                cond_name_1 = self.write_condition(DIR_PATH, sample_config, CMP, "Condition_1")
+                cond_name_2 = self.write_condition(DIR_PATH, sample_config, CMP, "Condition_2")
+
+                # inplace changing Run_Jobs.sh
+                cond_1_tmpl="CONDITION_1_NAME=TEMPLATE"
+                cond_2_tmpl="CONDITION_2_NAME=TEMPLATE"
+                compar_num="COMPAR_NUM=TEMPLATE"
+                
+                with fileinput.input('Run_Jobs.sh', inplace=True) as runjobs:
+
+                    for line in runjobs:
+                        if cond_1_tmpl in line:
+                            newline = line.replace("TEMPLATE", f'"{cond_name_1}"')
+                            print(newline, end='')
+                        elif cond_2_tmpl in line:
+                            newline = line.replace("TEMPLATE", f'"{cond_name_2}"')
+                            print(newline, end='')
+                        elif compar_num in line:
+                            newline = line.replace("TEMPLATE", str(CMP.Comparison_Number))
+                            print(newline, end='')
+                        else:
+                            print(line,  end='')
+                                                
+                # go back to script directory
+                os.chdir(SCRIPT_PATH)
+
+def generate_example(config_path, default_config):
+    if not os.path.exists(config_path):
+        print(f"Generating example config file {os.path.basename(config_path)}")
+        with open(config_path, "w") as conf:
+            conf.write(default_config)
+                
+                
+if __name__ == "__main__":
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-e", "--export",
+                        help="export all env.variables",
+                        action="store_true")
+
+    parser.add_argument("-g", "--generate",
+                        help="generate Diff.Ex directories from templates",
+                        action="store_true")
+
+    parser.add_argument("-s", "--samples",
+                        help="return bash array of triples (DIR,ID,DESCR)",
+                        action="store_true")
+    
+    args = parser.parse_args()
+
+    system_config = SystemConfig("./"+PIPELINE_CONFIG)
+    sample_config = SampleConfig(os.getenv('SCRIPT_DIR') + "/" + SAMPLES_CONFIG)
+    comparison_config = ComparisonsConfig(os.getenv('SCRIPT_DIR')+"/" + COMPARISON_CONFIG)
+
+    if args.export:
+        print(system_config.setup_env_variables())
+        exit(0)
+    elif args.generate:
+        diffex = DiffExpression(["../TEMPLATE_09a_DiffExp_NN_HTSEQ",
+                                 "../TEMPLATE_09b_DiffExp_NN_FEATURECOUNTS",
+                                 "../TEMPLATE_09c_DiffExp_NN_LNCRNA"],
+                                comparison_config,
+                                sample_config,
+                                system_config)
+        # TODO: output dir
+        diffex.generate()
+        print("Diff.ex directories generated")
+        exit(0)
+    elif args.samples:
+        print(sample_config.samplesToBash())
+        exit(0)
+    else:
+        parser.print_help()
+
+
