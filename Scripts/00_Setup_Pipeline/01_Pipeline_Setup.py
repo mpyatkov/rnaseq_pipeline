@@ -184,15 +184,14 @@ class EnvInterpolation(configparser.ExtendedInterpolation):
     
 class SystemConfig:
 
-    def __init__(self, filename = PIPELINE_CONFIG ):
-        generate_example(filename, DEFAULT_PIPELINE_CONFIG)
-        self.current_path = os.path.dirname(os.path.abspath(__file__))
-        os.environ['SETUP_PIPELINE_DIR'] = self.current_path
+    def __init__(self, config_path):
+        generate_example(config_path, DEFAULT_PIPELINE_CONFIG)
+        self.current_path = os.path.dirname(config_path)
 
-        # read config with case sensitive option
+        # read config with case sensitive options
         config = configparser.RawConfigParser(interpolation=EnvInterpolation())
         config.optionxform = lambda option: option
-        config.read(os.getenv('SETUP_PIPELINE_DIR')+"/"+filename)
+        config.read(config_path)
         self.config = config
 
     def setup_env_variables(self):
@@ -330,9 +329,12 @@ if __name__ == "__main__":
     
     args = parser.parse_args()
 
-    system_config = SystemConfig("./"+PIPELINE_CONFIG)
-    sample_config = SampleConfig(os.getenv('SETUP_PIPELINE_DIR') + "/" + SAMPLES_CONFIG)
-    comparison_config = ComparisonsConfig(os.getenv('SETUP_PIPELINE_DIR')+"/" + COMPARISON_CONFIG)
+    # directory with configs and python script
+    current_path = os.path.dirname(os.path.abspath(__file__))
+
+    system_config = SystemConfig(current_path+"/"+PIPELINE_CONFIG)
+    sample_config = SampleConfig(current_path + "/" + SAMPLES_CONFIG)
+    comparison_config = ComparisonsConfig(current_path + "/" + COMPARISON_CONFIG)
 
     if args.export:
         print(system_config.setup_env_variables())
