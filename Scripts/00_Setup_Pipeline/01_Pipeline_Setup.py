@@ -49,15 +49,19 @@ D;      E0771_IFNB_T6;       G180_M12;    G180_M12;   E0771_IFNB_6h;            
 
 DEFAULT_PIPELINE_CONFIG="""
 [USER]
-Dataset_DIR=/restricted/projectnb/waxmanlab/Cam/G180
-BU_User=CHANGE_USER_NAME
-Dataset_Label=G180
-GTF_Files_DIR=/unprotected/projects/waxmanlab/routines/GTF_Files
+# Setup dataset directory
+DATASET_DIR=/restricted/projectnb/waxmanlab/Cam/G180
 
-# wax-dk,waxmanlab,wax-es
+# Setup dataset label
+DATASET_LABEL=G180
+
+# Setup user name
+BU_USER=CHANGE_USER_NAME
+
+# Setup project name. Choices: (wax-dk,waxmanlab,wax-es)
 PROJECT=wax-dk 
 
-# [STEPS]
+[STEPS]
 # Bioanalyzer length (from Bioanalyzer tracings)
 BIOANALYZER_LEN=330
 # Usually the adaptor length is 60bp (60bp on each end: 120bp total
@@ -78,11 +82,12 @@ STRANDEDNESS=1
 MODE=2
 
 [SYSTEM]
-Bowtie2Index_DIR=/restricted/projectnb/waxmanlab/routines/BowtieIndex
-Sample_Labels_DIR=${USER:Dataset_DIR}/Scripts/00_Setup_Pipeline
+GTF_FILES_DIR=/unprotected/projects/waxmanlab/routines/GTF_Files
+BOWTIE2INDEX_DIR=/restricted/projectnb/waxmanlab/routines/BowtieIndex
+SAMPLE_LABELS_DIR=${USER:DATASET_DIR}/Scripts/00_Setup_Pipeline
 ANNOTATION_FILE=RefSeq_GeneBody.gtf
-VM_DIR_FASTQC=/net/waxman-server/mnt/data/waxmanlabvm_home/waxmanlab/FASTQC/${USER:Dataset_Label}
-VM_DIR_UCSC=/net/waxman-server/mnt/data/waxmanlabvm_home/${USER:BU_User}/${USER:Dataset_Label}
+VM_DIR_FASTQC=/net/waxman-server/mnt/data/waxmanlabvm_home/waxmanlab/FASTQC/${USER:DATASET_LABEL}
+VM_DIR_UCSC=/net/waxman-server/mnt/data/waxmanlabvm_home/${USER:BU_User}/${USER:DATASET_LABEL}
 TIME_LIMIT=96:00:00
 """.strip()
 
