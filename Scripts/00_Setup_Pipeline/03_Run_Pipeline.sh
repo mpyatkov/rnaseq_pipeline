@@ -44,7 +44,7 @@ START_STEP=$1
 START_TIME=$(date +"%s")
 
 # export and print all variables from Pipeline_Setup.conf
-eval "$(${SETUP_PIPELINE_DIR}/01_Pipeline_Setup.py --export)"
+eval "$(./01_Pipeline_Setup.py --export)"
 
 # Generate differential expression folders
 ./01_Pipeline_Setup.py --generate

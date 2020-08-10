@@ -12,7 +12,7 @@ set -o nounset
 ##########
 
 # export and print all variables from Pipeline_Setup.conf
-eval "$(${SETUP_PIPELINE_DIR}/01_Pipeline_Setup.py --export)"
+eval "$(./01_Pipeline_Setup.py --export)"
 
 # Print all exported variables from config files
 echo "All exported variables:"
