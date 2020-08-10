@@ -11,8 +11,8 @@ set -o nounset
 # Usage: ./02_Review_Pipeline_Parameters.sh
 ##########
 
-# export and print all variables from Pipeline_Setup.conf 
-eval $(./01_Pipeline_Setup.py --export)
+# export and print all variables from Pipeline_Setup.conf
+eval "$(${SETUP_PIPELINE_DIR}/01_Pipeline_Setup.py --export)"
 
 # Print all exported variables from config files
 echo "All exported variables:"
@@ -20,9 +20,8 @@ echo "All exported variables:"
 
 # turn off hard exit when a command fails
 # TODO: Before starting the pipeline, users must be sure that they have the necessary
-# access to the directories, because in the next versions (set + x) the parameters
+# access to the directories, because in the next versions option (set +x)
 # will be removed.
-
 set +o errexit
 
 # checking existing VM_DIR_FASTQC 
