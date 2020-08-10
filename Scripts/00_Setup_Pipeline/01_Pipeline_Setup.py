@@ -187,12 +187,12 @@ class SystemConfig:
     def __init__(self, filename = PIPELINE_CONFIG ):
         generate_example(filename, DEFAULT_PIPELINE_CONFIG)
         self.current_path = os.path.dirname(os.path.abspath(__file__))
-        os.environ['SCRIPT_DIR'] = self.current_path
+        os.environ['SETUP_PIPELINE_DIR'] = self.current_path
 
         # read config with case sensitive option
         config = configparser.RawConfigParser(interpolation=EnvInterpolation())
         config.optionxform = lambda option: option
-        config.read(os.getenv('SCRIPT_DIR')+"/"+filename)
+        config.read(os.getenv('SETUP_PIPELINE_DIR')+"/"+filename)
         self.config = config
 
     def setup_env_variables(self):
@@ -203,7 +203,7 @@ class SystemConfig:
             for key in keys:
                 exports.append((key, self.config[section][key]))
 
-        exports.append(('SCRIPT_DIR', self.current_path))
+        exports.append(('SETUP_PIPELINE_DIR', self.current_path))
         exports = [f"export {e[0]}={e[1]}" for e in exports]
         return "\n".join(exports)
 
@@ -258,19 +258,22 @@ class DiffExpression():
             Condition.write(samples)
         return condition_name
 
-    def generate(self):
-
+    def generate(self, output_location = "./"):
+        # output_location start from SETUP_PIPELINE_DIR
+        
         for CMP in self.comp_config.comparisons:
             for TMPL in self.templates:
                 DIR_NAME = os.path.basename(TMPL).replace('TEMPLATE_','')
                 DIR_NAME = DIR_NAME.replace('NN', CMP.Comparison_Number)
 
-                SCRIPT_PATH = os.getenv('SCRIPT_DIR')
+                SCRIPT_PATH = os.getenv('SETUP_PIPELINE_DIR')
 
-                # TODO: change it to OUTPUT path
-                DIR_PATH = SCRIPT_PATH+"/"+DIR_NAME 
+                # TODO: change it to OUTPUT path (SCRIPT_PATH+"/"+)
+                
+                DIR_PATH = output_location + "/" + DIR_NAME
 
-                # create 
+                print(TMPL,DIR_PATH)
+                # copy template dirs from TMPL to DIR_PATH
                 self.copy_dir(TMPL, DIR_PATH)
                 
                 # go to inside diff.ex task directory
@@ -328,23 +331,28 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     system_config = SystemConfig("./"+PIPELINE_CONFIG)
-    sample_config = SampleConfig(os.getenv('SCRIPT_DIR') + "/" + SAMPLES_CONFIG)
-    comparison_config = ComparisonsConfig(os.getenv('SCRIPT_DIR')+"/" + COMPARISON_CONFIG)
+    sample_config = SampleConfig(os.getenv('SETUP_PIPELINE_DIR') + "/" + SAMPLES_CONFIG)
+    comparison_config = ComparisonsConfig(os.getenv('SETUP_PIPELINE_DIR')+"/" + COMPARISON_CONFIG)
 
     if args.export:
         print(system_config.setup_env_variables())
         exit(0)
     elif args.generate:
-        diffex = DiffExpression(["../TEMPLATE_09a_DiffExp_NN_HTSEQ",
-                                 "../TEMPLATE_09b_DiffExp_NN_FEATURECOUNTS",
-                                 "../TEMPLATE_09c_DiffExp_NN_LNCRNA"],
+        # TODO: find all templates automatically
+        TEMPLATE_PATHS=["../TEMPLATE_09a_DE_NN_HTSEQ",
+                        "../TEMPLATE_09b_DE_NN_FEATURECOUNTS",
+                        "../TEMPLATE_09c_DE_NN_LNCRNA"]
+
+        diffex = DiffExpression(TEMPLATE_PATHS,
                                 comparison_config,
                                 sample_config,
                                 system_config)
-        # TODO: output dir
-        diffex.generate()
+
+        # Output dir by default the same as TEMPLATES_PATH
+        diffex.generate(os.path.dirname(TEMPLATE_PATHS[0]))
         print("Diff.ex directories generated")
         exit(0)
+        
     elif args.samples:
         print(sample_config.samplesToBash())
         exit(0)
