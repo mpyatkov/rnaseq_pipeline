@@ -12,6 +12,27 @@ set -o nounset
 # Usage: ./Rename_Folders.sh
 # Example:
 # ./Rename_Folders.sh
+# Why we do this?
+# The sequencing facility will typically provide raw data files in the following
+# folder structure:
+#---------------------------------------------------------------------------------
+# Sample_Waxman-TP17
+# Sample_Waxman-TP18
+# Sample_Waxman-TP19
+# Sample_Waxman-TP20
+#---------------------------------------------------------------------------------
+# Experimental information for each sample is usually in an email or lab
+# ChIPSeq_samples_*.xlsx file
+# After collecting this information, we simply want to rename these folders so
+# that we have the following:
+#---------------------------------------------------------------------------------
+# G83_M1
+# G83_M2
+# G83_M3
+# G83_M4
+#---------------------------------------------------------------------------------
+# The above is much easier to understand and keep track of progress moving
+# through the analysis pipeline
 ##################################################################################
 
 # export all variables from Pipeline_Setup.conf
