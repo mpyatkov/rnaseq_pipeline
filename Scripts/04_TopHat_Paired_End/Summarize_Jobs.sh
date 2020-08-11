@@ -7,6 +7,10 @@
 #./TopHat_Paired_End_Summary.sh
 ##################################################################################
 
+set -o errexit
+set -o pipefail
+set -o nounset
+
 # export all variables from Pipeline_Setup.conf
 eval "$(../00_Setup_Pipeline/01_Pipeline_Setup.py --export)"
 
