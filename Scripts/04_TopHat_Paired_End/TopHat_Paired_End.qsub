@@ -1,0 +1,310 @@
+#!/bin/bash -l
+
+set -o errexit
+set -o pipefail
+set -o nounset
+
+##################################################################################
+#Andy Rampersaud, 05.03.16
+#Adapted from tophat/paired_end_mapping scripts by Tisha Melia
+#This script is called by TopHat_Paired_End.sh
+##################################################################################
+# Specify which shell to use
+#$ -S /bin/bash
+# Run on the current working directory
+#$ -cwd
+#$ -pe omp 16
+# Join standard output and error to a single file  
+#$ -j n
+# change to y if you want a single qlog file 
+#$ -l scratch_free=200G
+##################################################################################
+
+# export all variables from Pipeline_Setup.conf
+eval "$(../00_Setup_Pipeline/01_Pipeline_Setup.py --export)"
+
+#Initialize variables from TopHat_Paired_End.sh
+##################################################################################
+#checking the command line arg
+#-ne : "is not equal to"
+if [ $# -ne 3 ] ; then
+      echo "Need 3 arguments for the qsub command:"
+      echo "qsub -N ${job_name}'_'${sample_id} -P wax-dk -l h_rt=${TIME_LIMIT} TopHat_Paired_End.qsub ${sample_id} ${tophat_strandedness} ${distance_bt_read_pair}"
+      exit 0
+fi
+#process the command line arguments
+SAMPLE_ID=$1
+TOPHAT_STRANDEDNESS=$2
+DISTANCE_BT_READ_PAIR=$3
+
+#Print variables (make sure they appear correctly):
+echo "-----------------------"
+echo "Start of variable list:"
+echo "-----------------------"
+echo "Sample_ID: ${SAMPLE_ID}"
+echo "Dataset_DIR: ${DATASET_DIR}"
+echo "Sample_Labels_DIR: ${SAMPLE_LABELS_DIR}"
+echo "Bowtie2Index_DIR: ${BOWTIE2INDEX_DIR}"
+echo "GTF_Files_DIR: ${GTF_FILES_DIR}"
+echo "ANNOTATION_FILE: ${ANNOTATION_FILE}"
+echo "STRANDEDNESS: ${TOPHAT_STRANDEDNESS}"
+echo "DISTANCE_BT_READ_PAIR: ${DISTANCE_BT_READ_PAIR}"
+echo "-----------------------"
+echo "End of variable list"
+echo "-----------------------"
+
+
+start_time=$(date +"%s")
+
+# Now let's keep track of some information just in case anything goes wrong
+echo "=========================================================="
+echo "Starting on : $(date)"
+echo "Running on node : $(hostname)"
+echo "Current directory : $(pwd)"
+echo "Current job ID : $JOB_ID"
+echo "Current job name : $JOB_NAME"
+echo "Task index number : $SGE_TASK_ID"
+echo "Parameter for multiple cores : $NSLOTS"
+echo "=========================================================="
+
+# Go to local scratch directory
+echo "Change dir to scratch directory"
+
+cd "${TMPDIR}"
+
+echo "Print scratch directory location: ${TMPDIR}"
+echo 'Loading required modules...'
+
+module load samtools
+
+# copy user input data files to scratch
+#Copy over the *R1*.fq.gz file(s):
+cp ${DATASET_DIR}/${SAMPLE_ID}/fastq/*_1*.fq.gz .
+#Copy over the *R2*.fq.gz file(s):
+cp ${DATASET_DIR}/${SAMPLE_ID}/fastq/*_2*.fq.gz .
+#Need the Bowtie2 index:
+cp -r ${BOWTIE2INDEX_DIR}/Bowtie2Index .
+#Copy RefSeq_GeneBody.gtf
+cp ${GTF_FILES_DIR}/RefSeq_GeneBody.gtf .
+
+#-----------------------------------------------------
+#As described by TopHat2:
+#<reads1_1[,...,readsN_1]> 	A comma-separated list of files containing reads in FASTQ or FASTA format. When running TopHat with paired-end reads, this should be the *_1 ("left") set of files.
+#<[reads1_2,...readsN_2]> 	A comma-separated list of files containing reads in FASTA or FASTA format. Only used when running TopHat with paired end reads, and contains the *_2 ("right") set of files. The *_2 files MUST appear in the same order as the *_1 files. 
+#-----------------------------------------------------
+
+#We need a comma separated list for the *_1 ("left") set of files:
+
+left_list=$(find . -name "*_1*.fq.gz" | xargs -n1 basename | paste -s -d ",")
+right_list=$(find . -name "*_2*.fq.gz" | xargs -n1 basename | paste -s -d ",")
+
+# Set the standard deviation for the ${DISTANCE_BT_READ_PAIR}
+# --mate-std-dev <int>
+# The standard deviation for the distribution on inner distances between mate
+# pairs. The default is 20bp.
+# Looks like we use a wide standard deviation:
+param_std=150
+
+#Make output dir:
+storage_dir="${DATASET_DIR}/${SAMPLE_ID}/fastq"
+output_dir="$TMPDIR/tophat2"
+mkdir -p "$output_dir"
+
+echo 'List files in the scratch directory:'
+
+ls -alh
+
+echo 'Starting to run my commands'
+
+echo 'Starting tophat'
+
+#------------------------------------------------------------------------------
+#Jobs are taking too long to complete
+#Need the option: --no-coverage-search
+#------------------------------------------------------------------------------
+echo "tophat --no-coverage-search -o ${output_dir} -G ${ANNOTATION_FILE} -p $NSLOTS --library-type ${TOPHAT_STRANDEDNESS} -r ${DISTANCE_BT_READ_PAIR} --mate-std-dev ${param_std} Bowtie2Index/genome ${Left_List} ${Right_List}"
+
+tophat --no-coverage-search -o ${output_dir} -G ${ANNOTATION_FILE} -p $NSLOTS --library-type ${TOPHAT_STRANDEDNESS} -r ${DISTANCE_BT_READ_PAIR} --mate-std-dev ${param_std} Bowtie2Index/genome ${left_list} ${right_list}
+
+echo 'Ending tophat'
+
+echo 'Starting samtools commands'
+
+# Site for explaining flag definitions:
+# http://broadinstitute.github.io/picard/explain-flags.html
+# http://davetang.org/muse/2014/03/06/understanding-bam-flags/
+# 0x100 = not primary alignment
+# samtools view options:
+# -f INT   required flag, 0 for unset [0]
+# -F INT   filtering flag, 0 for unset [0]
+
+# Require that the read record is not primary alignment:
+samtools view -f 0x100 -b ${output_dir}/accepted_hits.bam > ${output_dir}/non_primary.bam
+
+# Filter out all the read records that are not primary alignment
+# Otherwords: extract all primary alignment reads
+samtools view -F 0x100 -b ${output_dir}/accepted_hits.bam > ${output_dir}/primary.bam
+
+# Generate index for a bam file
+samtools index ${output_dir}/accepted_hits.bam
+samtools index ${output_dir}/primary.bam
+
+# Collect statistics for a bam file
+samtools flagstat ${output_dir}/non_primary.bam > ${output_dir}/statistics_for_nonprimary_reads.txt
+samtools flagstat ${output_dir}/primary.bam > ${output_dir}/statistics_for_primary_reads.txt
+samtools flagstat ${output_dir}/accepted_hits.bam > ${output_dir}/statistics_for_all_accepted_reads.txt
+samtools flagstat ${output_dir}/unmapped.bam > ${output_dir}/statistics_for_unmapped_reads.txt
+
+# numunique_hits.txt contains the mapping statistics of all mappable reads,
+# ***excluding*** multi-mappable reads (identical to b)). This is not applicable
+# for paired-end reads.
+samtools view ${output_dir}/accepted_hits.bam | cut -f 1 | sort | uniq | wc -l > numunique_hits.txt
+
+# We now want to get the uniquely mapped reads:
+pushd "${output_dir}"
+
+# http://www.researchgate.net/post/How_can_I_get_uniquely_mapped_reads_from_Tophatv2012
+# We can filter the *_primary.bam
+# First I need to get the header lines
+# Easier alternative: samtools view with (-H) option:
+# -H       print header only (no alignments)
+samtools view -H 'primary.bam' > Header.txt
+
+# samtools view (without option) will print alignments (no header) :
+samtools view 'primary.bam' > temp1.sam
+
+# Run grep command to extract the uniquely mapped reads:
+# http://onetipperday.blogspot.com/2012/07/deeply-understanding-sam-tags.html
+# NH is "Number of reported alignments that contains the query in the current
+# record", which should be >1 for multiple-mapped reads.
+grep -w "NH:i:1" temp1.sam > temp2.sam
+
+#Add header:
+cat Header.txt temp2.sam > temp3.sam
+
+#Convert SAM to BAM:
+samtools view -bS temp3.sam > temp4.bam
+
+#Sort the BAM file:
+#Usage:   samtools sort [options] <in.bam> <out.prefix>
+#Options: -n        sort by read name
+#Without any options it will sort by coordinates
+samtools sort temp4.bam 'primary_unique'
+
+#http://sourceforge.net/p/samtools/mailman/message/31318733/
+#The samtools index command expects the input file to be coordinate sorted
+#Generate index for a bam file
+samtools index 'primary_unique'.bam
+
+#Collect statistics for a bam file
+samtools flagstat 'primary_unique'.bam > statistics_for_'primary_unique'_reads.txt
+
+#Remove temp files:
+rm -rf Header.txt temp*.sam temp*.bam
+
+popd
+
+echo 'Ending samtools commands'
+
+
+# Output file descriptions:
+# 1) accepted_hits.bam -> The mapped reads for your sample. If your reads are
+# mappable to several places, this file will have up to 20 of those.
+# 3) Several mapping statistics:
+# a) statistics_for_all_accepted_reads.txt contains the mapping statistics of
+# all mappable reads, which include multi-mappable reads.
+# b) statistics_for_primary_reads.txt contains the mapping statistics of all
+# mappable reads, ***excluding*** multi-mappable reads.
+# c) statistics_for_nonprimary_reads.txt contains the mapping statistics for multi-mappable reads.
+# d) statistics_for_unmapped_reads.txt contains the mapping statistics for unmapped rads.
+# e) numunique_hits.txt contains the mapping statistics of all mappable reads,
+# ***excluding*** multi-mappable reads (identical to b)). This is not applicable
+# for paired-end reads.
+# ---------------------------------------------------------------------------------
+# primary.bam -> The mapped reads that only contain the best mappable place for
+# each of your read that was able to be mapped.
+# junctions.bed. A UCSC BED track of junctions reported by TopHat. Each junction
+# consists of two connected BED blocks, where each block is as long as the
+# maximal overhang of any read spanning the junction. The score is the number of
+# alignments spanning the junction.
+# insertions.bed and deletions.bed. UCSC BED tracks of insertions and deletions reported by TopHat. 
+# ---------------------------------------------------------------------------------
+# primary_unique.bam -> The subset of the primary.bam where each read only has 1 reported alignment
+# In other words, these are the uniquely mapped reads
+# The uniquely mapped reads is the read set we want to use for both counting and visualization
+# ---------------------------------------------------------------------------------
+##################################################################################
+# remove stuff that we dont need
+
+# For DESeq, we need the primary_unique.bam
+rm ${output_dir}/non_primary.bam
+rm ${output_dir}/accepted_hits.bam
+rm ${output_dir}/accepted_hits.bam.bai
+rm ${output_dir}/primary.bam
+rm ${output_dir}/primary.bam.bai
+rm ${output_dir}/unmapped.bam
+
+# Rename the output files
+output_list=${output_dir}/*
+for output_file in ${output_list}
+do
+    output_file_name=$(basename $output_file)
+    
+    #Add the ${Sample_ID} as a file name prefix
+    mv "${output_dir}/$output_file_name" "${output_dir}/${Sample_ID}_${output_file_name}"
+done
+
+
+echo 'Starting spliced_read_counts'
+
+#cd into the ${output_dir}
+pushd "${output_dir}"
+######################
+
+output_file=$output_dir/${SAMPLE_ID}'_spliced_read_counts.txt'
+rm -rf ${output_file} && touch ${output_file}
+
+# It would be useful to know the number of mapped reads that have skipped regions
+# from the reference genome
+# This information is in the CIGAR string
+# http://zenfractal.com/2013/06/19/playing-with-matches/
+# Aligned reads in a SAM or BAM file typically have a Compact Idiosyncratic
+# Gapped Alignment Report (CIGAR) string that expresses how the read is mapped to
+# the reference genome.
+# The CIGAR string is in the 6th column:
+# https://samtools.github.io/hts-specs/SAMv1.pdf
+# M stands for: alignment match (can be a sequence match or mismatch)
+# N stands for: skipped region from the reference
+skipped_reads=$(samtools view "${SAMPLE_ID}_primary_unique.bam" | awk '($6 ~ /N/)' | cut -f6 | wc -l)
+
+#Need a regular expression to specifically find these spliced reads:
+#Bunch of numbers then "M", bunch of numbers then "N", bunch of numbers then "M":
+spliced_reads=$(samtools view "${SAMPLE_ID}_primary_unique.bam" | awk '($6 ~ /[0-9]+[M][0-9]+[N][0-9]+[M]/)' | cut -f6 | wc -l )
+
+#Print header to output file:
+printf "SAMPLE_ID\tskipped_region_READS\tsplice_junction_READS" >> "${output_file}"
+
+#Print to output file
+printf "%s\t%s\t%s\t\n" "${SAMPLE_ID}" "${skipped_reads}" "${spliced_reads}" >> "${output_file}"
+
+#cd out of ${output_dir}
+popd
+
+echo 'Ending spliced_read_counts'
+
+# copy the output files to users storage dir
+cp *.txt ${output_dir}
+cp -r ${output_dir} ${storage_dir}
+
+echo "List files in scratch"
+ls -alh
+
+echo "=========================================================="
+echo "Finished on : $(date)"
+
+#Use to calculate job time:
+#End_Time in seconds
+end_time=$(date +"%s")
+diff=$((end_time-start_time))
+echo "$((diff / 3600)) hours, $(((diff / 60) % 60)) minutes and $((diff % 60)) seconds elapsed."
+echo "=========================================================="
