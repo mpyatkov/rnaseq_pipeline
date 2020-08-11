@@ -1,0 +1,108 @@
+#!/bin/bash -l
+
+set -o errexit
+set -o pipefail
+set -o nounset
+
+##################################################################################
+#Andy Rampersaud, 02.23.16
+#This script is called by fastqC.sh
+##################################################################################
+# Specify which shell to use
+#$ -S /bin/bash
+# current working directory option
+#$ -cwd
+# 
+#$ -j n
+##################################################################################
+#Initialize variables from fastqC.sh
+##################################################################################
+
+# export all variables from Pipeline_Setup.conf
+eval "$(../00_Setup_Pipeline/01_Pipeline_Setup.py --export)"
+
+#checking the command line arg
+#-ne : "is not equal to"
+
+if [ $# -ne 2 ] ; then
+      echo "Need 2 arguments for the qsub command:"
+      echo "qsub -N ${job_name}_${sample_id} -P ${PROJECT} -l h_rt=${TIME_LIMIT} FASTQC.qsub ${sample_id} ${output_dir}"
+      exit 1
+fi
+
+#process the command line arguments
+sample_id=$1
+output_dir=$2
+
+# Now let's keep track of some information just in case anything goes wrong
+echo "=========================================================="
+#Use to calculate job time:
+#Start_Time in seconds
+Start_Time=$(date +"%s")
+echo "Starting on : $(date)"
+echo "Running on node : $(hostname)"
+echo "Current directory : $(pwd)"
+echo "Current job ID : $JOB_ID"
+echo "Current job name : $JOB_NAME"
+echo "Task index number : $SGE_TASK_ID"
+echo "Parameter for multiple cores : $NSLOTS"
+echo "=========================================================="
+
+# Go to local scratch directory
+
+printf "\nChange dir to scratch directory\n"
+cd ${TMPDIR}
+prinft "\nPrint scratch directory location: ${TMPDIR}"
+printf "\nLoading required modules...\n"
+module load fastqc
+
+# copy user input data files to scratch
+# Copy over the *R1*.fq.gz file(s):
+cp ${DATASET_DIR}/${sample_id}/fastq/*_1*.fq.gz .
+
+# Copy over the *R2*.fq.gz file(s):
+cp ${DATASET_DIR}/${sample_id}/fastq/*_2*.fq.gz .
+
+# Create FASTQC output folder to store files:
+fastqc_dir="${sample_id}_FASTQC"
+mkdir -p "${fastqc_dir}"
+
+printf "\nList files in scratch directory:\n"
+ls -alh
+printf "\nStarting to run my commands\n"
+printf "Unzip files:"
+
+time gzip -d *.gz
+
+printf "\nFinished unzipping\n"
+printf "\nPrint first 20 lines of fastq file:\n"
+
+head -20 *.fq
+
+printf "\nStarting fastqC command\n"
+
+# Run the command for each fastq file:
+fastq_list=*.fq
+for fastq_file in ${fastq_list}
+do
+    printf "fastqc --outdir %s %s" "${fastqc_dir}" "${fastq_file}"
+
+    fastqc --outdir ${fastqc_dir} ${fastq_file}
+done
+#--------------------------------------------------------------------------------
+printf '\nFinished FASTQC command\n'
+printf '\nCopy output to storage dir\n'
+
+cp -r $fastqc_dir $output_dir
+
+printf "\nList files in scratch\n"
+ls -alh
+
+echo "Finished on : $(date)"
+
+#Use to calculate job time:
+#End_Time in seconds
+end_time=$(date +"%s")
+diff=$((end_time-start_time))
+echo "$((diff / 3600)) hours, $(((diff / 60) % 60)) minutes and $((diff % 60)) seconds elapsed."
+echo "=========================================================="
