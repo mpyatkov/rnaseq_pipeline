@@ -122,7 +122,7 @@ echo 'Starting tophat'
 #Jobs are taking too long to complete
 #Need the option: --no-coverage-search
 #------------------------------------------------------------------------------
-echo "tophat --no-coverage-search -o ${output_dir} -G ${ANNOTATION_FILE} -p $NSLOTS --library-type ${TOPHAT_STRANDEDNESS} -r ${DISTANCE_BT_READ_PAIR} --mate-std-dev ${param_std} Bowtie2Index/genome ${Left_List} ${Right_List}"
+echo "tophat --no-coverage-search -o ${output_dir} -G ${ANNOTATION_FILE} -p $NSLOTS --library-type ${TOPHAT_STRANDEDNESS} -r ${DISTANCE_BT_READ_PAIR} --mate-std-dev ${param_std} Bowtie2Index/genome ${left_List} ${right_List}"
 
 tophat --no-coverage-search -o ${output_dir} -G ${ANNOTATION_FILE} -p $NSLOTS --library-type ${TOPHAT_STRANDEDNESS} -r ${DISTANCE_BT_READ_PAIR} --mate-std-dev ${param_std} Bowtie2Index/genome ${left_list} ${right_list}
 

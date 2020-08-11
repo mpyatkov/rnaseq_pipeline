@@ -39,7 +39,7 @@ do
     sample_id=${samples[i+1]}
     # description=${samples[i+2]}
 
-    qsub -N "${job_name}_${sample_id}" -P "${PROJECT}" -l h_rt="${TIME_LIMIT}" FASTQC.qsub "${sample_id}" "${output_dir}"
+    (set -x; qsub -N "${job_name}_${sample_id}" -P "${PROJECT}" -l h_rt="${TIME_LIMIT}" FASTQC.qsub "${sample_id}" "${output_dir}")
 done
 
 echo "End of FASTQC commands"

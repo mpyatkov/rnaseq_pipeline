@@ -55,7 +55,7 @@ do
     sample_id=${samples[i+1]}
     # description=${samples[i+2]}
     
-    qsub -N "${job_name}_${sample_id}" -P "${PROJECT}" -l h_rt="${TIME_LIMIT}" TopHat_Paired_End.qsub "${sample_id}" "${tophat_strandedness}" "${distance_bt_read_pair}"
+    (set -x; qsub -N "${job_name}_${sample_id}" -P "${PROJECT}" -l h_rt="${TIME_LIMIT}" TopHat_Paired_End.qsub "${sample_id}" "${tophat_strandedness}" "${distance_bt_read_pair}")
 done
 
 echo "End of TOPHAT commands"

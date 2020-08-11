@@ -51,7 +51,9 @@ do
     # description=${samples[i+2]}
 
     printf "Rename %s to %s\n" "${sample_dir}" "${sample_id}"
-    mv "${DATASET_DIR}/${sample_dir}" "${DATASET_DIR}/${sample_id}"
+    set +e
+    (set -x; mv "${DATASET_DIR}/${sample_dir}" "${DATASET_DIR}/${sample_id}")
+    set -e
 done
 
 printf "End renaming folders\n\n"
