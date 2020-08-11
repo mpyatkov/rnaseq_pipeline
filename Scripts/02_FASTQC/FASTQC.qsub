@@ -38,7 +38,7 @@ output_dir=$2
 echo "=========================================================="
 #Use to calculate job time:
 #Start_Time in seconds
-Start_Time=$(date +"%s")
+start_time=$(date +"%s")
 echo "Starting on : $(date)"
 echo "Running on node : $(hostname)"
 echo "Current directory : $(pwd)"
@@ -52,7 +52,7 @@ echo "=========================================================="
 
 printf "\nChange dir to scratch directory\n"
 cd ${TMPDIR}
-prinft "\nPrint scratch directory location: ${TMPDIR}"
+printf "\nPrint scratch directory location: ${TMPDIR}"
 printf "\nLoading required modules...\n"
 module load fastqc
 

@@ -28,11 +28,12 @@ fi
 sample_id=$1
 output_dir=$2
 
+start_time=$(date +"%s")
+
 # Now let's keep track of some information just in case anything goes wrong
 echo "=========================================================="
 #Use to calculate job time:
 #Start_Time in seconds
-Start_Time=$(date +"%s")
 echo "Starting on : $(date)"
 echo "Running on node : $(hostname)"
 echo "Current directory : $(pwd)"
