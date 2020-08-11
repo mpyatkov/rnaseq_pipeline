@@ -88,11 +88,10 @@ do
     pushd "${STEP}"
     
     #Run_Jobs:
-
     # TODO: check out the exit code of each step to prevent running pipeline
     # if job return something wrong create error message and stop pipeline
+
     ./Run_Jobs.sh
-    
     # Need a way to periodically check that all jobs have completed 
     # Count the number of jobs submitted by the user
     # Once the count goes to zero then summarize this job and move to the next step
@@ -100,10 +99,9 @@ do
     # Need to omit the 1st 2 lines of qstat command:
     # JOB_COUNT=$(qstat -u ${BU_USER} | awk 'FNR>2 {print $0}' | wc -l)
     # echo ${JOB_COUNT} 
-    
+
     # Split by "_" grab the 1st part (use cut command)
     STEP_NUM=$(echo "${STEP}" | cut -d'_' -f 1)
-    
     # Create the Job_Name:
     JOB_NAME="Step_${STEP_NUM}"
     

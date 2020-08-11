@@ -25,7 +25,8 @@ step_num=$(echo ${dir_name} | cut -d'_' -f 1)
 job_name="Step_${step_num}"
 
 # output dir to store text files:
-output_dir="${DATASET_DIR}/Scripts/${dir_name}/Job_Summary"
+output_dir="$(pwd)/Job_Summary"
+#output_dir="${DATASET_DIR}/Scripts/${dir_name}/Job_Summary"
 rm -rf "${output_dir}" && mkdir -p "${output_dir}"
 
 # samples contains array of (sample_dir, sample_id, description) for each sample
