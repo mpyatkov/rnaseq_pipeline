@@ -14,7 +14,7 @@ eval "$(../00_Setup_Pipeline/01_Pipeline_Setup.py --export)"
 dir_name=$(basename $(pwd))
 
 # output dir to store text files:
-output_dir="${DATASET_DIR}/Scripts/${dir_name}/Job_Summary"
+output_dir="$(pwd)/Job_Summary"
 output_file="${output_dir}/Read_Length_Stats.txt"
 
 rm -rf ${output_file} && touch ${output_file}
@@ -22,7 +22,7 @@ rm -rf ${output_file} && touch ${output_file}
 cd "${output_dir}"
 
 # print headers to the output file
-printf "SAMPLE_ID\tFASTQ_File_Name\tRead_Length(bp)\tRead_Count" >> "${output_file}"
+printf "SAMPLE_ID\tFASTQ_File_Name\tRead_Length(bp)\tRead_Count\n" >> "${output_file}"
 
 # samples contains array of (sample_dir, sample_id, description) for each sample
 samples=($("${SETUP_PIPELINE_DIR}"/01_Pipeline_Setup.py --samples))
