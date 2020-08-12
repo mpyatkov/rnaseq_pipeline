@@ -250,8 +250,8 @@ for output_file in ${output_list}
 do
     output_file_name=$(basename $output_file)
     
-    #Add the ${Sample_ID} as a file name prefix
-    mv "${output_dir}/$output_file_name" "${output_dir}/${Sample_ID}_${output_file_name}"
+    #Add the ${SAMPLE_ID} as a file name prefix
+    mv "${output_dir}/$output_file_name" "${output_dir}/${SAMPLE_ID}_${output_file_name}"
 done
 
 
