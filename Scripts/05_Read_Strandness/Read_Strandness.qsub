@@ -1,4 +1,5 @@
 #!/bin/bash -l
+
 ##################################################################################
 #Andy Rampersaud, 02.23.16
 #This script is called by setup_UCSC_BigWig.sh
@@ -72,7 +73,7 @@ mkdir -p ${output_dir}
 #Create output file to store the result:
 output_file="${output_dir}/${SAMPLE_ID}_Read_Strandness.txt"
 
-rm -rf  ${output_file} && touch ${output_file}
+rm -rf  "${output_file}" && touch "${output_file}"
 
 echo 'Unzip files:'
 time gzip -d *.gz
