@@ -106,7 +106,7 @@ do
     job_name="Step_${step_num}"
     
     #Now use arguments in the PBS script call:
-    (set -x; qsub -N "${job_name}_${sample_id}" -P "${PROJECT}" -l h_rt="${TIME_LIMIT}" DiffExp.qsub ${SCRIPT_DIR} ${DATASET_DIR} ${DATASET_LABEL} ${GTF_FILES_DIR} ${ANNOTATION_FILE}  ${CONDITION_1_NAME} ${CONDITION_2_NAME} ${Lengths_DIR} ${GENE_LENGTHS_FILE} ${COUNT_DIR} ${OUTPUT_PREFIX} ${DiffExp_Index} ${COL_SUFFIX} ${COUNT_PROGRAM})
+    (set -x; qsub -N "${job_name}_${DiffExp_Index}" -P "${PROJECT}" -l h_rt="${TIME_LIMIT}" DiffExp.qsub ${SCRIPT_DIR} ${DATASET_DIR} ${DATASET_LABEL} ${GTF_FILES_DIR} ${ANNOTATION_FILE}  ${CONDITION_1_NAME} ${CONDITION_2_NAME} ${Lengths_DIR} ${GENE_LENGTHS_FILE} ${COUNT_DIR} ${OUTPUT_PREFIX} ${DiffExp_Index} ${COL_SUFFIX} ${COUNT_PROGRAM})
 
     #End loop over GTF files:
 done

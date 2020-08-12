@@ -19,9 +19,6 @@ set -o nounset
 # change to y if you want a single qlog file 
 ##################################################################################
 
-# export all variables from Pipeline_Setup.conf
-eval "$(../00_Setup_Pipeline/01_Pipeline_Setup.py --export)"
-
 #checking the command line arg
 #-ne : "is not equal to"
 if [ $# -ne 14 ] ; then
