@@ -133,7 +133,7 @@ do
             #Calculate percentages
             READS_IN_EXONS_RATIO=$(echo "scale=4;$READS_IN_EXONS/$Aligned_Pairs" | bc)
             echo 'Printing to output file...'
-            echo $sample_id $'\t'$Description $'\t'$Aligned_Pairs $'\t'$READS_IN_EXONS $'\t'$READS_IN_EXONS_RATIO >> $output_file
+            echo $sample_id $'\t'$description $'\t'$Aligned_Pairs $'\t'$READS_IN_EXONS $'\t'$READS_IN_EXONS_RATIO >> $output_file
             #End loop over Sample_Labels:
         done < Sample_Labels.temp
         cd ${Current_DIR}
