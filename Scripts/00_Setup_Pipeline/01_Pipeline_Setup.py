@@ -287,7 +287,7 @@ class DiffExpression():
                 cond_2_tmpl="CONDITION_2_NAME=TEMPLATE"
                 compar_num="COMPAR_NUM=TEMPLATE"
                 
-                with fileinput.input('Run_Jobs.sh', inplace=True) as runjobs:
+                with fileinput.input("setup_DiffExp.sh", inplace=True) as runjobs:
 
                     for line in runjobs:
                         if cond_1_tmpl in line:
