@@ -1,0 +1,405 @@
+#!/bin/bash -l
+
+set -o errexit
+set -o pipefail
+set -o nounset
+
+##################################################################################
+#Andy Rampersaud, 02.22.16
+#This script is called by setup_Extract_Counts.sh
+##################################################################################
+# Specify which shell to use
+#$ -S /bin/bash
+# Run on the current working directory
+#$ -cwd
+
+# Join standard output and error to a single file  
+#$ -j n
+# change to y if you want a single qlog file 
+
+#$ -l scratch_free=200G
+#You can use option "-pe omp N", where N is the number of cores ( number of course on our system can be any integer between 1 and 16):
+#$ -pe omp 16
+
+##################################################################################
+# export all variables from Pipeline_Setup.conf
+eval "$(../00_Setup_Pipeline/01_Pipeline_Setup.py --export)"
+
+##################################################################################
+#checking the command line arg
+#-ne : "is not equal to"
+if [ $# -ne 5 ] ; then
+    echo "Need 5 arguments for the qsub command"
+    exit 1
+fi
+
+#process the command line arguments
+SAMPLE_ID=$1
+STRANDEDNESS_FEATURECOUNT=$2
+FEATURE_ID=$3
+ANNOTATION_FILE=$4
+FEATURE_TYPE=$5
+
+SCRIPT_DIR="$(pwd)"
+
+#Use to calculate job time:
+#Start_Time in seconds
+start_time=$(date +"%s")
+echo "Starting on : $(date)"
+echo "Running on node : $(hostname)"
+echo "Current directory : $(pwd)"
+echo "Current job ID : $JOB_ID"
+echo "Current job name : $JOB_NAME"
+echo "Task index number : $SGE_TASK_ID"
+echo "Parameter for multiple cores : $NSLOTS"
+echo "=========================================================="
+
+# Go to local scratch directory
+echo 'Change dir to scratch directory'
+cd ${TMPDIR}
+echo 'Print scratch directory location:'
+echo $TMPDIR
+#--------------------------------------
+echo 'Loading required modules...'
+module load R/3.6.0
+module load gcc/8.1.0
+module load samtools/0.1.19
+
+# copy user input data files to scratch
+cp ${DATASET_DIR}/${SAMPLE_ID}/fastq/tophat2/${SAMPLE_ID}'_primary_unique.bam' .
+
+#Copy gtf file (annotation file):
+cp ${GTF_FILES_DIR}/${ANNOTATION_FILE} .
+
+if [ "${ANNOTATION_FILE}" == "Exon_Only_Regions.gtf" ];
+then
+    #Copy Intron_Only gtf file (annotation file):
+    cp ${GTF_FILES_DIR}/Intron_Only_Regions.gtf .
+elif [ "${ANNOTATION_FILE}" == "exonic_only_gene_models_ncRNA_for_counting.gtf" ];
+then
+    # Copy intronic_only_gene_models_ncRNA_for_counting gtf file (annotation file):
+    # rename the intronic_only gtf file as Intron_Only_Regions.gtf, such that I
+    # can reuse Andy's if statements
+    cp ${GTF_FILES_DIR}/intronic_only_gene_models_ncRNA_for_counting.gtf Intron_Only_Regions.gtf
+fi
+
+
+#Initialize INPUT_BAM:
+input_bam=${SAMPLE_ID}'_primary_unique.bam'
+
+#Make output dir:
+storage_dir=${DATASET_DIR}/${SAMPLE_ID}/fastq/tophat2/featureCounts
+
+#Need if statements to name the output_dir depending on the ANNOTATION_FILE used:
+
+if [ "${ANNOTATION_FILE}" == "genes.gtf" ];
+then
+    output_dir=$storage_dir/Illumina_GTF
+fi
+
+if [ "${ANNOTATION_FILE}" == "RefSeq_GeneBody.gtf" ];
+then
+    output_dir=$storage_dir/RefSeq_Exon_GTF
+fi
+
+if [ "${ANNOTATION_FILE}" == "Intron_Only_Regions.gtf" ];
+then
+    output_dir=$storage_dir/RefSeq_Intron_GTF
+fi
+
+if [ "${ANNOTATION_FILE}" == "Exon_Only_Regions.gtf" ];
+then
+    output_dir=$storage_dir/RefSeq_Exon_Only_GTF
+fi
+
+#Start of lncRNA gtf
+if [ "${ANNOTATION_FILE}" == "ncRNA_exon_for_counting.gtf" ];
+then
+    output_dir=$storage_dir/LncRNA_Exon_Collapsed_GTF
+fi
+
+if [ "${ANNOTATION_FILE}" == "ncRNA_genebodies_for_counting.gtf" ];
+then
+    output_dir=$storage_dir/LncRNA_GeneBody_GTF
+fi
+
+if [ "${ANNOTATION_FILE}" == "intronic_only_gene_models_ncRNA_for_counting.gtf" ];
+then
+    output_dir=$storage_dir/LncRNA_Intronic_Only_GTF
+fi
+
+if [ "${ANNOTATION_FILE}" == "exonic_only_gene_models_ncRNA_for_counting.gtf" ];
+then
+    output_dir=$storage_dir/LncRNA_Exonic_Only_GTF
+fi
+
+rm -rf ${output_dir} && mkdir -p ${output_dir}
+
+output_file="${SAMPLE_ID}_featureCounts.out"
+rm -rf ${output_file} && mkdir -p ${output_file}
+
+echo 'List files in scratch directory:'
+ls -alh
+
+echo 'Starting to run my commands'
+
+echo 'Starting featureCounts'
+
+# For the "Exonic_Only" counts I need to process the BAM file to filter out reads
+# that overlap Intron_Only_Regions
+# Need an if statement to check ANNOTATION_FILE used:
+if [ ${ANNOTATION_FILE} == "Exon_Only_Regions.gtf" -o "${ANNOTATION_FILE}" == "exonic_only_gene_models_ncRNA_for_counting.gtf" ];
+then
+    echo 'Starting Intron_Only_Regions read overlap filter'
+    #-v Only report those entries in A that have no overlap in B. Restricted by
+    #-f and -r.
+    # -abam BAM file A. Each BAM alignment in A is compared to B in
+    # search of overlaps. Use “stdin” if passing A with a UNIX pipe: For
+    # example: samtools view -b <BAM> | bedtools intersect -abam stdin -b
+    # genes.bed. Note: no longer necessary after version 2.19.0
+    # -b One or moreBAM/BED/GFF/VCF file(s) “B”. Use “stdin” if passing B with a
+    # UNIX pipe.
+
+    intersectBed -v -abam ${input_bam} -b Intron_Only_Regions.gtf > "${SAMPLE_ID}_primary_no_Intron_Only.bam"
+    
+    #Redefine the ${input_bam}:
+    input_bam=${SAMPLE_ID}'_primary_no_Intron_Only.bam'
+    echo 'Ending Intron_Only_Regions read overlap filter'
+fi
+
+# For the "Intronic_Only" counts I need to process the BAM file to filter out
+# splice junction reads
+# Need an if statement to check ANNOTATION_FILE used:
+if [ ${ANNOTATION_FILE} == "Intron_Only_Regions.gtf" -o "${ANNOTATION_FILE}" == "intronic_only_gene_models_ncRNA_for_counting.gtf"  ];
+then
+    echo
+    echo 'Starting splice read filter'
+    echo
+    #Need a regular expression to specifically find these spliced reads:
+    #Bunch of numbers then "M", bunch of numbers then "N", bunch of numbers then "M":
+    # print only lines which do NOT match regex (emulates "grep -v")
+    # NOT match regex:  awk '$7 !~ /^[a-f]/'
+    #---------------------------------------------------------------------------------
+    #Need the header (-h)
+    #Need to use a regular expression match to extract header lines:
+    #https://www.biostars.org/p/9247/
+    #Regular expression:
+    #/^@[A-Za-z][A-Za-z](\t[A-Za-z][A-Za-z0-9]:[ -~]+)+$/
+    #"At" symbol then two letters, a tab, then letters, then letter and/or number, then a colon, some characters after then the end of the string
+    samtools view -h ${input_bam} | awk '($0 ~ /^@[A-Za-z][A-Za-z](\t[A-Za-z][A-Za-z0-9]:[ -~]+)+$/)' > Header.txt
+
+    #Need everything after the header information (do NOT match regex):
+    samtools view -h ${input_bam} | awk '($0 !~ /^@[A-Za-z][A-Za-z](\t[A-Za-z][A-Za-z0-9]:[ -~]+)+$/)' > temp1.sam
+
+    #Run awk command to filter out spliced reads:
+    awk '($6 !~ /[0-9]+[M][0-9]+[N][0-9]+[M]/)' temp1.sam > temp2.sam
+
+    #Add header:
+    cat Header.txt temp2.sam > temp3.sam
+
+    #Convert SAM to BAM:
+    samtools view -bS temp3.sam > ${SAMPLE_ID}'_primary_no_splice.bam'
+
+    #Redefine the ${input_bam}:
+    input_bam=${SAMPLE_ID}'_primary_no_splice.bam'
+
+    #Remove temp files:
+    rm temp*.sam
+    rm Header.txt 
+    echo
+    echo 'Ending splice read filter'
+    echo
+fi
+
+#Sort the input BAM file:
+#Usage:   samtools sort [options] <in.bam> <out.prefix>
+#Options: -n        sort by read name
+samtools sort -n ${input_bam} ${SAMPLE_ID}'_sorted'
+
+#For paired-end data we want the (-p) option
+#The (-B) option seems logical but the only effect is a slightly lowered read count
+#Leave out the (-B) option (get overall counts closer to HTSeq counts)
+#Need an if statement to check ANNOTATION_FILE used:
+if [ ${ANNOTATION_FILE} == "genes.gtf" -o \
+                        ${ANNOTATION_FILE} == "ncRNA_exon_for_counting.gtf" -o \
+                        ${ANNOTATION_FILE} == "ncRNA_genebodies_for_counting.gtf" -o \
+                        ${ANNOTATION_FILE} == "intronic_only_gene_models_ncRNA_for_counting.gtf" -o \
+                        ${ANNOTATION_FILE} == "exonic_only_gene_models_ncRNA_for_counting.gtf" ];
+then
+
+    #Run the command:
+    (set -x; featureCounts -p -T $NSLOTS -s ${STRANDEDNESS_FEATURECOUNT} -g ${FEATURE_ID} -t ${FEATURE_TYPE} -a ${ANNOTATION_FILE} -o ${output_file} ${SAMPLE_ID}'_sorted'.bam)
+fi
+
+#Dealing with overlapping gene symbols, need to run the Parse_GTF.R
+#Parse_GTF.R will create 2 GTF files from the ${ANNOTATION_FILE}
+#1st GTF file for modified counting 
+#2nd GTF file for normal counting
+
+#Need an if statement to check ANNOTATION_FILE used:
+if [ ${ANNOTATION_FILE} != "genes.gtf" -a \
+                        ${ANNOTATION_FILE} != "ncRNA_exon_for_counting.gtf" -a \
+                        ${ANNOTATION_FILE} != "ncRNA_genebodies_for_counting.gtf" -a \
+                        ${ANNOTATION_FILE} != "intronic_only_gene_models_ncRNA_for_counting.gtf" -a \
+                        ${ANNOTATION_FILE} != "exonic_only_gene_models_ncRNA_for_counting.gtf" ];
+then
+    #GTF file name determines the GeneSym_List.txt
+
+    #Extract extension
+    GTF_name=${ANNOTATION_FILE%\.gtf}
+    echo "GTF file name: "${GTF_name}
+
+    #Copy GeneSym_List.txt:
+    cp ${GTF_FILES_DIR}/featureCount_Files/${GTF_name}/GeneSym_DoubleCounts/GeneSym_List.txt . 
+
+    #Copy Parse_GTF.R:
+    cp ${SCRIPT_DIR}/Scripts/Parse_GTF.R . 
+
+    #Print the command:
+    echo "Rscript Parse_GTF.R ${ANNOTATION_FILE} GeneSym_List.txt"
+
+    #Run the command:
+    Rscript Parse_GTF.R ${ANNOTATION_FILE} GeneSym_List.txt
+    echo "Running assign_all_features counting"
+    #    -O        	If specified, reads (or fragments if -p is specified) will
+    #              	be allowed to be assigned to more than one matched meta-
+    #              	feature (or feature if -f is specified). 
+
+    #Run the command:
+    (set -x; featureCounts -O -p -T $NSLOTS -s ${STRANDEDNESS_FEATURECOUNT} -g ${FEATURE_ID} -t ${FEATURE_TYPE} -a GeneSym_assign_all_features.gtf -o ${SAMPLE_ID}"_assign_all_features.out" ${SAMPLE_ID}'_sorted'.bam)
+    
+    echo "Running assign_only1_feature counting"
+
+    #Run the command:
+    (set -x; featureCounts -p -T $NSLOTS -s ${STRANDEDNESS_FEATURECOUNT} -g ${FEATURE_ID} -t ${FEATURE_TYPE} -a GeneSym_assign_only1_feature.gtf -o ${SAMPLE_ID}"_assign_only1_feature.out" ${SAMPLE_ID}'_sorted'.bam)
+    
+    #The featureCounts output file needs to be reformatted for use by DiffExp scripts
+    file_list=*_assign_*.out
+    for file in ${file_list}
+    do
+        echo "Processing "${file}
+        #Get rid of first 2 header lines:
+        tail -n +3 ${file} > ${file}.temp1
+        #Just want the first and last column 
+        #NF is always the last column
+        awk -F '\t' '{print $1"\t"$NF}' ${file}.temp1 > ${file}.temp2
+        #Rename the count file:
+        mv ${file}.temp2 ${file}
+        #Remove temp files:
+        rm *.temp*
+        echo "Done processing file."
+    done
+
+    #Need to concatenate summary files
+    #Need to add headers to indicate counting method
+    echo "${SAMPLE_ID}"_assign_all_features.out >> ${output_file}.summary
+    cat ${SAMPLE_ID}"_assign_all_features.out.summary" >> ${output_file}.summary
+    echo "${SAMPLE_ID}"_assign_only1_feature.out >> ${output_file}.summary
+    cat ${SAMPLE_ID}"_assign_only1_feature.out.summary" >> ${output_file}.summary
+
+    #Concatenate files then sort by 1st column
+    cat *_assign_*.out > ${output_file}.temp1
+    sort -k1,1 ${output_file}.temp1 > ${output_file}.temp2
+    mv ${output_file}.temp2 ${output_file}
+    #Remove temp files:
+    rm ${output_file}.temp*
+fi
+
+#End if statement to check ANNOTATION_FILE
+
+echo 'Ending featureCounts'
+
+#Example featureCounts output file:
+## Program:featureCounts v1.4.6-p5; Command:"featureCounts" "-T" "16" "-s" "0" "-g" "gene_id" "-t" "exon" "-a" "RefSeq_GeneBody.gtf" "-o" "G83_M1_featureCounts.out" "G83_M1_sorted.bam" 
+#Geneid	Chr	Start	End	Strand	Length	G83_M1_sorted.bam
+#Xkr4	chr1;chr1;chr1	3204563;3411783;3660633	3207049;3411982;3661579	-;-;-	3634	0
+#Rp1	chr1;chr1;chr1;chr1;chr1;chr1	4280927;4333588;4341991;4342283;4350281;4399251	4283093;4340172;4342162;4342918;4350395;4399322	-;-;-;-;-;-	9747	0
+#Sox17	chr1;chr1;chr1;chr1;chr1	4481009;4483181;4483853;4485217;4486372	4482749;4483571;4483944;4486023;4487435	-;-;-;-;-	4095	4
+
+#Need an if statement to check ANNOTATION_FILE used:
+if [ ${ANNOTATION_FILE} == "genes.gtf" -o \
+                        ${ANNOTATION_FILE} == "ncRNA_exon_for_counting.gtf" -o \
+                        ${ANNOTATION_FILE} == "ncRNA_genebodies_for_counting.gtf" -o \
+                        ${ANNOTATION_FILE} == "intronic_only_gene_models_ncRNA_for_counting.gtf" -o \
+                        ${ANNOTATION_FILE} == "exonic_only_gene_models_ncRNA_for_counting.gtf" ];
+then
+    #The featureCounts output file needs to be reformatted for use by DiffExp scripts
+
+    #Get rid of first 2 header lines:
+    tail -n +3 ${output_file} > ${output_file}.temp1
+
+    #Just want the first and last column 
+    #NF is always the last column
+    awk -F '\t' '{print $1"\t"$NF}' ${output_file}.temp1 > ${output_file}.temp2
+
+    #Rename the count file:
+    mv ${output_file}.temp2 ${output_file}
+
+    #Remove temp files:
+    rm *.temp*
+fi
+
+#For the "Intronic_Only" counts I need to process the output count file so that upload to SEGEX will work with the RefSeq platform
+#Need an if statement to check ANNOTATION_FILE used:
+if [ ${ANNOTATION_FILE} == "Intron_Only_Regions.gtf" ];
+then
+    #Copy RefSeq_Genes_Zero_Count.txt:
+    cp ${SCRIPT_DIR}/RefSeq_Files/RefSeq_Genes_Zero_Count.txt . 
+    #Omit header from RefSeq_Genes_Zero_Count.txt
+    tail -n +2 RefSeq_Genes_Zero_Count.txt > RefSeq_Genes_Zero_Count.temp
+    #The featureCounts output file has already been reformatted above
+    #Concatenate files:
+    cat ${output_file} RefSeq_Genes_Zero_Count.temp > ${output_file}.temp1
+    #Sort file by gene symbol
+    sort -k1,1 ${output_file}.temp1 > ${output_file}.temp2
+    #Rename the count file:
+    mv ${output_file}.temp2 ${output_file}
+    #Remove temp files:
+    rm *.temp*
+fi
+
+# copy the output files to users storage dir
+cp ${output_file} ${output_dir}
+cp ${output_file}.summary ${output_dir}
+
+#Example job output files:
+#*.out file:
+#Xkr4	0
+#Rp1	0
+#Sox17	2
+#Mrpl15	7
+#Lypla1	33
+#Tcea1	12
+#Rgs20	0
+#Atp6v1h	9
+#Oprk1	0
+#Npbwr1	0
+#Rb1cc1	11
+#Fam150a	0
+#-----------------------
+#*.out.summary file:
+#Status	G83_M1_sorted.bam
+#Assigned	181926
+#Unassigned_Ambiguity	4618
+#Unassigned_MultiMapping	0
+#Unassigned_NoFeatures	24533
+#Unassigned_Unmapped	0
+#Unassigned_MappingQuality	0
+#Unassigned_FragmentLength	0
+#Unassigned_Chimera	0
+#Unassigned_Secondary	0
+#Unassigned_Nonjunction	0
+#Unassigned_Duplicate	0
+#-----------------------
+
+echo "List files in scratch"
+ls -alh
+
+
+echo "Finished on : $(date)"
+#Use to calculate job time:
+#End_Time in seconds
+end_time=$(date +"%s")
+diff=$((end_time-start_time))
+echo "$((diff / 3600)) hours, $(((diff / 60) % 60)) minutes and $((diff % 60)) seconds elapsed."
+echo "=========================================================="
