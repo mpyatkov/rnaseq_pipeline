@@ -1,0 +1,97 @@
+#!/bin/bash -l
+
+##################################################################################
+#Andy Rampersaud, 02.22.16
+#This script is called by setup_CollectInsertSizeMetrics.sh
+##################################################################################
+
+# Specify which shell to use
+#$ -S /bin/bash
+# Run on the current working directory
+#$ -cwd
+
+# Join standard output and error to a single file  
+#$ -j n
+# change to y if you want a single qlog file 
+
+##################################################################################
+#Initialize variables from CollectInsertSizeMetrics.sh
+##################################################################################
+
+# export all variables from Pipeline_Setup.conf
+eval "$(../00_Setup_Pipeline/01_Pipeline_Setup.py --export)"
+
+#checking the command line arg
+#-ne : "is not equal to"
+if [ $# -ne 1 ] ; then
+      echo "Need 1 argument for the qsub command: SAMPLE_ID: {$1}"
+      exit 0
+fi
+
+SAMPLE_ID=$1
+
+# Now let's keep track of some information just in case anything goes wrong
+echo "=========================================================="
+#Use to calculate job time:
+#Start_Time in seconds
+start_time=$(date +"%s")
+
+echo "Starting on : $(date)"
+echo "Running on node : $(hostname)"
+echo "Current directory : $(pwd)"
+echo "Current job ID : $JOB_ID"
+echo "Current job name : $JOB_NAME"
+echo "Task index number : $SGE_TASK_ID"
+echo "Parameter for multiple cores : $NSLOTS"
+echo "=========================================================="
+
+# Go to local scratch directory
+
+echo 'Change dir to scratch directory'
+
+cd "${TMPDIR}"
+
+echo 'Print scratch directory location:'
+
+echo "$TMPDIR"
+
+echo 'Loading required modules...'
+
+cp "${DATASET_DIR}/${SAMPLE_ID}/fastq/tophat2/${SAMPLE_ID}'_primary_unique.bam" .
+
+#Initialize INPUT_BAM:
+input_bam="${SAMPLE_ID}_primary_unique.bam"
+
+storage_dir=${Dataset_DIR}/${SAMPLE_ID}/fastq/tophat2
+
+#Create CollectInsertSizeMetrics output folder to store files:
+output_dir='CollectInsertSizeMetrics'
+
+mkdir -p "$output_dir"
+
+echo 'List files in scratch directory:'
+
+ls -alh
+
+echo 'Starting to run my commands'
+
+echo 'Starting CollectInsertSizeMetrics command'
+
+
+echo 'Printing command:'
+(set -x; picard CollectInsertSizeMetrics HISTOGRAM_FILE="${output_dir}/${SAMPLE_ID}_hist.pdf" INPUT="${input_bam}" OUTPUT="${output_dir}/${SAMPLE_ID}_metrics")
+
+echo 'Finished CollectInsertSizeMetrics command'
+echo 'Copy output to storage dir'
+cp -r "$output_dir" "$storage_dir"
+
+echo "List files in scratch"
+ls -alh
+
+echo "=========================================================="
+echo "Finished on : $(date)"
+
+end_time=$(date +"%s")
+diff=$((end_time-start_time))
+echo "$((diff / 3600)) hours, $(((diff / 60) % 60)) minutes and $((diff % 60)) seconds elapsed."
+echo "=========================================================="
