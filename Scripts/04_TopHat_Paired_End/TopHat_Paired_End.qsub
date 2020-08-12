@@ -1,8 +1,9 @@
 #!/bin/bash -l
 
-set -o errexit
+# set -o errexit
 set -o pipefail
 set -o nounset
+# set -x
 
 ##################################################################################
 #Andy Rampersaud, 05.03.16
@@ -53,7 +54,6 @@ echo "-----------------------"
 echo "End of variable list"
 echo "-----------------------"
 
-
 start_time=$(date +"%s")
 
 # Now let's keep track of some information just in case anything goes wrong
@@ -75,7 +75,7 @@ cd "${TMPDIR}"
 echo "Print scratch directory location: ${TMPDIR}"
 echo 'Loading required modules...'
 
-module load samtools
+module load samtools/0.1.19
 
 # copy user input data files to scratch
 #Copy over the *R1*.fq.gz file(s):
@@ -107,8 +107,8 @@ param_std=150
 
 #Make output dir:
 storage_dir="${DATASET_DIR}/${SAMPLE_ID}/fastq"
-output_dir="$TMPDIR/tophat2"
-mkdir -p "$output_dir"
+output_dir="${TMPDIR}/tophat2"
+mkdir -p "${output_dir}"
 
 echo 'List files in the scratch directory:'
 
@@ -122,7 +122,7 @@ echo 'Starting tophat'
 #Jobs are taking too long to complete
 #Need the option: --no-coverage-search
 #------------------------------------------------------------------------------
-echo "tophat --no-coverage-search -o ${output_dir} -G ${ANNOTATION_FILE} -p $NSLOTS --library-type ${TOPHAT_STRANDEDNESS} -r ${DISTANCE_BT_READ_PAIR} --mate-std-dev ${param_std} Bowtie2Index/genome ${left_List} ${right_List}"
+echo "tophat --no-coverage-search -o ${output_dir} -G ${ANNOTATION_FILE} -p $NSLOTS --library-type ${TOPHAT_STRANDEDNESS} -r ${DISTANCE_BT_READ_PAIR} --mate-std-dev ${param_std} Bowtie2Index/genome ${left_list} ${right_list}"
 
 tophat --no-coverage-search -o ${output_dir} -G ${ANNOTATION_FILE} -p $NSLOTS --library-type ${TOPHAT_STRANDEDNESS} -r ${DISTANCE_BT_READ_PAIR} --mate-std-dev ${param_std} Bowtie2Index/genome ${left_list} ${right_list}
 

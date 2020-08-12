@@ -1,9 +1,9 @@
 #!/bin/bash
 
-set -o errexit
+# set -o errexit
 set -o pipefail
 set -o nounset
-
+# set -x
 ##################################################################################
 #Andy Rampersaud, 02.22.16
 #Adapted from tophat/paired_end_mapping scripts by Tisha Melia
