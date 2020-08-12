@@ -1,0 +1,414 @@
+#!/bin/bash -l
+##################################################################################
+#Andy Rampersaud, 02.22.16
+#This script is called by bamCorrelate.sh
+##################################################################################
+# Specify which shell to use
+#$ -S /bin/bash
+# Run on the current working directory
+#$ -cwd
+# Join standard output and error to a single file  
+#$ -j n
+# change to y if you want a single qlog file 
+#$ -pe omp 16
+#After job submission, use the following to confirm multiple cores:
+#top -u <user_id>
+#The press "1"
+#This will list the multiple cores being used (not necessarily the same number requested)
+#---------------------------------------------------------------------------------
+
+# export all variables from Pipeline_Setup.conf
+eval "$(../00_Setup_Pipeline/01_Pipeline_Setup.py --export)"
+
+set -o errexit
+set -o pipefail
+set -o nounset
+
+##################################################################################
+#Initialize variables from bamCorrelate.sh
+##################################################################################
+#checking the command line arg
+#Depending on ${bin_mode}:
+#If ${bin_mode} = "On": 7 agruments
+#If ${bin_mode} = "Off": 9 agruments
+#-ne : "is not equal to"
+#-ge : Checks if the value of left operand is greater than or equal to the value of right operand, if yes then condition becomes true.
+if [ $# -ne 7 || $# -ne 9 ] ; then
+    echo "Need at least 5 arguments for the qsub command:"
+    echo "qsub -N ${Job_Name}'_bamCor_'${JOB_COUNTER} -P wax-dk -l h_rt=${TIME_LIMIT} bamCorrelate.qsub ${Dataset_DIR} ${Dataset_Label} ${bin_mode} ${SCRIPT_DIR} ${OUTPUT_DIR} ${zMin} ${zMax} ${JOB_COUNTER} ${BED_file_name}"
+    exit 0
+fi
+
+#http://www.ibm.com/developerworks/library/l-bash-parameters/
+#Note: If you have more than 9 parameters, you cannot use $10 to refer to the tenth one. You must first either process or save the first parameter ($1), then use the shift command to drop parameter 1 and move all remaining parameters down 1, so that $10 becomes $9 and so on.
+
+#http://unix.stackexchange.com/questions/104420/how-to-use-command-line-arguments-in-a-shell-script
+#If you need access more than 9 command line arguments, you can use the shift command. Example: shift 2 renames $3 to $1, $4 to $2 etc.
+
+#process the command line arguments
+Dataset_DIR=$1
+Dataset_Label=$2
+bin_mode=$3
+SCRIPT_DIR=$4
+OUTPUT_DIR=$5
+zMin=$6
+zMax=$7
+JOB_COUNTER=$8
+BED_file_name=$9
+
+#---------------------------------------------------------------------------------
+#Check that each variable prints a value to the terminal:
+echo "-----------------------"
+echo "Start of variable list:"
+echo "-----------------------"
+echo "Dataset_DIR:"
+echo ${Dataset_DIR}
+echo "Dataset_Label:"
+echo ${Dataset_Label}
+echo "bin_mode:"
+echo ${bin_mode}
+echo "SCRIPT_DIR:"
+echo ${SCRIPT_DIR}
+echo "OUTPUT_DIR:"
+echo ${OUTPUT_DIR}
+echo "JOB_COUNTER:"
+echo ${JOB_COUNTER}
+echo "zMin:"
+echo ${zMin}
+echo "zMax:"
+echo ${zMax}
+echo "BED_file_name:"
+echo ${BED_file_name}
+echo "-----------------------"
+echo "End of variable list"
+echo "-----------------------"
+#---------------------------------------------------------------------------------
+
+# Now let's keep track of some information just in case anything goes wrong
+echo "=========================================================="
+#Use to calculate job time:
+#Start_Time in seconds
+Start_Time=$(date +"%s")
+echo "Starting on : $(date)"
+echo "Running on node : $(hostname)"
+echo "Current directory : $(pwd)"
+echo "Current job ID : $JOB_ID"
+echo "Current job name : $JOB_NAME"
+echo "Task index number : $SGE_TASK_ID"
+echo "Parameter for multiple cores : $NSLOTS"
+echo "=========================================================="
+
+# Go to local scratch directory
+echo
+echo 'Change dir to scratch directory'
+echo
+cd ${TMPDIR}
+echo
+echo 'Print scratch directory location:'
+echo
+echo $TMPDIR
+#--------------------------------------
+echo
+echo 'Loading required modules...'
+echo
+#Make sure the shebang line = #!/bin/bash -l
+#Need the -l option to load modules
+#Search for latest program installed:
+#module avail -t 2>&1 | grep -i bedtools
+module load bedtools/2.27.1
+#module avail -t 2>&1 | grep -i deeptools
+#deeptools/1.5.11
+#deeptools/1.6.0
+#deeptools/1.6.0 Requires this specific version of python:
+#module load python3
+#module load deeptools/3.1.3
+module load python2
+module load deeptools/3.1.3
+
+#--------------------------------------
+
+#---------------------------------------------------------------------------------
+#module help bedtools/2.25.0
+#----------- Module Specific Help for 'bedtools/2.25.0' ------------
+#bedtools 2.25.0 A swiss army knife for genome arithmetic.
+#Collectively, the bedtools utilities are a swiss-army knife of tools for a wide-range of genomics analysis tasks. The most widely-used tools enable genome arithmetic: that is, set theory on the genome. For example, bedtools allows one to intersect, merge, count, complement, and shuffle genomic intervals from multiple files in widely-used genomic file formats such as BAM, BED, GFF/GTF, VCF. While each individual tool is designed to do a relatively simple task (e.g., intersect two interval files), quite sophisticated analyses can be conducted by combining multiple bedtools operations on the UNIX command line.
+#For more information on bedtools, please see http://bedtools.readthedocs.org/en/latest/
+#---------------------------------------------------------------------------------
+#module help python/2.7.7
+#----------- Module Specific Help for 'python/2.7.7' ---------------
+#python 2.7.7: A general purpose, interpretive programming language.
+#For more information on python, please see
+#* Our help page: http://www.bu.edu/tech/support/research/software-and-programming/common-languages/python/
+#* Our tutorial page: http://www.bu.edu/tech/support/research/training-consulting/live-tutorials/#PROGRAMMING
+#* The vendor's website: http://www.python.org
+#---------------------------------------------------------------------------------
+#module help deeptools/1.6.0
+#----------- Module Specific Help for 'deeptools/1.6.0' ------------
+#deepTools 1.6.0: Tools to process and analyze deep sequencing data.
+#deepTools addresses the challenge of handling the large amounts of data that are now routinely generated from DNA sequencing centers. To do so, deepTools contains useful modules to process the mapped reads data to create coverage files in standard bedGraph and bigWig file formats. By doing so, deepTools allows the creation of normalized coverage files or the comparison between two files (for example, treatment and control). Finally, using such normalized and standardized files, multiple visualizations can be created to identify enrichments with functional annotations of the genome.
+#For more information on deeptools, please see https://github.com/fidelram/deepTools/tree/release-1.6
+#---------------------------------------------------------------------------------
+
+#Output dir:
+#---------------------------------------------------------------------------------
+if [ ${bin_mode} == "On" ]; then
+    JOB_OUTPUT=${OUTPUT_DIR}/'Output_bamCorrelate_Full_Genome'
+    #Using an if statement to make the output folder if it does not exists
+    if [ ! -d $JOB_OUTPUT ]; then
+	mkdir $JOB_OUTPUT; 
+    fi
+    #End of $JOB_OUTPUT if statement
+fi
+#End of ${bin_mode} if statement
+#---------------------------------------------------------------------------------
+##################################################################################
+#---------------------------------------------------------------------------------
+if [ ${bin_mode} == "Off" ]; then
+    JOB_OUTPUT=${OUTPUT_DIR}/'Output_bamCorrelate_'$BED_file_name
+    #Using an if statement to make the output folder if it does not exists
+    if [ ! -d $JOB_OUTPUT ]; then
+	mkdir $JOB_OUTPUT; 
+    fi
+    #End of $JOB_OUTPUT if statement
+
+    #Need to copy input BED file:
+    cp ${SCRIPT_DIR}/Input/BED_Regions/${BED_file_name}'.bed' .
+    #Save the number of BED records into a variable for use in the plot title:
+    echo 'Getting BED file line count...'
+    echo 'Before ENCODE_Blacklist filter:'
+    BED_Line_Count=$(wc -l < ${BED_file_name}'.bed')
+    echo ${BED_Line_Count}
+
+    #---------------------------------------------------------------------------------
+    #ENCODE has a list of blacklisted sites that should be removed:
+    #https://sites.google.com/site/anshulkundaje/projects/blacklists
+    #---------------------------------------------------------------------------------
+
+    #Need to copy ENCODE_Blacklist regions:
+    cp ${SCRIPT_DIR}/Input/ENCODE_Blacklist/mm9-blacklist.bed.gz .
+    gzip -d mm9-blacklist.bed.gz
+    echo 'Overlap BED file with mm9-blacklist.bed and filter out overlap'
+    #Need to copy overlap scripts:
+    cp ${SCRIPT_DIR}/Input/Overlap_Script/overlap.* .
+    #Run overlap:
+    ./overlap.sh ${BED_file_name}'.bed' mm9-blacklist.bed
+    #We want the BED file regions that don't overlap the mm9-blacklist.bed:${BED_file_name}'_unique.bed'
+    #Copy this BED file from the *_Output folder, then rename to replace original BED file
+    cp *_Output/${BED_file_name}'_unique.bed' ./${BED_file_name}'.bed'
+    #Save the number of BED records into a variable for use in the plot title:
+    echo 'Getting BED file line count...'
+    echo 'After ENCODE_Blacklist filter:'
+    BED_Line_Count=$(wc -l < ${BED_file_name}'.bed')
+    echo ${BED_Line_Count}
+    #---------------------------------------------------------------------------------
+fi
+#End of ${bin_mode} if statement
+#---------------------------------------------------------------------------------
+
+##################################################################################
+#Create folders to store input files:
+mkdir -p Input
+
+
+# samples contains array of (sample_dir, sample_id, description) for each sample
+samples=($("${SETUP_PIPELINE_DIR}"/01_Pipeline_Setup.py --samples))
+
+# loop over all samples
+for ((i=0;i< ${#samples[@]} ;i+=3));
+do
+    Sample_DIR=${samples[i]}
+    Sample_ID=${samples[i+1]}
+    Description=${samples[i+2]}
+
+    ##Check that text file is read in properly:
+    #echo 'Sample_DIR:'
+    Sample_DIR=${myArray[0]}
+    #echo 'Sample_ID:'
+    Sample_ID=${myArray[1]}
+    #echo $Sample_ID
+    #echo 'Description:'
+    Description=${myArray[2]}
+    #echo $Description
+    #---------------------------
+    #Copy Input sample BAM files to Input folder
+    #---------------------------------------------------------------------------------
+    #Remember:
+    #For ChIP/DNase-Seq:
+    #	Used bowtie2 for read mapping
+    #	Input BAM file: ${Sample_ID}'_sorted_mapped.bam'
+    #For RNA-Seq:
+    #	Used tophat2 for read mapping
+    #	Input BAM file: ${Sample_ID}'_primary_unique.bam'
+    #---------------------------------------------------------------------------------
+    cp ${Dataset_DIR}/${Sample_ID}/fastq/tophat2/${Sample_ID}'_primary_unique.bam' ./Input
+    #Also need the index files:
+    cp ${Dataset_DIR}/${Sample_ID}/fastq/tophat2/${Sample_ID}'_primary_unique.bam.bai' ./Input
+    #---------------------------
+done 
+
+###############################################
+#---------------------------------------------------------------------------------
+##################################################################################
+#Change dir back to scratch dir
+cd ${TMPDIR}
+
+echo 
+echo 'Save Input file lists to a variable'
+echo
+
+cd Input
+Input_List=$(ls -l *.bam| awk '{print $9}' | tr "\n" " ")
+echo 'Input_List:'
+echo $Input_List
+#Need a list of labels (file names are too long):
+#Omit the "_primary_unique.bam"
+Labels_List=$(ls -l *.bam| awk '{print $9}' | tr "\n" " " | sed 's/_primary_unique.bam//g')
+echo 'Labels_List:'
+echo $Labels_List
+#Need to move input files
+mv *.bam ../
+mv *.bam.bai ../
+cd ../
+
+
+echo
+echo 'List files in scratch directory:'
+echo
+ls -alh
+
+echo
+echo 'Starting to run my commands'
+echo
+
+# run my commands.
+echo
+echo 'Starting bamCorrelate command'
+echo
+
+#---------------------------------------------------------------------------------
+#There's different information sources for different versions:
+#https://github.com/fidelram/deepTools/wiki/QC#bamcorrelate
+#For this version of deeptools:
+#bamCorrelate --version
+#bamCorrelate 1.6.0
+#I need to call bamCorrelate then use the plotCorrelation command
+#http://deeptools.readthedocs.org/en/latest/content/tools/plotCorrelation.html
+#---------------------------------------------------------------------------------
+
+#---------------------------------------------------------------------------------
+#The value of ${bin_mode} determines the command to run:
+#---------------------------------------------------------------------------------
+if [ ${bin_mode} == "On" ]; then
+    #(--binSize) affects the job run-time:
+    #10KB:	about 5 minutes
+    #1KB:	about 10 minutes
+    #100bp:	about 90 minutes (1.5 hours)
+    #---------------------------------------------------------------------------------
+    #The 1KB bin size might be better than the 100bp
+    #100bp bins probably too small for noisy data
+    #---------------------------------------------------------------------------------
+    #Set (--binSize) (get more resolution than 10KB)
+    multiBamSummary bins --bamfiles $Input_List -out results.npz --numberOfProcessors $NSLOTS --verbose --binSize 1000
+fi
+#End of ${bin_mode} if statement
+#---------------------------------------------------------------------------------
+if [ ${bin_mode} == "Off" ]; then
+    multiBamSummary BED-file --BED ${BED_file_name}'.bed' --bamfiles $Input_List -out results.npz --numberOfProcessors $NSLOTS --verbose 
+fi
+#End of ${bin_mode} if statement
+
+#---------------------------------------------------------------------------------
+#argument --outFileName/-out is required
+#The results.npz is a zipped folder containing:
+#results.npz_FILES:
+#labels.npy
+#matrix.npy
+#These are a non-text file format for NumPy Arrays:
+#https://github.com/numpy/numpy/blob/master/doc/neps/npy-format.rst
+#---------------------------------------------------------------------------------
+
+echo
+echo 'Ending bamCorrelate command'
+echo
+
+echo
+echo 'Starting plotCorrelation command'
+echo
+
+#example usages:
+#plotCorrelation --results results_file --whatToPlot heatmap --corMethod pearson -o heatmap.png
+##################################################################################
+#---------------------------------------------------------------------------------
+#Regarding plotCorrelation options:
+#The only output from bamCorrelate: results.npz
+#---------------------------------------------------------------------------------
+#--corMethod 	{spearman, pearson} 	Choose the method for the correlation calculation (default: None)
+#https://github.com/fidelram/deepTools/wiki/QC#bamcorrelate
+#"The Spearman correlation, however, seems to be more robust"
+#---------------------------------------------------------------------------------
+#Want to see the correlation numbers on the heatmap (--plotNumbers)
+#---------------------------------------------------------------------------------
+#The scatterplot just prints the correlation numbers
+#More useful to have heatmap
+#---------------------------------------------------------------------------------
+#Need to change the colors used for heatmaps
+#Link provided by plotCorrelation command:
+#http://www.astro.lsa.umich.edu/~msshin/science/code/matplotlib_cm/
+#For the above page you have to stop it before it completely loads the page (otherwise it re-directs the page)
+#Probably an outdated webpage
+#"cool" looks like a lighter shade of colors:
+#--colorMap 'cool'
+#---------------------------------------------------------------------------------
+#http://scipy.github.io/old-wiki/pages/Cookbook/Matplotlib/Show_colormaps
+#Attending the Inside "Nature:" Visual Communications Strategies:
+#They recommend grey scale over rainbow colors
+#The black may interfere with the printed numbers on the heatmap
+#Maybe better to use:
+#--colorMap 'YlOrRd'
+#---------------------------------------------------------------------------------
+#Create a heatmap:
+#---------------------------------------------------------------------------------
+if [ ${bin_mode} == "On" ]; then
+    # Auto_zScaled_heatmap:
+    plotCorrelation --corData results.npz --whatToPlot heatmap --corMethod spearman --plotNumbers --plotTitle 'Spearman Correlation for '${Dataset_Label}' Samples for Full_Genome' --labels $Labels_List --colorMap 'YlOrRd' -o Auto_zScaled_heatmap.png
+    #User-defined zScaled heatmap:
+    plotCorrelation --corData results.npz --whatToPlot heatmap --corMethod spearman --plotNumbers --plotTitle 'Spearman Correlation for '${Dataset_Label}' Samples for Full_Genome' --labels $Labels_List --colorMap 'YlOrRd' --zMin ${zMin} --zMax ${zMax} -o User_defined_zScaled_heatmap.png
+    #Try a scatterplot also:
+    plotCorrelation --corData results.npz --whatToPlot scatterplot --corMethod spearman --plotTitle 'Spearman Correlation for '${Dataset_Label}' Samples for Full_Genome' --labels $Labels_List -o scatterplot.png
+fi
+#End of ${bin_mode} if statement
+#---------------------------------------------------------------------------------
+if [ ${bin_mode} == "Off" ]; then
+    # Auto_zScaled_heatmap:
+    plotCorrelation --corData results.npz --whatToPlot heatmap --corMethod spearman --plotNumbers --plotTitle 'Spearman Correlation for '${Dataset_Label}' Samples for '${BED_file_name}' ('${BED_Line_Count}' sites)' --labels $Labels_List --colorMap 'YlOrRd' -o Auto_zScaled_heatmap.png
+    #User_defined_zScaled heatmap:
+    plotCorrelation --corData results.npz --whatToPlot heatmap --corMethod spearman --plotNumbers --plotTitle 'Spearman Correlation for '${Dataset_Label}' Samples for '${BED_file_name}' ('${BED_Line_Count}' sites)' --labels $Labels_List --colorMap 'YlOrRd' --zMin ${zMin} --zMax ${zMax} -o User_defined_zScaled_heatmap.png
+    #Try a scatterplot also:
+    plotCorrelation --corData results.npz --whatToPlot scatterplot --corMethod spearman --plotTitle 'Spearman Correlation for '${Dataset_Label}' Samples for '${BED_file_name}' ('${BED_Line_Count}' sites)' --labels $Labels_List -o scatterplot.png
+fi
+#End of ${bin_mode} if statement
+#---------------------------------------------------------------------------------
+
+echo
+echo 'Ending plotCorrelation command'
+echo
+
+#Copy files back to storage
+cp *.png $JOB_OUTPUT
+#Copy overlap folder
+cp -r *_Output $JOB_OUTPUT
+#---------------------------------------------------------------------------------
+
+echo
+echo "List files:"
+echo
+ls -alh
+
+echo "=========================================================="
+echo "Finished on : $(date)"
+#Use to calculate job time:
+#End_Time in seconds
+End_Time=$(date +"%s")
+diff=$(($End_Time-$Start_Time))
+echo "$(($diff / 3600)) hours, $((($diff / 60) % 60)) minutes and $(($diff % 60)) seconds elapsed."
+echo "=========================================================="
