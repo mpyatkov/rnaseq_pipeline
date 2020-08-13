@@ -1,0 +1,63 @@
+#!/bin/bash
+##################################################################################
+#Andy Rampersaud, 08.07.17
+##################################################################################
+#Assumptions for this job to run correctly:
+#1. You have already run the TopHat_Paired_End job
+#2. Your data is organized in the following way:
+#You have a data set dir such as:
+#/projectnb/wax-es/aramp10/G83_Samples
+#Within this dir you have sample specific folders such as:
+#G83_M1
+#G83_M2
+#G83_M3
+#G83_M4
+#Within each sample specific folder you have a *_R1_*.fastq.gz file and *_R2_*.fastq.gz such as:
+#Waxman-TP17_CGATGT_L007_R1_001.fastq.gz
+#Waxman-TP17_CGATGT_L007_R2_001.fastq.gz
+#Within each sample specific folder you have a "tophat2" folder containing output files
+##################################################################################
+#Fill in the following information:
+##################################################################################
+#Need to get the current dir
+#SCRIPT_DIR=$(pwd)
+##################################################################################
+#Need a data set label for output filenames
+#Also need data set label to indicate the waxmanlabvm folder
+#Dataset_Label="G83"
+##################################################################################
+#BU Username:
+#Need to provide your BU Username so the script knows where to look for UCSC files on the waxmanlabvm
+#BU_User="aramp10"
+##################################################################################
+#Webserver hosting files
+#Output files will be hosted on the lab server 
+#Log into your account on (waxmanlabvm.bu.edu)
+#Make sure the VM_DIR is already created:
+#---------------------------------------------------------------------------------
+#Webserver location(s) for hosting files
+#Note: We are using the waxman-server mount point on the SCC
+#VM_DIR_FASTQC=/net/waxman-server/mnt/data/waxmanlabvm_home/waxmanlab/FASTQC/${Dataset_Label}
+#VM_DIR_UCSC=/net/waxman-server/mnt/data/waxmanlabvm_home/${BU_User}/${Dataset_Label}
+#---------------------------------------------------------------------------------
+#In addition to the above dir, you should have your own "Lab_bigBED_Files" dir on the waxmanlabvm
+#Feel free to copy my folder if needed
+#Remember:
+#You'll need to create UCSC track lines for the UCSC Browser to view the data
+##################################################################################
+#STRAND_RULE option for bam2wig.py:
+#---------------------------------------------------------------------------------
+#Please use the same option from running the "UCSC_BigWig" job
+#This option is used to determine if you have a single bigWig file (STRAND_RULE="none") or if you have a Forward.bw and Reverse.bw file (STRAND_RULE not equal to "none")
+#---------------------------------------------------------------------------------
+#Choose one:
+#Single-end options:
+#STRAND_RULE="none"
+#STRAND_RULE="+-"
+#STRAND_RULE="-+"
+#Paired-end options:
+#STRAND_RULE="none"
+#STRAND_RULE="1++,1--,2+-,2-+"
+#STRAND_RULE="1+-,1-+,2++,2--"
+#---------------------------------------------------------------------------------
+##################################################################################

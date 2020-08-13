@@ -1,0 +1,3 @@
+F_14_segments_recolored	UT_Female_Chromatin_Map
+M_14_segments_recolored	UT_Male_Chromatin_Map
+mm9-blacklist	ENCODE_mm9-blacklist
