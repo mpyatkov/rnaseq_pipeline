@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# set -o errexit
+set -o errexit
 set -o pipefail
 set -o nounset
 # set -x
@@ -18,8 +18,11 @@ set -o nounset
 rm -rf *.e* *.o* *.po* *.pe*
 
 # we activated this module for case when we need run this script independently
-module load anaconda2
-source activate RNAseq
+(
+    set +eu
+    module load anaconda2
+    source activate RNAseq
+)
 
 # export all variables from Pipeline_Setup.conf
 eval "$(../00_Setup_Pipeline/01_Pipeline_Setup.py --export)"

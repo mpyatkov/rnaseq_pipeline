@@ -27,8 +27,11 @@ set -o nounset
 #---------------------------------------------------------------------------------
 
 # Activate anaconda environment
-module load anaconda2
-source activate RNAseq
+(
+    set +eu
+    module load anaconda2
+    source activate RNAseq
+)
 
 # Process system argument:
 if [[ $# -ne 1 ]]

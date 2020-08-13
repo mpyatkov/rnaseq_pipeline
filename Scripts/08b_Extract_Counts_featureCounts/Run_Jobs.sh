@@ -19,9 +19,11 @@ rm -rf *.o* *.e*
 eval "$(../00_Setup_Pipeline/01_Pipeline_Setup.py --export)"
 
 # load anaconda in case if run this script independently
-module load anaconda2
-source activate RNAseq
-
+(
+    set +eu
+    module load anaconda2
+    source activate RNAseq
+)
 
 # calculate strandedness_featurecount
 if [ ${STRANDEDNESS} -eq 0 ]
@@ -131,7 +133,7 @@ do
             FEATURE_TYPE="Exonic_Only"
         fi
         
-        qsub -N "${job_name}_${sample_id}" -P "${PROJECT}" -l h_rt="${TIME_LIMIT}" Extract_Counts.qsub ${sample_id} ${strandedness_featurecount} ${feature_id} ${ANNOTATION_FILE} ${FEATURE_TYPE}
+        (set -x; qsub -N "${job_name}_${sample_id}" -P "${PROJECT}" -l h_rt="${TIME_LIMIT}" Extract_Counts.qsub ${sample_id} ${strandedness_featurecount} ${feature_id} ${ANNOTATION_FILE} ${FEATURE_TYPE})
         
         #End loop over GTF files:
     done

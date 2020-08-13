@@ -19,9 +19,11 @@ rm -rf *.o* *.e* *.pe* *.po*
 # export all variables from Pipeline_Setup.conf
 eval "$(../00_Setup_Pipeline/01_Pipeline_Setup.py --export)"
 
-module load anaconda2
-source activate RNAseq
-
+(
+    set +eu
+    module load anaconda2
+    source activate RNAseq
+)
 #bamCorrelate
 zMin=0.6
 zMax=1.0

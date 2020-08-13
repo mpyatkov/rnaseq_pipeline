@@ -13,8 +13,11 @@ rm -rf *.o* *.e*
 # export all variables from Pipeline_Setup.conf
 eval "$(../00_Setup_Pipeline/01_Pipeline_Setup.py --export)"
 
-module load anaconda2
-source activate RNAseq
+(
+    set +eu
+    module load anaconda2
+    source activate RNAseq
+)
 
 # calculate STRAND_RULE from STRANDEDNESS
 if [ ${STRANDEDNESS} -eq 0 ]

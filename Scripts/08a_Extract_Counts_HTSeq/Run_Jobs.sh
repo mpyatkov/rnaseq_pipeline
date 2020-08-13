@@ -19,8 +19,11 @@ rm -rf *.o* *.e*
 eval "$(../00_Setup_Pipeline/01_Pipeline_Setup.py --export)"
 
 # load anaconda module for case when we need independent run
-module load anaconda2
-source activate RNAseq
+(
+    set +eu
+    module load anaconda2
+    source activate RNAseq
+)
 
 #We always count by gene_id when using HTSeq
 feature_id=gene_id

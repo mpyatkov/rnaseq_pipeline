@@ -16,9 +16,11 @@ set -o nounset
 # export all variables from Pipeline_Setup.conf
 eval "$(../00_Setup_Pipeline/01_Pipeline_Setup.py --export)"
 
-module load anaconda2
-source activate RNAseq
-
+(
+    set +eu
+    module load anaconda2
+    source activate RNAseq
+)
 #Remove *.o files from previous jobs
 #Need the 2>/dev/null to supress the "No such file or directory"
 rm -rf *.o* *.e* Output_* Summary_Differential_Expression
