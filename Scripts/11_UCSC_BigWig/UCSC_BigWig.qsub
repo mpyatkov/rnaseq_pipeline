@@ -21,26 +21,19 @@ set -o nounset
 ##################################################################################
 #checking the command line arg
 #-ne : "is not equal to"
-if [ $# -ne 7 ] ; then
+if [ $# -ne 6 ] ; then
     echo "Need 7 arguments for the qsub command:"
-    echo "qsub -N ${Job_Name}'_'${Sample_ID} -P wax-dk -l h_rt=${TIME_LIMIT} UCSC_BigWig.qsub ${Sample_ID} ${Dataset_DIR} ${Sample_Labels_DIR} ${STRAND_RULE} ${BU_User} ${VM_DIR_UCSC} ${SCRIPT_DIR}"
+    echo "qsub -N ${Job_Name}'_'${Sample_ID} -P wax-dk -l h_rt=${TIME_LIMIT} UCSC_BigWig.qsub ${Sample_ID} ${Dataset_DIR} ${STRAND_RULE} ${BU_User} ${VM_DIR_UCSC} ${SCRIPT_DIR}"
     exit 0
 fi
-
-#http://www.ibm.com/developerworks/library/l-bash-parameters/
-#Note: If you have more than 9 parameters, you cannot use $10 to refer to the tenth one. You must first either process or save the first parameter ($1), then use the shift command to drop parameter 1 and move all remaining parameters down 1, so that $10 becomes $9 and so on.
-
-#http://unix.stackexchange.com/questions/104420/how-to-use-command-line-arguments-in-a-shell-script
-#If you need access more than 9 command line arguments, you can use the shift command. Example: shift 2 renames $3 to $1, $4 to $2 etc.
 
 #process the command line arguments
 Sample_ID=$1
 Dataset_DIR=$2
-Sample_Labels_DIR=$3
-STRAND_RULE=$4
-BU_User=$5
-VM_DIR_UCSC=$6
-SCRIPT_DIR=$7
+STRAND_RULE=$3
+BU_User=$4
+VM_DIR_UCSC=$5
+SCRIPT_DIR=$6
 
 #Print variables (make sure they appear correctly):
 echo "-----------------------"

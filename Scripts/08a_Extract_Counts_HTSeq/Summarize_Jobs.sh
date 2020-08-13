@@ -135,53 +135,23 @@ do
             echo 'Printing to output file...'
             echo $sample_id $'\t'$description $'\t'$Aligned_Pairs $'\t'$READS_IN_EXONS $'\t'$READS_IN_EXONS_RATIO >> $output_file
             #End loop over Sample_Labels:
-        done < Sample_Labels.temp
-        cd ${Current_DIR}
-        #Remove the temp file:
-        rm Sample_Labels.temp
+        done 
         ##################################################################################
         #Need to summarize HTSeq special counters
         ##################################################################################
         cd ${Current_DIR}
-        ################################################
-        #A text file (Sample_Labels.txt) is needed to run this script
+                
         SCRIPT_DIR=$(pwd)
-        cp $Sample_Labels_DIR/Sample_Labels.txt $SCRIPT_DIR
-        ################################################
-        #The text file is formatted like the following:
-        #----------------------------------------------
-        #Sample_DIR	sample_id	Description
-        #Sample_Waxman-TP17	G83_M1	Male 8wk-pool 1
-        #Sample_Waxman-TP18	G83_M2	Male 8wk-pool 2
-        #Sample_Waxman-TP19	G83_M3	Female 8wk-pool 1
-        #Sample_Waxman-TP20	G83_M4	Female 8wk-pool 2	
-        #----------------------------------------------
-        #The 1st column: The Sample_DIR name
-        #The 2nd column: Waxman Lab sample_id 
-        #The 3rd column: Sample's description 
-        ################################################
-        #Print header to output file:
-        #------------------------------------------
+        
         echo 'SAMPLE_ID' $'\t''DESCRIPTION' $'\t''Aligned_Pairs' $'\t''no_feature_count' $'\t''no_feature_RATIO' $'\t''ambiguous_count'$'\t''ambiguous_RATIO' $'\t''too_low_aQual_count'$'\t''too_low_aQual_RATIO' $'\t''not_aligned_count'$'\t''not_aligned_RATIO' $'\t''alignment_not_unique'$'\t''alignment_not_unique_RATIO' >> $output_file
         #------------------------------------------
-        ################################################
-        #Text file has a header line to ignore:
-        tail -n +2 Sample_Labels.txt > Sample_Labels.temp
-        #Use a while loop to run jobs
-        while IFS=$'\t' read -r -a myArray
+        # loop over all samples
+        for ((i=0;i< ${#samples[@]} ;i+=3));
         do
-            #---------------------------
-            ##Check that text file is read in properly:
-            #echo 'Sample_DIR:'
-            Sample_DIR=${myArray[0]}
-            #echo 'sample_id:'
-            sample_id=${myArray[1]}
-            #echo $sample_id
-            #echo 'Description:'
-            Description=${myArray[2]}
-            #echo $Description
-            #---------------------------
-            echo
+            sample_dir=${samples[i]}
+            sample_id=${samples[i+1]}
+            description=${samples[i+2]}
+        
             echo $sample_id
             #Need to cd to sample specific tophat2 folder
             cd ${DATASET_DIR}/$sample_id/fastq/tophat2

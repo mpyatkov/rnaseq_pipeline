@@ -84,7 +84,6 @@ MODE=2
 [SYSTEM]
 GTF_FILES_DIR=/unprotected/projects/waxmanlab/routines/GTF_Files
 BOWTIE2INDEX_DIR=/restricted/projectnb/waxmanlab/routines/BowtieIndex
-SAMPLE_LABELS_DIR=${USER:DATASET_DIR}/Scripts/00_Setup_Pipeline
 ANNOTATION_FILE=RefSeq_GeneBody.gtf
 VM_DIR_FASTQC=/net/waxman-server/mnt/data/waxmanlabvm_home/waxmanlab/FASTQC/${USER:DATASET_LABEL}
 VM_DIR_UCSC=/net/waxman-server/mnt/data/waxmanlabvm_home/${USER:BU_USER}/${USER:DATASET_LABEL}

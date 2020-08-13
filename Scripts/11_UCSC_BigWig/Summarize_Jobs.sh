@@ -18,8 +18,6 @@ echo "Start of variable list:"
 echo "-----------------------"
 echo "DATASET_DIR:"
 echo ${DATASET_DIR}
-echo "Sample_Labels_DIR:"
-echo ${SAMPLE_LABELS_DIR}
 echo "VM_DIR_UCSC:"
 echo ${VM_DIR_UCSC}
 echo "SCRIPT_DIR:"
@@ -29,12 +27,12 @@ echo ${TIME_LIMIT}
 echo "-----------------------"
 echo "End of variable list"
 echo "-----------------------"
-#---------------------------------------------------------------------------------
+
 ##################################################################################
 INPUT_DIR=$(pwd)
 cd $INPUT_DIR
+
 ################################################
-#A text file (Sample_Labels.txt) is needed to run this script
 SCRIPT_DIR=$(pwd)
 
 # samples contains array of (sample_dir, sample_id, description) for each sample

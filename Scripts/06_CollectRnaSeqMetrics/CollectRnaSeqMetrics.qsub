@@ -40,8 +40,6 @@ echo "Sample_ID:"
 echo ${SAMPLE_ID}
 echo "Dataset_DIR:"
 echo ${DATASET_DIR}
-echo "Sample_Labels_DIR:"
-echo ${SAMPLE_LABELS_DIR}
 echo "STRAND_SPECIFICITY:"
 echo ${STRAND_SPECIFICITY}
 echo "SCRIPT_DIR:"
