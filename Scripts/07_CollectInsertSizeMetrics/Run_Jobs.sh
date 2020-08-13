@@ -16,11 +16,10 @@ rm -rf *.o* *.e*
 eval "$(../00_Setup_Pipeline/01_Pipeline_Setup.py --export)"
 
 # activate anaconda in case of independent running
-(
-    set +eu
-    module load anaconda2
-    source activate RNAseq
-)
+set +eu
+module load anaconda2
+source activate RNAseq
+set -eu
 
 # dir_name and job_name are required in the next steps
 dir_name=$(basename $(pwd))

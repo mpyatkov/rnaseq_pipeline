@@ -57,12 +57,12 @@ echo "$TMPDIR"
 
 echo 'Loading required modules...'
 
-cp "${DATASET_DIR}/${SAMPLE_ID}/fastq/tophat2/${SAMPLE_ID}'_primary_unique.bam" .
+cp "${DATASET_DIR}/${SAMPLE_ID}/fastq/tophat2/${SAMPLE_ID}_primary_unique.bam" .
 
 #Initialize INPUT_BAM:
 input_bam="${SAMPLE_ID}_primary_unique.bam"
 
-storage_dir=${Dataset_DIR}/${SAMPLE_ID}/fastq/tophat2
+storage_dir=${DATASET_DIR}/${SAMPLE_ID}/fastq/tophat2
 
 #Create CollectInsertSizeMetrics output folder to store files:
 output_dir='CollectInsertSizeMetrics'
@@ -76,7 +76,6 @@ ls -alh
 echo 'Starting to run my commands'
 
 echo 'Starting CollectInsertSizeMetrics command'
-
 
 echo 'Printing command:'
 (set -x; picard CollectInsertSizeMetrics HISTOGRAM_FILE="${output_dir}/${SAMPLE_ID}_hist.pdf" INPUT="${input_bam}" OUTPUT="${output_dir}/${SAMPLE_ID}_metrics")
