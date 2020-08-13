@@ -281,10 +281,10 @@ skipped_reads=$(samtools view "${SAMPLE_ID}_primary_unique.bam" | awk '($6 ~ /N/
 spliced_reads=$(samtools view "${SAMPLE_ID}_primary_unique.bam" | awk '($6 ~ /[0-9]+[M][0-9]+[N][0-9]+[M]/)' | cut -f6 | wc -l )
 
 #Print header to output file:
-printf "SAMPLE_ID\tskipped_region_READS\tsplice_junction_READS" >> "${output_file}"
+printf "SAMPLE_ID\tskipped_region_READS\tsplice_junction_READS\n" >> "${output_file}"
 
 #Print to output file
-printf "%s\t%s\t%s\t\n" "${SAMPLE_ID}" "${skipped_reads}" "${spliced_reads}" >> "${output_file}"
+printf "%s\t%s\t%s\t\n" "${SAMPLE_ID}" "${skipped_reads}" "${spliced_reads}\n" >> "${output_file}"
 
 #cd out of ${output_dir}
 popd
