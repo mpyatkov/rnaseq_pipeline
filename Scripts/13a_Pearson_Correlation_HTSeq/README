@@ -1,0 +1,55 @@
+####################################################################################
+#Kritika Karri, 08.07.16
+#README file for the pearson correlation analysis for sample replicates.
+#This is a new module in the RNAseq pipeline to assure the quality of the sample replicates by calculating the Pearson correlation values within each sample. 
+#The quality can be tested at two levels:  
+# a) By calculating the Pearson values for all the genes 
+# b) By filtering out genes based on the mean RPKM (>1)  and calculate the correlation.
+#######################################################################################
+The way this work in the pipeline is as follows :
+
+1) There is are two additional folders added in the pipeline : 
+
+ 13a_Pearson_Correlation_HTSeq 
+ 13b_Pearson_Correlation_featureCounts.
+
+2) Inside each of the two folders you will find the Pearson_script.R - That calculates the Pearson correlation values for all the replicates  and also generate a heatmap for easy visualization
+
+How does the output looks likes?
+
+- The output of this analysis would be two folders : 
+a)Pearson_All , b)Pearson_Filtered
+
+Inside each of these two folders, the user will find two file formats - 
+a) .csv (Pearson values in tabular format), b) .pdf (Heatmap). 
+The user can see these two files generated for every differential expression comparison.
+Additionally, there is a merge.csv and merge.pdf file which includes Pearson comparison for every sample in the dataset.
+##########################################################################################
+
+How can one run this analysis ?
+
+There are two ways of running it : Locally or  as part of the complete pipeline
+
+a) As part of the pipeline : You can run this step by calling the name of this step or it will be implemented automatically if the user runs the complete pipeline
+for example: 
+
+./03_Run_Pipeline.sh 13a_Pearson_Correlation_HTSeq
+
+ 
+b) Locally: Alternatively, one can go into the step folder and run the ./Run_Jobs.sh script.  However one needs to ensure that they have the files from differential expression analysis.
+
+#########################################################################################
+Hope this new module will help you ensure the quality control of your samples replicates in less cumbersome manner.
+
+
+###################################################END OF FILE ############################
+
+ 
+ 
+
+
+
+
+
+
+
