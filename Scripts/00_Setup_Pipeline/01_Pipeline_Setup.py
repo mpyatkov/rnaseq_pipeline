@@ -125,14 +125,23 @@ class SampleConfig:
 
     def samplesToBash(self):
         #only Sample_DIR, Sample_ID, Description
-        result = [() for s in self.samples]
         result = []
         for sample in self.samples:
             result.append(sample.Sample_DIR)
             result.append(sample.Sample_ID)
             result.append(sample.Description)
         return " ".join(result)
-        
+
+    def samplesWithColorToBash(self):
+        #only Sample_DIR, Sample_ID, Description, Color
+        result = []
+        for sample in self.samples:
+            result.append(sample.Sample_DIR)
+            result.append(sample.Sample_ID)
+            result.append(sample.Description)
+            result.append(sample.Color)
+        return " ".join(result)
+
     def __str__(self):
         return "\n".join(map(lambda x: str(x), self.samples))
 
@@ -326,6 +335,10 @@ if __name__ == "__main__":
     parser.add_argument("-s", "--samples",
                         help="return bash array of triples (DIR,ID,DESCR)",
                         action="store_true")
+
+    parser.add_argument("-c", "--samples_with_color",
+                        help="return bash array of (DIR,ID,DESCR,COLOR)",
+                        action="store_true")
     
     args = parser.parse_args()
 
@@ -358,6 +371,11 @@ if __name__ == "__main__":
     elif args.samples:
         print(sample_config.samplesToBash())
         exit(0)
+        
+    elif args.samples_with_color:
+        print(sample_config.samplesWithColorToBash())
+        exit(0)
+        
     else:
         parser.print_help()
 
