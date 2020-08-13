@@ -25,10 +25,9 @@ set -o nounset
 # export all variables from Pipeline_Setup.conf
 eval "$(../00_Setup_Pipeline/01_Pipeline_Setup.py --export)"
 
-
 #checking the command line arg
 #-ne : "is not equal to"
-if [ $# -ne 4 ] ; then
+if [ $# -ne 6 ] ; then
       echo "Need 4 arguments for the qsub command:"
       exit 1
 fi
@@ -39,6 +38,8 @@ STRANDEDNESS_HTSEQ=$2
 FEATURE_ID=$3
 ANNOTATION_FILE=$4
 FEATURE_TYPE=$5
+MODE=$6
+
 script_dir=$(pwd)
 
 # Now let's keep track of some information just in case anything goes wrong

@@ -139,8 +139,6 @@ do
         ##################################################################################
         #Need to summarize HTSeq special counters
         ##################################################################################
-        cd ${Current_DIR}
-                
         SCRIPT_DIR=$(pwd)
         
         echo 'SAMPLE_ID' $'\t''DESCRIPTION' $'\t''Aligned_Pairs' $'\t''no_feature_count' $'\t''no_feature_RATIO' $'\t''ambiguous_count'$'\t''ambiguous_RATIO' $'\t''too_low_aQual_count'$'\t''too_low_aQual_RATIO' $'\t''not_aligned_count'$'\t''not_aligned_RATIO' $'\t''alignment_not_unique'$'\t''alignment_not_unique_RATIO' >> $output_file
@@ -233,7 +231,7 @@ do
             echo 'Calculate percentage...'
             alignment_not_unique_RATIO=$(echo "scale=4;$alignment_not_unique/$Aligned_Pairs" | bc)
             echo 'Printing to output file...'
-            echo $sample_id $'\t'$Description $'\t'$Aligned_Pairs $'\t'$no_feature $'\t'$no_feature_RATIO $'\t'$ambiguous $'\t'$ambiguous_RATIO $'\t'$too_low_aQual $'\t'$too_low_aQual_RATIO $'\t'$not_aligned $'\t'$not_aligned_RATIO $'\t'$alignment_not_unique $'\t'$alignment_not_unique_RATIO >> $output_file
+            echo $sample_id $'\t'$description $'\t'$Aligned_Pairs $'\t'$no_feature $'\t'$no_feature_RATIO $'\t'$ambiguous $'\t'$ambiguous_RATIO $'\t'$too_low_aQual $'\t'$too_low_aQual_RATIO $'\t'$not_aligned $'\t'$not_aligned_RATIO $'\t'$alignment_not_unique $'\t'$alignment_not_unique_RATIO >> $output_file
             #End loop over Sample_Labels:
 
             #go back

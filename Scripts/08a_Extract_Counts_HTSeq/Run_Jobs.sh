@@ -19,14 +19,25 @@ rm -rf *.o* *.e*
 eval "$(../00_Setup_Pipeline/01_Pipeline_Setup.py --export)"
 
 # load anaconda module for case when we need independent run
-(
-    set +eu
-    module load anaconda2
-    source activate RNAseq
-)
+set +eu
+module load anaconda2
+source activate RNAseq
+set -eu
 
 #We always count by gene_id when using HTSeq
 feature_id=gene_id
+
+# calculate MODE
+if [[ ${MODE} -eq 0 ]]
+then
+    mode="union"
+elif [[ ${MODE} -eq 1 ]]
+then
+    mode="intersection-strict"
+elif [[ ${MODE} -eq 2 ]]
+then
+    mode="intersection-nonempty"
+fi
 
 # calculate strandedness_htseq from STRANDEDNESS
 if [ ${STRANDEDNESS} -eq 0 ]
@@ -111,7 +122,7 @@ do
         else
 
             #Now use arguments in the PBS script call:
-            (set -x; qsub -N "${job_name}_${sample_id}" -P "${PROJECT}" -l h_rt="${TIME_LIMIT}" Extract_Counts.qsub ${sample_id} ${strandedness_htseq} ${feature_id} ${ANNOTATION_FILE} ${FEATURE_TYPE})
+            (set -x; qsub -N "${job_name}_${sample_id}" -P "${PROJECT}" -l h_rt="${TIME_LIMIT}" Extract_Counts.qsub ${sample_id} ${strandedness_htseq} ${feature_id} ${ANNOTATION_FILE} ${FEATURE_TYPE} ${mode})
         fi #End of if statement to ignore lncRNA gtfs
         #End loop over GTF files:
     done
