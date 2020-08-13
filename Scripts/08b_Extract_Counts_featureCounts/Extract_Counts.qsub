@@ -136,7 +136,7 @@ fi
 rm -rf ${output_dir} && mkdir -p ${output_dir}
 
 output_file="${SAMPLE_ID}_featureCounts.out"
-rm -rf ${output_file} && mkdir -p ${output_file}
+rm -rf ${output_file} && touch ${output_file}
 
 echo 'List files in scratch directory:'
 ls -alh

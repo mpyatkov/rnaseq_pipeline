@@ -19,11 +19,11 @@ rm -rf *.o* *.e*
 eval "$(../00_Setup_Pipeline/01_Pipeline_Setup.py --export)"
 
 # load anaconda in case if run this script independently
-(
-    set +eu
-    module load anaconda2
-    source activate RNAseq
-)
+
+set +eu
+module load anaconda2
+source activate RNAseq
+set +eu
 
 # calculate strandedness_featurecount
 if [ ${STRANDEDNESS} -eq 0 ]

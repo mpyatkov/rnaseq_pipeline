@@ -91,8 +91,7 @@ do
     then
         echo 'SAMPLE_ID' $'\t''DESCRIPTION' $'\t''Aligned_Pairs' $'\t''Read_Pair_IN_EXONS' $'\t''Read_Pair_IN_EXONS_RATIO' >> $OUTPUT_FILE
     fi
-
-
+    
     # samples contains array of (sample_dir, sample_id, description) for each sample
     samples=($("${SETUP_PIPELINE_DIR}"/01_Pipeline_Setup.py --samples))
 
@@ -106,7 +105,7 @@ do
         echo $sample_id
         #Need to cd to sample specific tophat2 folder
 
-        cd ${DATASET_DIR}/$sample_id/fastq/tophat2
+        pushd ${DATASET_DIR}/$sample_id/fastq/tophat2
         #------------------------------------------
         #Get counts from *_align_summary.txt file
         # echo 'Getting the total number of mapped reads...'
@@ -131,44 +130,46 @@ do
         
         if [ "${ANNOTATION_FILE}" == "genes.gtf" ];
         then
-            cd ${featureCounts_DIR}/Illumina_GTF
+            annotation_dir=${featureCounts_DIR}/Illumina_GTF
         fi
         
         if [ "${ANNOTATION_FILE}" == "RefSeq_GeneBody.gtf" ];
         then
-            cd ${featureCounts_DIR}/RefSeq_Exon_GTF
+            annotation_dir=${featureCounts_DIR}/RefSeq_Exon_GTF
         fi
 
         if [ "${ANNOTATION_FILE}" == "Intron_Only_Regions.gtf" ];
         then
-            cd ${featureCounts_DIR}/RefSeq_Intron_GTF
+            annotation_dir=${featureCounts_DIR}/RefSeq_Intron_GTF
         fi
         
         if [ "${ANNOTATION_FILE}" == "Exon_Only_Regions.gtf" ];
         then
-            cd ${featureCounts_DIR}/RefSeq_Exon_Only_GTF
+            annotation_dir=${featureCounts_DIR}/RefSeq_Exon_Only_GTF
         fi
 
         #Start of lncRNA gtf
         if [ "${ANNOTATION_FILE}" == "ncRNA_exon_for_counting.gtf" ];
         then
-            cd ${featureCounts_DIR}/LncRNA_Exon_Collapsed_GTF
+            annotation_dir=${featureCounts_DIR}/LncRNA_Exon_Collapsed_GTF
         fi
 
         if [ "${ANNOTATION_FILE}" == "ncRNA_genebodies_for_counting.gtf" ];
         then
-            cd ${featureCounts_DIR}/LncRNA_GeneBody_GTF
+            annotation_dir=${featureCounts_DIR}/LncRNA_GeneBody_GTF
         fi
 
         if [ "${ANNOTATION_FILE}" == "intronic_only_gene_models_ncRNA_for_counting.gtf" ];
         then
-            cd ${featureCounts_DIR}/LncRNA_Intronic_Only_GTF
+            annotation_dir=${featureCounts_DIR}/LncRNA_Intronic_Only_GTF
         fi
 
         if [ "${ANNOTATION_FILE}" == "exonic_only_gene_models_ncRNA_for_counting.gtf" ];
         then
-            cd ${featureCounts_DIR}/LncRNA_Exonic_Only_GTF
+            annotation_dir=${featureCounts_DIR}/LncRNA_Exonic_Only_GTF
         fi
+
+	pushd "${annotation_dir}"
 
         #Get the sum of the 2nd coulumn
         READS_IN_EXONS=$(awk '{n+=$2;} ; END {print n;}' $sample_id'_featureCounts.out')
@@ -179,6 +180,9 @@ do
         echo 'Printing to output file...'
         echo $sample_id $'\t'$description $'\t'$Aligned_Pairs $'\t'$READS_IN_EXONS $'\t'$READS_IN_EXONS_RATIO >> $OUTPUT_FILE
         #End loop over Sample_Labels:
+	# exit from annotation dir
+	popd 
+	# exit from sample id
         popd
     done 
 
@@ -230,7 +234,7 @@ do
         OUTPUT_FILE_SPECIAL=$OUTPUT_DIR/featureCounts_summary_LncRNA_Exonic_Only_GTF.txt
     fi
 
-    rm -rf ${OUTPUT_FILE} && touch ${OUTPUT_FILE}
+    rm -rf ${OUTPUT_FILE_SPECIAL} && touch ${OUTPUT_FILE_SPECIAL}
 
     
     # samples contains array of (sample_dir, sample_id, description) for each sample
@@ -243,7 +247,7 @@ do
         sample_id=${samples[i+1]}
         description=${samples[i+2]}
 
-        cd ${DATASET_DIR}/$sample_id/fastq/tophat2
+        pushd ${DATASET_DIR}/$sample_id/fastq/tophat2
         #------------------------------------------
         #Get counts from *_align_summary.txt file
         # echo 'Getting the total number of mapped reads...'
@@ -266,22 +270,22 @@ do
 
         if [ "${ANNOTATION_FILE}" == "genes.gtf" ];
         then
-            cd ${featureCounts_DIR}/Illumina_GTF
+            annotation_dir=${featureCounts_DIR}/Illumina_GTF
         fi
 
         if [ "${ANNOTATION_FILE}" == "RefSeq_GeneBody.gtf" ];
         then
-            cd ${featureCounts_DIR}/RefSeq_Exon_GTF
+            annotation_dir=${featureCounts_DIR}/RefSeq_Exon_GTF
         fi
 
         if [ "${ANNOTATION_FILE}" == "Intron_Only_Regions.gtf" ];
         then
-            cd ${featureCounts_DIR}/RefSeq_Intron_GTF
+            annotation_dir=${featureCounts_DIR}/RefSeq_Intron_GTF
         fi
 
         if [ "${ANNOTATION_FILE}" == "Exon_Only_Regions.gtf" ];
         then
-            cd ${featureCounts_DIR}/RefSeq_Exon_Only_GTF
+            annotation_dir=${featureCounts_DIR}/RefSeq_Exon_Only_GTF
         fi
 
         #Start of lncRNA gtf
@@ -337,7 +341,10 @@ do
         rm Header.txt
         ##------------------------------------------
         #End loop over Sample_Labels:
+	# exit from annotation dir
         popd
+	# exit from sample dir
+	popd
     done 
 
     echo 'Check out '$OUTPUT_FILE
