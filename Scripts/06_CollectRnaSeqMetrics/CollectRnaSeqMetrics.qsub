@@ -75,13 +75,13 @@ module load picard
 cp "${DATASET_DIR}/${SAMPLE_ID}/fastq/tophat2/${SAMPLE_ID}_primary_unique.bam" .
 
 #Initialize INPUT_BAM:
-input_bam=${sample_id}'_primary_unique.bam'
+input_bam=${SAMPLE_ID}'_primary_unique.bam'
 
 #Copy CollectRnaSeqMetrics required files:
 cp "${script_dir}/Input_Regions/genes_refFlat" .
 cp "${script_dir}/Input_Regions/rRNA_intervalList_sorted" .
 
-storage_dir=${DATASET_DIR}/${sample_id}/fastq/tophat2
+storage_dir=${DATASET_DIR}/${SAMPLE_ID}/fastq/tophat2
 
 #Create CollectRnaSeqMetrics output folder to store files:
 output_dir='CollectRnaSeqMetrics'
@@ -95,7 +95,7 @@ echo 'Printing command:'
 echo
 
 #Run command:
-(set -x; picard CollectRnaSeqMetrics REF_FLAT=genes_refFlat RIBOSOMAL_INTERVALS=rRNA_intervalList_sorted STRAND="${STRAND_SPECIFICITY}" INPUT="${input_bam}" OUTPUT="${output_dir}/${sample_id}_metrics")
+(set -x; picard CollectRnaSeqMetrics REF_FLAT=genes_refFlat RIBOSOMAL_INTERVALS=rRNA_intervalList_sorted STRAND="${STRAND_SPECIFICITY}" INPUT="${input_bam}" OUTPUT="${output_dir}/${SAMPLE_ID}_metrics")
 
 echo 'Finished CollectRnaSeqMetrics command'
 echo 'Copy output to storage dir'

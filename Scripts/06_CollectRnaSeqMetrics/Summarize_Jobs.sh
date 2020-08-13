@@ -7,6 +7,10 @@
 #./CollectRnaSeqMetrics_Summary.sh
 ##################################################################################
 
+set -o errexit
+set -o pipefail
+set -o nounset
+
 # export all variables from Pipeline_Setup.conf
 eval "$(../00_Setup_Pipeline/01_Pipeline_Setup.py --export)"
 
@@ -16,7 +20,10 @@ output_dir="$(pwd)/Job_Summary"
 rm -rf "${output_dir}" && mkdir -p "${output_dir}"
 
 output_file="$output_dir/CollectRnaSeqMetrics_Stats.txt"
-rm -rf "${output_file}" && mkdir -p "${output_file}"
+rm -rf "${output_file}" && touch "${output_file}"
+
+# print header to output file
+echo SAMPLE_ID $'\t'DESCRIPTION $'\t'PCT_CODING_BASES $'\t'PCT_UTR_BASES $'\t'PCT_INTRONIC_BASES $'\t'PCT_INTERGENIC_BASES $'\t'PCT_MRNA_BASES $'\t'PCT_RIBOSOMAL_BASES >> $OUTPUT_FILE
 
 # samples contains array of (sample_dir, sample_id, description) for each sample
 samples=($("${SETUP_PIPELINE_DIR}"/01_Pipeline_Setup.py --samples))
@@ -59,7 +66,7 @@ do
     #Remove temp1.txt
     rm temp1.txt
     #Print to output file
-    echo ${sample_id} $'\t'$Description $'\t'$PCT_CODING_BASES $'\t'$PCT_UTR_BASES $'\t'$PCT_INTRONIC_BASES $'\t'$PCT_INTERGENIC_BASES $'\t'$PCT_MRNA_BASES $'\t'$PCT_RIBOSOMAL_BASES >> "${output_file}"
+    echo ${sample_id} $'\t'$description $'\t'$PCT_CODING_BASES $'\t'$PCT_UTR_BASES $'\t'$PCT_INTRONIC_BASES $'\t'$PCT_INTERGENIC_BASES $'\t'$PCT_MRNA_BASES $'\t'$PCT_RIBOSOMAL_BASES >> "${output_file}"
     popd
 done
 
