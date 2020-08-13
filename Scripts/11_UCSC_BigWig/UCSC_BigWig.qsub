@@ -1,0 +1,249 @@
+#!/bin/bash -l
+
+set -o errexit
+set -o pipefail
+set -o nounset
+
+##################################################################################
+#Andy Rampersaud, 08.07.17
+#This script is called by setup_UCSC_BigWig.sh
+##################################################################################
+# Specify which shell to use
+#$ -S /bin/bash
+# Run on the current working directory
+#$ -cwd
+# Join standard output and error to a single file  
+#$ -j n
+# change to y if you want a single qlog file 
+
+##################################################################################
+#Initialize variables from UCSC_BigWig.sh
+##################################################################################
+#checking the command line arg
+#-ne : "is not equal to"
+if [ $# -ne 7 ] ; then
+    echo "Need 7 arguments for the qsub command:"
+    echo "qsub -N ${Job_Name}'_'${Sample_ID} -P wax-dk -l h_rt=${TIME_LIMIT} UCSC_BigWig.qsub ${Sample_ID} ${Dataset_DIR} ${Sample_Labels_DIR} ${STRAND_RULE} ${BU_User} ${VM_DIR_UCSC} ${SCRIPT_DIR}"
+    exit 0
+fi
+
+#http://www.ibm.com/developerworks/library/l-bash-parameters/
+#Note: If you have more than 9 parameters, you cannot use $10 to refer to the tenth one. You must first either process or save the first parameter ($1), then use the shift command to drop parameter 1 and move all remaining parameters down 1, so that $10 becomes $9 and so on.
+
+#http://unix.stackexchange.com/questions/104420/how-to-use-command-line-arguments-in-a-shell-script
+#If you need access more than 9 command line arguments, you can use the shift command. Example: shift 2 renames $3 to $1, $4 to $2 etc.
+
+#process the command line arguments
+Sample_ID=$1
+Dataset_DIR=$2
+Sample_Labels_DIR=$3
+STRAND_RULE=$4
+BU_User=$5
+VM_DIR_UCSC=$6
+SCRIPT_DIR=$7
+
+#Print variables (make sure they appear correctly):
+echo "-----------------------"
+echo "Start of variable list:"
+echo "-----------------------"
+echo "Sample_ID:"
+echo ${Sample_ID}
+echo "Dataset_DIR:"
+echo ${Dataset_DIR}
+echo "Sample_Labels_DIR:"
+echo ${Sample_Labels_DIR}
+echo "STRAND_RULE:"
+echo ${STRAND_RULE}
+echo "BU_User:"
+echo ${BU_User}
+echo "VM_DIR_UCSC:"
+echo ${VM_DIR_UCSC}
+echo "SCRIPT_DIR:"
+echo ${SCRIPT_DIR}
+echo "-----------------------"
+echo "End of variable list"
+echo "-----------------------"
+
+# Now let's keep track of some information just in case anything goes wrong
+echo "=========================================================="
+#Use to calculate job time:
+#Start_Time in seconds
+Start_Time=$(date +"%s")
+echo "Starting on : $(date)"
+echo "Running on node : $(hostname)"
+echo "Current directory : $(pwd)"
+echo "Current job ID : $JOB_ID"
+echo "Current job name : $JOB_NAME"
+echo "Task index number : $SGE_TASK_ID"
+echo "Parameter for multiple cores : $NSLOTS"
+echo "=========================================================="
+
+# Go to local scratch directory
+
+echo 'Change dir to scratch directory'
+cd ${TMPDIR}
+echo 'Print scratch directory location:'
+echo $TMPDIR
+echo 'Loading required modules...'
+
+module load samtools/0.1.19
+
+cp ${Dataset_DIR}/${Sample_ID}/fastq/tophat2/${Sample_ID}'_primary_unique.bam' .
+#Initialize INPUT_BAM:
+INPUT_BAM=${Sample_ID}'_primary_unique.bam'
+
+echo
+echo 'INPUT_BAM:'
+echo ${INPUT_BAM}
+echo
+
+#Copy UCSC_BigWig required files:
+cp ${SCRIPT_DIR}/Chrom_Sizes/mm9.chrom.sizes .
+#Initialize variable:
+CHROMSIZE_FILE=mm9.chrom.sizes
+#cp ${SCRIPT_DIR}/UCSC_Tools/wigToBigWig .
+cp -r ${SCRIPT_DIR}/UCSC_Tools .
+
+STORAGE_DIR=${Dataset_DIR}/${Sample_ID}/fastq/tophat2
+#Create UCSC_BigWig output folder to store files:
+OUTPUT_DIR=${TMPDIR}/'UCSC_BigWig'
+
+mkdir -p $OUTPUT_DIR
+
+echo
+echo 'List files in scratch directory:'
+echo
+ls -alh
+
+echo
+echo 'Starting to run my commands'
+echo
+
+echo
+echo 'Starting samtools sort and index'
+echo
+
+#samtools sort only takes file name without extension
+samtools sort ${INPUT_BAM} ${Sample_ID}'_sorted'
+#samtools sort only takes file name with extension
+samtools index ${Sample_ID}'_sorted'.bam
+#Initilize variable:
+INPUT_FILE=${Sample_ID}'_sorted.bam'
+
+echo
+echo 'Finished samtools sort and index'
+echo
+
+echo
+echo 'Starting bam2wig.py command'
+echo
+#--------------------------------------------------------------------------------
+#http://rseqc.sourceforge.net/#infer-experiment-py
+#1. bam2wig.py converts all types of RNA-seq data from BAM format into wiggle format.
+#2. If UCSC wigToBigWig tool was found, output wiggle file will be converted into bigwig format automatically.
+#3. To use bam2wig.py, BAM file must be sorted and indexed properly using SAMtools. Below example shows how to sort and index BAM file using samTools
+#--------------------------------------------------------------------------------
+
+#The number you want your wigfiles to be normalized to. Please put
+#1000000000. For the normalization, all wig files are normalized to a
+#random, fixed number that I chose (1000000000). So, all wig files
+#that are created with this script are comparable. The normalization
+#is basically enforcing that the area under the wig-file curves are
+#constant for all samples (i.e. the "drawing area" for each sample are
+#fixed, it depends on each sample where to distribute its drawing
+#area).
+
+TOTAL_WIGSUM=1000000000
+#--------------------------------------------------------------------------------
+
+#For some reason "none" is not recognized by bam2wig.py
+#Need an if statement to check if ${STRAND_RULE} equals "none"
+#------------------------------------------
+if [ "${STRAND_RULE}" == "none" ];
+then
+    #If the data is unstranded, then don't specify --strand option (default=none)
+    bam2wig_options="--input-file=$INPUT_FILE --chromSize=$CHROMSIZE_FILE --out-prefix=${Sample_ID} --wigsum=${TOTAL_WIGSUM}"
+else
+    bam2wig_options="--input-file=$INPUT_FILE --chromSize=$CHROMSIZE_FILE --out-prefix=${Sample_ID} --wigsum=${TOTAL_WIGSUM} --strand=${STRAND_RULE}"
+fi
+
+#------------------------------------------
+echo 'Printing command:'
+echo "bam2wig.py "${bam2wig_options}
+echo
+#Run command:
+bam2wig.py ${bam2wig_options}
+#--------------------------------------------------------------------------------
+
+echo
+echo 'Finished bam2wig.py command'
+echo
+
+echo
+echo 'Sample from wiggle files:'
+echo
+
+head -10 *.wig
+
+#Need some processing of the wig files before wigToBigWig conversion
+#Previously saw error with "-" in the 2nd column of wig file (cause an error with wigToBigWig conversion)
+#Move the wigToBigWig to another folder (copy the whole UCSC_Tools/)
+#Need to by-pass the bam2wig.py finding the wigToBigWig script
+
+wig_list=*.wig
+for wig_file in $wig_list
+do
+    wig_file_name=${wig_file%\.wig}
+    echo
+    echo '#--------------------------------'
+    echo $wig_file
+    echo '#--------------------------------'
+    echo 'Line count where 2nd column does not equal "-":'
+    awk '$2!="-" {print $0}' $wig_file | wc -l 
+    echo 'Line count where 2nd column is only a negative sign:'
+    awk '$2=="-" {print $0}' $wig_file | wc -l 
+    echo 'Copy '$wig_file' to UCSC_Tools folder'
+    cp $wig_file ./UCSC_Tools
+    echo 'Copy mm9.chrom.sizes to UCSC_Tools folder'
+    cp mm9.chrom.sizes ./UCSC_Tools
+    echo 'Start wigToBigWig'
+    cd UCSC_Tools
+    #Change permissions to run program:
+    chmod 700 wigToBigWig
+    ./wigToBigWig $wig_file mm9.chrom.sizes $OUTPUT_DIR/$wig_file_name.bw
+    echo 'End wigToBigWig'
+    cd ..
+done
+
+echo
+echo 'List of files in UCSC_Tools folder:'
+echo
+ls -al ./UCSC_Tools/*
+
+#As mentioned above:
+#2. If UCSC wigToBigWig tool was found, output wiggle file will be converted into bigwig format automatically.
+#For some reason when bam2wig.py calls the wigToBigWig tool it may return an error
+#Better to call the wigToBigWig tool directly (as I do above)
+
+#Copy bigWig files to $OUTPUT_DIR
+#cp ${Sample_ID}.Forward.bw $OUTPUT_DIR
+#cp ${Sample_ID}.Reverse.bw $OUTPUT_DIR
+
+echo
+echo 'Copy output to storage dir'
+echo
+cp -r $OUTPUT_DIR $STORAGE_DIR
+
+echo
+echo "List files in scratch"
+echo
+ls -alh
+
+echo "=========================================================="
+echo "Finished on : $(date)"
+#Use to calculate job time:
+#End_Time in seconds
+End_Time=$(date +"%s")
+diff=$(($End_Time-$Start_Time))
+echo "$(($diff / 3600)) hours, $((($diff / 60) % 60)) minutes and $(($diff % 60)) seconds elapsed."
+echo "=========================================================="
