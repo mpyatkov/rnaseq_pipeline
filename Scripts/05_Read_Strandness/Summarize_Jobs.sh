@@ -7,6 +7,10 @@
 #./Read_Strandness_Summary.sh
 ##################################################################################
 
+set -o errexit
+set -o pipefail
+set -o nounset
+
 # export all variables from Pipeline_Setup.conf
 eval "$(../00_Setup_Pipeline/01_Pipeline_Setup.py --export)"
 
@@ -20,7 +24,7 @@ rm -rf "${output_file}" && touch "${output_file}"
 # samples contains array of (sample_dir, sample_id, description) for each sample
 samples=($("${SETUP_PIPELINE_DIR}"/01_Pipeline_Setup.py --samples))
 
-# rename directories from sample_dir to sample_id
+# loop over samples
 for ((i=0;i< ${#samples[@]} ;i+=3));
 do
     # sample_dir=${samples[i]}
