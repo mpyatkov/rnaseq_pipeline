@@ -8,9 +8,14 @@
 ##################################################################################
 #---------------------------------------------------------------------------------
 
+set -o errexit
+set -o pipefail
+set -o nounset
+
 # export all variables from Pipeline_Setup.conf
 eval "$(../00_Setup_Pipeline/01_Pipeline_Setup.py --export)"
 
+SCRIPT_DIR=$(pwd)
 #---------------------------------------------------------------------------------
 #Check that each variable prints a value to the terminal:
 echo "-----------------------"
@@ -32,9 +37,6 @@ echo "-----------------------"
 INPUT_DIR=$(pwd)
 cd $INPUT_DIR
 
-################################################
-SCRIPT_DIR=$(pwd)
-
 # samples contains array of (sample_dir, sample_id, description) for each sample
 samples=($("${SETUP_PIPELINE_DIR}"/01_Pipeline_Setup.py --samples))
 
@@ -42,26 +44,15 @@ samples=($("${SETUP_PIPELINE_DIR}"/01_Pipeline_Setup.py --samples))
 for ((i=0;i< ${#samples[@]} ;i+=3));
 do
     Sample_DIR=${samples[i]}
-    Sample_DIR=${samples[i+1]}
+    Sample_ID=${samples[i+1]}
     Description=${samples[i+2]}
-    #---------------------------
-    ##Check that text file is read in properly:
-    #echo 'Sample_DIR:'
-    Sample_DIR=${myArray[0]}
-    #echo 'Sample_ID:'
-    Sample_ID=${myArray[1]}
-    #echo $Sample_ID
-    #echo 'Description:'
-    Description=${myArray[2]}
-    #echo $Description
-    #---------------------------
-    echo
-    echo $Sample_ID
     #Copy over BAM and *.bw files:
     echo 'Copying over BAM, bigWig, and bigBed files to waxmanlabvm...'
+    set +eu
     cp ${DATASET_DIR}/${Sample_ID}/fastq/tophat2/$Sample_ID'_primary_unique.bam' ${VM_DIR_UCSC}
     cp ${DATASET_DIR}/${Sample_ID}/fastq/tophat2/$Sample_ID'_primary_unique.bam.bai' ${VM_DIR_UCSC}
     cp ${DATASET_DIR}/${Sample_ID}/fastq/tophat2/UCSC_BigWig/*'.bw' ${VM_DIR_UCSC}
+    set -eu
 done 
 cd $INPUT_DIR
 

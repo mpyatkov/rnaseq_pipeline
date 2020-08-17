@@ -43,8 +43,6 @@ echo "Sample_ID:"
 echo ${Sample_ID}
 echo "Dataset_DIR:"
 echo ${Dataset_DIR}
-echo "Sample_Labels_DIR:"
-echo ${Sample_Labels_DIR}
 echo "STRAND_RULE:"
 echo ${STRAND_RULE}
 echo "BU_User:"
