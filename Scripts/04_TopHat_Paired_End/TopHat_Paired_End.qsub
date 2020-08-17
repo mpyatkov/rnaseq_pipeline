@@ -1,9 +1,8 @@
 #!/bin/bash -l
 
-# set -o errexit
+set -o errexit
 set -o pipefail
 set -o nounset
-# set -x
 
 ##################################################################################
 #Andy Rampersaud, 05.03.16
@@ -28,11 +27,13 @@ eval "$(../00_Setup_Pipeline/01_Pipeline_Setup.py --export)"
 ##################################################################################
 #checking the command line arg
 #-ne : "is not equal to"
+
 if [ $# -ne 3 ] ; then
       echo "Need 3 arguments for the qsub command:"
       echo "qsub -N ${job_name}'_'${sample_id} -P wax-dk -l h_rt=${TIME_LIMIT} TopHat_Paired_End.qsub ${sample_id} ${tophat_strandedness} ${distance_bt_read_pair}"
       exit 0
 fi
+
 #process the command line arguments
 SAMPLE_ID=$1
 TOPHAT_STRANDEDNESS=$2
@@ -42,8 +43,9 @@ DISTANCE_BT_READ_PAIR=$3
 echo "-----------------------"
 echo "Start of variable list:"
 echo "-----------------------"
-echo "Sample_ID: ${SAMPLE_ID}"
+echo "SAMPLE_ID: ${SAMPLE_ID}"
 echo "Dataset_DIR: ${DATASET_DIR}"
+echo "Sample_Labels_DIR: ${SAMPLE_LABELS_DIR}"
 echo "Bowtie2Index_DIR: ${BOWTIE2INDEX_DIR}"
 echo "GTF_Files_DIR: ${GTF_FILES_DIR}"
 echo "ANNOTATION_FILE: ${ANNOTATION_FILE}"
@@ -97,6 +99,8 @@ cp ${GTF_FILES_DIR}/RefSeq_GeneBody.gtf .
 left_list=$(find . -name "*_1*.fq.gz" | xargs -n1 basename | paste -s -d ",")
 right_list=$(find . -name "*_2*.fq.gz" | xargs -n1 basename | paste -s -d ",")
 
+echo "left_list: ${left_list}"
+echo "right_list: ${right_list}"
 # Set the standard deviation for the ${DISTANCE_BT_READ_PAIR}
 # --mate-std-dev <int>
 # The standard deviation for the distribution on inner distances between mate
@@ -121,9 +125,8 @@ echo 'Starting tophat'
 #Jobs are taking too long to complete
 #Need the option: --no-coverage-search
 #------------------------------------------------------------------------------
-echo "tophat --no-coverage-search -o ${output_dir} -G ${ANNOTATION_FILE} -p $NSLOTS --library-type ${TOPHAT_STRANDEDNESS} -r ${DISTANCE_BT_READ_PAIR} --mate-std-dev ${param_std} Bowtie2Index/genome ${left_list} ${right_list}"
 
-tophat --no-coverage-search -o ${output_dir} -G ${ANNOTATION_FILE} -p $NSLOTS --library-type ${TOPHAT_STRANDEDNESS} -r ${DISTANCE_BT_READ_PAIR} --mate-std-dev ${param_std} Bowtie2Index/genome ${left_list} ${right_list}
+(set -x; tophat --no-coverage-search -o ${output_dir} -G ${ANNOTATION_FILE} -p $NSLOTS --library-type ${TOPHAT_STRANDEDNESS} -r ${DISTANCE_BT_READ_PAIR} --mate-std-dev ${param_std} Bowtie2Index/genome ${left_list} ${right_list})
 
 echo 'Ending tophat'
 
