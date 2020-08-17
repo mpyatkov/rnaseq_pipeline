@@ -1,0 +1,26 @@
+#!/bin/bash -l
+
+#$ -cwd
+#$ -j y
+# CHANGE TO YOUR PROJECT
+#$ -P PROJECT_NAME
+#$ -m be
+#$ -o output.log
+#$ -N install_env
+#$ -pe omp 4
+#$ -l mem_per_core=4G
+#$ -l h_rt=01:00:00
+
+echo "=========================================================="
+echo "Starting on       : $(date)"
+echo "Running on node   : $(hostname)"
+echo "Current job ID    : $JOB_ID"
+echo "Current job name  : $JOB_NAME"
+echo "Task index number : $TASK_ID"
+echo "=========================================================="
+
+module load anaconda2
+
+conda env create -f ./RNAseq_environment.yml
+ 
+echo "Finished  .............. $(date)"
