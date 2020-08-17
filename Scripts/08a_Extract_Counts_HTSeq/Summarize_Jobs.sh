@@ -139,6 +139,7 @@ do
         ##################################################################################
         #Need to summarize HTSeq special counters
         ##################################################################################
+                
         SCRIPT_DIR=$(pwd)
         
         echo 'SAMPLE_ID' $'\t''DESCRIPTION' $'\t''Aligned_Pairs' $'\t''no_feature_count' $'\t''no_feature_RATIO' $'\t''ambiguous_count'$'\t''ambiguous_RATIO' $'\t''too_low_aQual_count'$'\t''too_low_aQual_RATIO' $'\t''not_aligned_count'$'\t''not_aligned_RATIO' $'\t''alignment_not_unique'$'\t''alignment_not_unique_RATIO' >> $output_file

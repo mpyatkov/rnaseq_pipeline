@@ -25,6 +25,7 @@ set -o nounset
 # export all variables from Pipeline_Setup.conf
 eval "$(../00_Setup_Pipeline/01_Pipeline_Setup.py --export)"
 
+
 #checking the command line arg
 #-ne : "is not equal to"
 if [ $# -ne 6 ] ; then
@@ -110,7 +111,7 @@ fi
 rm -rf "${output_dir}" && mkdir -p "${output_dir}"
 
 output_file="${SAMPLE_ID}_HTSeq.out"
-rm -rf "${output_file}" && mkdir -p "${output_file}"
+rm -rf "${output_file}" && touch "${output_file}"
 
 echo 'List files in scratch directory:'
 ls -alh
