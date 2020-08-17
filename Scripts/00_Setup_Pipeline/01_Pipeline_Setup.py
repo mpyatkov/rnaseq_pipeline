@@ -254,7 +254,6 @@ class DiffExpression():
         """
 
         cond_value = getattr(compar_config, condition_num)
-        # TODO: when only one sample raise error
         cond_samples = sample_config.samplesByGroup(cond_value)
         condition_name = cond_samples[0].Condition_Name
         
@@ -274,7 +273,9 @@ class DiffExpression():
                 DIR_NAME = os.path.basename(TMPL).replace('TEMPLATE_','')
                 DIR_NAME = DIR_NAME.replace('NN', CMP.Comparison_Number)
 
-                SCRIPT_PATH = os.getcwd('SETUP_PIPELINE_DIR')
+                #SCRIPT_PATH = os.getenv('SETUP_PIPELINE_DIR')
+
+                SCRIPT_PATH = os.getcwd()
 
                 # TODO: change it to OUTPUT path (SCRIPT_PATH+"/"+)
                 
@@ -362,7 +363,7 @@ if __name__ == "__main__":
                                 comparison_config,
                                 sample_config,
                                 system_config)
-
+        
         # Output dir by default the same as TEMPLATES_PATH
         diffex.generate(os.path.dirname(TEMPLATE_PATHS[0]))
         print("Diff.ex directories generated")

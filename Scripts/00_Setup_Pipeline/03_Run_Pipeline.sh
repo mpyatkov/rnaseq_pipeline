@@ -2,8 +2,8 @@
 
 # prevent some unexpected behaviour
 set -o errexit
-set -o pipefail
-set -o nounset
+# set -o pipefail
+# set -o nounset
 
 ##################################################################################
 #Andy Rampersaud, 03.14.16
@@ -27,11 +27,10 @@ set -o nounset
 #---------------------------------------------------------------------------------
 
 # Activate anaconda environment
-(
-    set +eu
-    module load anaconda2
-    source activate RNAseq
-)
+set +eu
+module load anaconda2
+source activate RNAseq
+set -eu
 
 # Process system argument:
 if [[ $# -ne 1 ]]
@@ -49,21 +48,27 @@ START_TIME=$(date +"%s")
 # export and print all variables from Pipeline_Setup.conf
 eval "$(./01_Pipeline_Setup.py --export)"
 
-# Generate differential expression folders
-./01_Pipeline_Setup.py --generate
-
 # The Scripts folder is 1 level up from 00_Setup_Pipeline:
 cd ..
 STEPS_DIR=$(pwd)
 
 # get all steps (directories with numbers in the beginning)
-ALL_PIPELINE_STEPS=$(find . -maxdepth 1 -type d -name '[[:digit:]]*' | sort -n | xargs -n1 basename | sed -n '/^[0-9]/p' | sed '/00_Setup_Pipeline/d' | sed '/Rename_Folders/d' | sed '/Generate_Tracks/d')
+# ALL_PIPELINE_STEPS=$(find . -maxdepth 1 -type d -name '[[:digit:]]*' | sort -n | xargs -n1 basename | sed -n '/^[0-9]/p' | sed '/00_Setup_Pipeline/d' | sed '/Rename_Folders/d' | sed '/Generate_Tracks/d')
+
+# is full pipeline execution? Yes by default
+ISFULL=1
+
+# TODO: need refactoring twice ALL_PIPELINE_STEPS is not good here
 
 if [[ ${START_STEP} == "FULL" ]]
 then
+    ./01_Pipeline_Setup.py --generate
+    ALL_PIPELINE_STEPS=$(find . -maxdepth 1 -type d -name '[[:digit:]]*' | sort -n | xargs -n1 basename | sed -n '/^[0-9]/p' | sed '/00_Setup_Pipeline/d' | sed '/Rename_Folders/d' | sed '/Generate_Tracks/d')
     PIPELINE_STEPS=${ALL_PIPELINE_STEPS}
 else
+    ALL_PIPELINE_STEPS=$(find . -maxdepth 1 -type d -name '[[:digit:]]*' | sort -n | xargs -n1 basename | sed -n '/^[0-9]/p' | sed '/00_Setup_Pipeline/d' | sed '/Rename_Folders/d' | sed '/Generate_Tracks/d')
     PIPELINE_STEPS=$(printf "%s\n" "${ALL_PIPELINE_STEPS}" | sed -n -e '/'${START_STEP}'/,$p')
+    ISFULL=0
 fi
 
 # START PIPELINE
@@ -73,17 +78,22 @@ STEP_DIR=$(find . -maxdepth 1 -type d -name '[[:digit:]]*' | xargs -n1 basename 
 
 echo "Running: ${STEP_DIR}..." 
 
-#Go to the directory 01_Rename_Folders, run job and go back automaticaly:
-(
-    cd "${STEP_DIR}"
-    ./Rename_Folders.sh
-)
+# if full exectution
+if [[ $ISFULL -eq 1 ]]
+then
+    #Go to the directory 01_Rename_Folders, run job and go back automaticaly:
+    (
+	cd "${STEP_DIR}"
+	./Rename_Folders.sh
+    )
+fi
 
 echo "Done: ${STEP_DIR}"
 
 #For loop over steps in the pipeline
 for STEP in ${PIPELINE_STEPS}
 do
+    echo ${PIPELINE_STEPS}
     
     echo "Running: ${STEP} ..." 
     
@@ -128,10 +138,12 @@ do
         
 	JOB_COUNT=$(qstat -r -u ${BU_USER} | grep 'Full jobname:' | grep ${JOB_NAME} | wc -l)
     done
-    
-    # Summarize_Jobs:
+
+    # prevent immediate exit if ./Summarize_Jobs.sh does not exist
+    set +eu
     ./Summarize_Jobs.sh
-    
+    set -eu
+
     printf "Done: %s\n\n -------------------------" "${STEP}"
 
     # cd ..
@@ -162,17 +174,17 @@ printf "Job run times that deviate from the average should be inspected for poss
 
 cd "${STEPS_DIR}"
 
-# scan all steps again to extract information about time
-for STEP in ${ALL_PIPELINE_STEPS}
-do
-    # Extract job runtimes and collect in output file
-    (
-        cd "${STEP}"
-        echo "${STEP}" >> "${OUTPUT_FILE}"
-        grep 'elapsed' *.o* >> "${OUTPUT_FILE}"
-    )
+# # scan all steps again to extract information about time
+# for STEP in ${ALL_PIPELINE_STEPS}
+# do
+#     # Extract job runtimes and collect in output file
+#     (
+#         cd "${STEP}"
+#         echo "${STEP}" >> "${OUTPUT_FILE}"
+#         grep 'elapsed' *.o* >> "${OUTPUT_FILE}"
+#     )
 
-done
+# done
 
 #Also want to print the time to run this script:
 echo '--------------------' >> "${OUTPUT_FILE}"
