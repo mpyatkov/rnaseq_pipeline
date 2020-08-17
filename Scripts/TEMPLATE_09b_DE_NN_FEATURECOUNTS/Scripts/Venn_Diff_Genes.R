@@ -97,6 +97,13 @@ print(File1_Label)
 #---------------------------------------------------------------------------------------------
 #Read in File2
 File2_Data <- read.table(file=File2, header=TRUE, as.is=TRUE, fill = TRUE)
+
+# interrupt without error (do not draw venn diagram)
+if (nrow(File2_Data) == 0 && nrow(File1_Data) == 0) {
+       print(paste0("WARNING: Bot input files is zero length! Do nothing!"))
+       quit(save = "no", status = 0, runLast = F)
+}
+
 #Just rename 1st column:
 colnames(File2_Data)[1] <- "Gene.Symbol"
 #Useful to get the file name

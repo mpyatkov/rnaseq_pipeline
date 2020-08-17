@@ -1,4 +1,9 @@
 #!/bin/bash
+
+set -o errexit
+set -o pipefail
+set -o nounset
+
 ##################################################################################
 #Andy Rampersaud, 03.12.16
 #This script would be used to summarize DiffExp_* jobs
@@ -23,7 +28,7 @@ module load R/3.6.0
 # export all variables from Pipeline_Setup.conf
 eval "$(../00_Setup_Pipeline/01_Pipeline_Setup.py --export)"
 
-SCRIPT_DIR="$(pwd)"
+SCRIPT_DIR=$(pwd)
 
 #Source job-specific variables:
 source setup_DiffExp.sh
