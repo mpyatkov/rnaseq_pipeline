@@ -23,7 +23,7 @@ eval "$(../00_Setup_Pipeline/01_Pipeline_Setup.py --export)"
 set +eu
 module load anaconda2
 source activate RNAseq
-set +eu
+set -eu
 
 # calculate strandedness_featurecount
 if [ ${STRANDEDNESS} -eq 0 ]
