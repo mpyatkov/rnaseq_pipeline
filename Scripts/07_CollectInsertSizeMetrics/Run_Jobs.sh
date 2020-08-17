@@ -1,5 +1,9 @@
 #!/bin/bash -l
 
+set -o errexit
+set -o pipefail
+set -o nounset
+
 ##################################################################################
 #Andy Rampersaud, 02.22.16
 #This script would be used to run CollectInsertSizeMetrics.pbs in parallel for different samples
@@ -11,15 +15,14 @@
 #Remove *.o files from previous jobs
 rm -rf *.o* *.e*
 
-##################################################################################
-# export all variables from Pipeline_Setup.conf
-eval "$(../00_Setup_Pipeline/01_Pipeline_Setup.py --export)"
-
-# activate anaconda in case of independent running
 set +eu
 module load anaconda2
 source activate RNAseq
 set -eu
+
+##################################################################################
+# export all variables from Pipeline_Setup.conf
+eval "$(../00_Setup_Pipeline/01_Pipeline_Setup.py --export)"
 
 # dir_name and job_name are required in the next steps
 dir_name=$(basename $(pwd))

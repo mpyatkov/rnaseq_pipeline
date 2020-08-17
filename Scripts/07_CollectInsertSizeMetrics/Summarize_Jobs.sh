@@ -1,5 +1,9 @@
 #!/bin/bash
 
+set -o errexit
+set -o pipefail
+set -o nounset
+
 ##################################################################################
 #Andy Rampersaud, 02.16.16
 #This script would be used to summarize CollectInsertSizeMetrics statistics 

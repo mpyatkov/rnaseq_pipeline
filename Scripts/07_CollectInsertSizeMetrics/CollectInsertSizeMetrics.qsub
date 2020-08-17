@@ -1,5 +1,9 @@
 #!/bin/bash -l
 
+set -o errexit
+set -o pipefail
+set -o nounset
+
 ##################################################################################
 #Andy Rampersaud, 02.22.16
 #This script is called by setup_CollectInsertSizeMetrics.sh
