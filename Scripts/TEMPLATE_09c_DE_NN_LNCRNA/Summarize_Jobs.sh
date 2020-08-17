@@ -23,6 +23,7 @@ module load R/3.6.0
 # export all variables from Pipeline_Setup.conf
 eval "$(../00_Setup_Pipeline/01_Pipeline_Setup.py --export)"
 
+SCRIPT_DIR=$(pwd)
 #Source job-specific variables:
 source setup_DiffExp.sh
 #---------------------------------------------------------------------------------

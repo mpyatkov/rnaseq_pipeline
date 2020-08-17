@@ -14,6 +14,8 @@ set -o nounset
 # export all variables from Pipeline_Setup.conf
 eval "$(../00_Setup_Pipeline/01_Pipeline_Setup.py --export)"
 
+SCRIPT_DIR="$(pwd)"
+
 echo 'Loading required modules...'
 
 module load R/3.6.0
@@ -99,12 +101,8 @@ echo "------------------------------------------"
 echo "-----------------------"
 echo "Start of variable list:"
 echo "-----------------------"
-echo "Dataset_DIR:"
-echo ${Dataset_DIR}
-echo "Dataset_Label:"
-echo ${Dataset_Label}
-echo "GTF_Files_DIR:"
-echo ${GTF_Files_DIR}
+echo "DATASET_LABEL:"
+echo ${DATASET_LABEL}
 echo "CONDITION_1_NAME:"
 echo ${CONDITION_1_NAME}
 echo "CONDITION_2_NAME:"
@@ -121,7 +119,7 @@ echo "-----------------------"
 echo "End of variable list"
 echo "-----------------------"
 echo "------------------------------------------"
-Comparison_Info=${CONDITION_2_NAME}'.'${Dataset_Label}'.'${M_Num_Cond2_List}'.'${CONDITION_1_NAME}'.'${Dataset_Label}'.'${M_Num_Cond1_List}'.'${SEGEX_Platform}
+Comparison_Info=${CONDITION_2_NAME}'.'${DATASET_LABEL}'.'${M_Num_Cond2_List}'.'${CONDITION_1_NAME}'.'${DATASET_LABEL}'.'${M_Num_Cond1_List}'.'${SEGEX_Platform}
 echo "Comparison_Info:"
 echo ${Comparison_Info}
 echo "------------------------------------------"

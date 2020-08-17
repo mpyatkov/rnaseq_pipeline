@@ -16,6 +16,9 @@
 #Initialize variables from DiffExp.sh
 ##################################################################################
 
+# export all variables from Pipeline_Setup.conf
+eval "$(../00_Setup_Pipeline/01_Pipeline_Setup.py --export)"
+
 set -o errexit
 set -o pipefail
 set -o nounset
@@ -172,7 +175,7 @@ mkdir -p Input/Condition_1
 mkdir -p Input/Condition_2
 #-----------------------------------------------------
 #Copy gtf file (annotation file):
-cp ${GTF_Files_DIR}/${ANNOTATION_FILE} .
+cp ${ANNOTATION_FILE} .
 #Copy over text files indicating Condition_1 and Condition_2 samples:
 cp ${SCRIPT_DIR}/Condition_1.txt .
 cp ${SCRIPT_DIR}/Condition_2.txt .

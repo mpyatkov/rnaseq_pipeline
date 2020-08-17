@@ -7,17 +7,21 @@
 #Example: 
 #./Run_Jobs.sh
 ##################################################################################
+
+set -o errexit
+set -o pipefail
+set -o nounset
+
 #Remove *.o files from previous jobs
 rm -rf *.o* *.e*
 
 # export all variables from Pipeline_Setup.conf
 eval "$(../00_Setup_Pipeline/01_Pipeline_Setup.py --export)"
 
-(
-    set +eu
-    module load anaconda2
-    source activate RNAseq
-)
+set +eu
+module load anaconda2
+source activate RNAseq
+set -eu
 
 # calculate STRAND_RULE from STRANDEDNESS
 if [ ${STRANDEDNESS} -eq 0 ]
@@ -39,8 +43,6 @@ echo "Start of variable list:"
 echo "-----------------------"
 echo "DATASET_DIR:"
 echo ${DATASET_DIR}
-echo "SAMPLE_LABEL_DIR:"
-echo ${SAMPLE_LABEL_DIR}
 echo "STRAND_RULE:"
 echo ${STRAND_RULE}
 echo "BU_User:"
@@ -68,7 +70,7 @@ do
     Sample_DIR=${samples[i]}
     Sample_ID=${samples[i+1]}
     Description=${samples[i+2]}
-    (set -x; qsub -N "${job_Name}_${Sample_ID}" -P "${PROJECT}" -l h_rt="${TIME_LIMIT}" UCSC_BigWig.qsub ${Sample_ID} ${DATASET_DIR} ${STRAND_RULE} ${BU_USER} ${VM_DIR_UCSC} ${SCRIPT_DIR})
+    (set -x; qsub -N "${job_name}_${Sample_ID}" -P "${PROJECT}" -l h_rt="${TIME_LIMIT}" UCSC_BigWig.qsub ${Sample_ID} ${DATASET_DIR} ${STRAND_RULE} ${BU_USER} ${VM_DIR_UCSC} ${SCRIPT_DIR})
 
 done 
 #Remove the temp file:
