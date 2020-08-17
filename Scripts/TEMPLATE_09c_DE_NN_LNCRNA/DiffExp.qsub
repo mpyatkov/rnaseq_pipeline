@@ -16,19 +16,19 @@
 #Initialize variables from DiffExp.sh
 ##################################################################################
 
-# export all variables from Pipeline_Setup.conf
-eval "$(../00_Setup_Pipeline/01_Pipeline_Setup.py --export)"
-
 set -o errexit
 set -o pipefail
 set -o nounset
 
+# export all variables from Pipeline_Setup.conf
+eval "$(../00_Setup_Pipeline/01_Pipeline_Setup.py --export)"
+
 #checking the command line arg
 #-ne : "is not equal to"
 if [ $# -ne 14 ] ; then
-      echo "Need 14 arguments for the qsub command:"
-      echo "qsub -N ${Job_Name}'_'${DiffExp_Index} -P wax-dk -l h_rt=${TIME_LIMIT} DiffExp.qsub ${SCRIPT_DIR} ${Dataset_DIR} ${Dataset_Label} ${ANNOTATION_FILE_DIR} ${ANNOTATION_FILE}  ${CONDITION_1_NAME} ${CONDITION_2_NAME} ${Lengths_DIR} ${GENE_LENGTHS_FILE} ${COUNT_DIR} ${OUTPUT_PREFIX} ${DiffExp_Index} ${COL_SUFFIX} ${COUNT_PROGRAM}"
-      exit 0
+    echo "Need 14 arguments for the qsub command:"
+    echo "qsub -N ${Job_Name}'_'${DiffExp_Index} -P wax-dk -l h_rt=${TIME_LIMIT} DiffExp.qsub ${SCRIPT_DIR} ${Dataset_DIR} ${Dataset_Label} ${ANNOTATION_FILE_DIR} ${ANNOTATION_FILE}  ${CONDITION_1_NAME} ${CONDITION_2_NAME} ${Lengths_DIR} ${GENE_LENGTHS_FILE} ${COUNT_DIR} ${OUTPUT_PREFIX} ${DiffExp_Index} ${COL_SUFFIX} ${COUNT_PROGRAM}"
+    exit 0
 fi
 
 #http://www.ibm.com/developerworks/library/l-bash-parameters/
@@ -167,7 +167,7 @@ module load samtools/0.1.19
 OUTPUT_DIR=${SCRIPT_DIR}/'Output_'${DiffExp_Index}'_'${COUNT_PROGRAM}'_'${COL_SUFFIX}
 #Using an if statement to make the output folder if it does not exists
 if [ ! -d $OUTPUT_DIR ]; then
-	mkdir $OUTPUT_DIR; 
+    mkdir $OUTPUT_DIR; 
 fi
 #-----------------------------------------------------
 #Create folders to store input files:
@@ -175,6 +175,7 @@ mkdir -p Input/Condition_1
 mkdir -p Input/Condition_2
 #-----------------------------------------------------
 #Copy gtf file (annotation file):
+# cp ${GTF_FILES_DIR}/${ANNOTATION_FILE} .
 cp ${ANNOTATION_FILE} .
 #Copy over text files indicating Condition_1 and Condition_2 samples:
 cp ${SCRIPT_DIR}/Condition_1.txt .
@@ -218,30 +219,30 @@ echo "------------------------------------------"
 #Use a while loop to run jobs
 while IFS=$'\t' read -r -a myArray
 do
-#---------------------------
-##Check that text file is read in properly:
-echo 'Sample_DIR:'
-Sample_DIR=${myArray[0]}
-echo $Sample_DIR
-echo 'Sample_ID:'
-Sample_ID=${myArray[1]}
-echo $Sample_ID
-echo 'Description:'
-Description=${myArray[2]}
-echo $Description
-#---------------------------
-#Split by underscore and get the 2nd part (M number)
-M_Num=$(echo $Sample_ID | cut -d'_' -f 2)
-echo "M_Num:"
-echo ${M_Num}
-#Append variable string to itself:
-M_Num_Cond1_List+=${M_Num}
-#---------------------------
-echo 'Copy Condition_1 sample count files to Condition_1 folder'
-cp ${Dataset_DIR}/${Sample_ID}/fastq/tophat2/featureCounts/${COUNT_DIR}/${Sample_ID}'_featureCounts.out' ./Input/Condition_1
-echo 'Copy Condition_1 sample count summary files to Condition_1 folder'
-cp ${Dataset_DIR}/${Sample_ID}/fastq/tophat2/featureCounts/${COUNT_DIR}/${Sample_ID}'_featureCounts.out.summary' ./Input/Condition_1
-#---------------------------
+    #---------------------------
+    ##Check that text file is read in properly:
+    echo 'Sample_DIR:'
+    Sample_DIR=${myArray[0]}
+    echo $Sample_DIR
+    echo 'Sample_ID:'
+    Sample_ID=${myArray[1]}
+    echo $Sample_ID
+    echo 'Description:'
+    Description=${myArray[2]}
+    echo $Description
+    #---------------------------
+    #Split by underscore and get the 2nd part (M number)
+    M_Num=$(echo $Sample_ID | cut -d'_' -f 2)
+    echo "M_Num:"
+    echo ${M_Num}
+    #Append variable string to itself:
+    M_Num_Cond1_List+=${M_Num}
+    #---------------------------
+    echo 'Copy Condition_1 sample count files to Condition_1 folder'
+    cp ${Dataset_DIR}/${Sample_ID}/fastq/tophat2/featureCounts/${COUNT_DIR}/${Sample_ID}'_featureCounts.out' ./Input/Condition_1
+    echo 'Copy Condition_1 sample count summary files to Condition_1 folder'
+    cp ${Dataset_DIR}/${Sample_ID}/fastq/tophat2/featureCounts/${COUNT_DIR}/${Sample_ID}'_featureCounts.out.summary' ./Input/Condition_1
+    #---------------------------
 done < Condition_1.temp
 #---------------------------
 echo "M_Num_Cond1_List:"
@@ -272,30 +273,30 @@ echo "------------------------------------------"
 #Use a while loop to run jobs
 while IFS=$'\t' read -r -a myArray
 do
-#---------------------------
-##Check that text file is read in properly:
-echo 'Sample_DIR:'
-Sample_DIR=${myArray[0]}
-echo $Sample_DIR
-echo 'Sample_ID:'
-Sample_ID=${myArray[1]}
-echo $Sample_ID
-echo 'Description:'
-Description=${myArray[2]}
-echo $Description
-#---------------------------
-#Split by underscore and get the 2nd part (M number)
-M_Num=$(echo $Sample_ID | cut -d'_' -f 2)
-echo "M_Num:"
-echo ${M_Num}
-#Append variable string to itself:
-M_Num_Cond2_List+=${M_Num}
-#---------------------------
-echo 'Copy Condition_2 sample count files to Condition_2 folder'
-cp ${Dataset_DIR}/${Sample_ID}/fastq/tophat2/featureCounts/${COUNT_DIR}/${Sample_ID}'_featureCounts.out' ./Input/Condition_2
-echo 'Copy Condition_2 sample count summary files to Condition_2 folder'
-cp ${Dataset_DIR}/${Sample_ID}/fastq/tophat2/featureCounts/${COUNT_DIR}/${Sample_ID}'_featureCounts.out.summary' ./Input/Condition_2
-#---------------------------
+    #---------------------------
+    ##Check that text file is read in properly:
+    echo 'Sample_DIR:'
+    Sample_DIR=${myArray[0]}
+    echo $Sample_DIR
+    echo 'Sample_ID:'
+    Sample_ID=${myArray[1]}
+    echo $Sample_ID
+    echo 'Description:'
+    Description=${myArray[2]}
+    echo $Description
+    #---------------------------
+    #Split by underscore and get the 2nd part (M number)
+    M_Num=$(echo $Sample_ID | cut -d'_' -f 2)
+    echo "M_Num:"
+    echo ${M_Num}
+    #Append variable string to itself:
+    M_Num_Cond2_List+=${M_Num}
+    #---------------------------
+    echo 'Copy Condition_2 sample count files to Condition_2 folder'
+    cp ${Dataset_DIR}/${Sample_ID}/fastq/tophat2/featureCounts/${COUNT_DIR}/${Sample_ID}'_featureCounts.out' ./Input/Condition_2
+    echo 'Copy Condition_2 sample count summary files to Condition_2 folder'
+    cp ${Dataset_DIR}/${Sample_ID}/fastq/tophat2/featureCounts/${COUNT_DIR}/${Sample_ID}'_featureCounts.out.summary' ./Input/Condition_2
+    #---------------------------
 done < Condition_2.temp
 #---------------------------
 echo "M_Num_Cond2_List:"
@@ -322,17 +323,17 @@ echo 'NUM_REP_CONDITION1: '$NUM_REP_CONDITION1
 #------------------------------------------
 if [ "${NUM_REP_CONDITION1}" == "1" ] || [ "${NUM_REP_CONDITION2}" == "1" ] ;
 then
-echo
-echo "WARNING:"
-echo
-echo "Either your Condition_1 or Condition_2 has only 1 sample (no replicates)"
-echo "The differential expression analysis is designed for cases where there are at least 2 replicates/biological condition."
-echo "The resulting differential expression analysis will be converted to a stringent version due to absence of replicate samples."
-echo "Samples from this comparison will be treated as \"replicates\" to estimate the gene level variance in edgeR and, separately in, DESeq2."
-echo "Expect very few to zero DE genes from DESeq2, EdgeR should yield a DE gene count."
-echo "Interpreting the results: use the edgeR fold change or DESeq ratio (not DESeq fold change)"
-echo "Note regarding the SEGEX upload file(s):"
-echo "Since DESeq2 fold changes are not the same as the ratio of the normalized counts between the conditions, so the output of the segex upload file will be different between \"DESeq ratio\" and \"DESeq foldChange\". The former is truly the ratio between the normalized counts between the two conditions (plus pseudocounts) whereas the latter is the fold change estimated by DESeq."
+    echo
+    echo "WARNING:"
+    echo
+    echo "Either your Condition_1 or Condition_2 has only 1 sample (no replicates)"
+    echo "The differential expression analysis is designed for cases where there are at least 2 replicates/biological condition."
+    echo "The resulting differential expression analysis will be converted to a stringent version due to absence of replicate samples."
+    echo "Samples from this comparison will be treated as \"replicates\" to estimate the gene level variance in edgeR and, separately in, DESeq2."
+    echo "Expect very few to zero DE genes from DESeq2, EdgeR should yield a DE gene count."
+    echo "Interpreting the results: use the edgeR fold change or DESeq ratio (not DESeq fold change)"
+    echo "Note regarding the SEGEX upload file(s):"
+    echo "Since DESeq2 fold changes are not the same as the ratio of the normalized counts between the conditions, so the output of the segex upload file will be different between \"DESeq ratio\" and \"DESeq foldChange\". The former is truly the ratio between the normalized counts between the two conditions (plus pseudocounts) whereas the latter is the fold change estimated by DESeq."
 fi
 echo "=========================================================="
 #----------------------------------------------------------------------------------
@@ -349,39 +350,39 @@ echo
 cd ${TMPDIR}/Input/$CONDITION_1_NAME
 arr=(*.out)
 for ((i=0; i<${#arr[@]}; i++)); do
-#do something to each element of array
-#echo 'Original file name:'
-filename=${arr[$i]}
-#echo "${filename}"
-#Extract extension
-#name=${filename%\.out}
-#echo $name
-#echo 'Modified file name:'
-mod_name="${CONDITION_1_NAME}${i}.out"
-#echo ${mod_name}
-#Rename the file
-mv ${filename} ${TMPDIR}/Input/${mod_name}
-#rename the featurecount summary file to get the # mapped reads
-mv ${filename}.summary ${TMPDIR}/Input/${CONDITION_1_NAME}${i}.summary
+    #do something to each element of array
+    #echo 'Original file name:'
+    filename=${arr[$i]}
+    #echo "${filename}"
+    #Extract extension
+    #name=${filename%\.out}
+    #echo $name
+    #echo 'Modified file name:'
+    mod_name="${CONDITION_1_NAME}${i}.out"
+    #echo ${mod_name}
+    #Rename the file
+    mv ${filename} ${TMPDIR}/Input/${mod_name}
+    #rename the featurecount summary file to get the # mapped reads
+    mv ${filename}.summary ${TMPDIR}/Input/${CONDITION_1_NAME}${i}.summary
 done
 #Use an array to rename the files
 cd ${TMPDIR}/Input/$CONDITION_2_NAME
 arr=(*.out)
 for ((i=0; i<${#arr[@]}; i++)); do
-#do something to each element of array
-#echo 'Original file name:'
-filename=${arr[$i]}
-#echo "${filename}"
-#Extract extension
-#name=${filename%\.out}
-#echo $name
-#echo 'Modified file name:'
-mod_name="${CONDITION_2_NAME}${i}.out"
-#echo ${mod_name}
-#Rename the file
-mv ${filename} ${TMPDIR}/Input/${mod_name}
-#rename the featurecount summary file to get the # mapped reads
-mv ${filename}.summary ${TMPDIR}/Input/${CONDITION_2_NAME}${i}.summary
+    #do something to each element of array
+    #echo 'Original file name:'
+    filename=${arr[$i]}
+    #echo "${filename}"
+    #Extract extension
+    #name=${filename%\.out}
+    #echo $name
+    #echo 'Modified file name:'
+    mod_name="${CONDITION_2_NAME}${i}.out"
+    #echo ${mod_name}
+    #Rename the file
+    mv ${filename} ${TMPDIR}/Input/${mod_name}
+    #rename the featurecount summary file to get the # mapped reads
+    mv ${filename}.summary ${TMPDIR}/Input/${CONDITION_2_NAME}${i}.summary
 done
 #----------------------------------------------------------------------------------
 #copying lengths
@@ -532,23 +533,23 @@ cd ${OUTPUT_DIR}
 Text_file_list=*.txt
 for Text_file in ${Text_file_list}
 do
-#echo ${Text_file}
-#Extract file name:
-file_name=${Text_file%\.txt}
-#echo $file_name
-#Rename files:
-mv ${Text_file} ${file_name}'_'${COUNT_PROGRAM}'.txt'
+    #echo ${Text_file}
+    #Extract file name:
+    file_name=${Text_file%\.txt}
+    #echo $file_name
+    #Rename files:
+    mv ${Text_file} ${file_name}'_'${COUNT_PROGRAM}'.txt'
 done
 #----------------------------------------------------------------
 PNG_file_list=*.png
 for PNG_file in ${PNG_file_list}
 do
-#echo ${PNG_file}
-#Extract file name:
-file_name=${PNG_file%\.png}
-#echo $file_name
-#Rename files:
-mv ${PNG_file} ${file_name}'_'${COUNT_PROGRAM}'.png'
+    #echo ${PNG_file}
+    #Extract file name:
+    file_name=${PNG_file%\.png}
+    #echo $file_name
+    #Rename files:
+    mv ${PNG_file} ${file_name}'_'${COUNT_PROGRAM}'.png'
 done
 #----------------------------------------------------------------
 echo

@@ -5,35 +5,33 @@
 #The output is a Venn diagram showing the count of common and unique genes
 #This scripts works in conjuction with Diff_Genes.R (part of the DiffExp_* job of the RNA-Seq pipeline)
 #Output of Diff_Genes.R is used as input for this script
-#----------------------------------------------------------------------------------
+
 #Notes:
 #<File1_Data>		= Output of Diff_Genes.R (Down_Genes_DESeq.txt or Up_Genes_DESeq.txt)
 #<File2_Data> 		= Output of Diff_Genes.R (Down_Genes_EdgeR.txt or Up_Genes_EdgeR.txt)
 #<Subtitle>		= Plot subtitle to indicate counting method (GeneBody, Exonic_Only, Intronic_Only) (Use the COL_SUFFIX variable from the DiffExp_* job)
 #<DiffExp_Index> 	= Label needed for the Count_Table (Use the DiffExp_Index variable from the DiffExp_* job)
-#----------------------------------------------------------------------------------
+
 #Usage: 
 #Rscript Venn_Diff_Genes.R <File1_Data> <File2_Data> <Subtitle> <DiffExp_Index>
 #Example commands to run script:
-#----------------------------------------------------------------------------------
+
 #File1=Down_Genes_DESeq_GeneBody_Male_G83_M1M2_Female_G83_M3M4_HTSeq.txt
 #File2=Down_Genes_EdgeR_GeneBody_Male_G83_M1M2_Female_G83_M3M4_HTSeq.txt
 #Subtitle=GeneBody
 #DiffExp_Index=DiffExp_1a
 #Rscript Venn_Diff_Genes.R ${File1} ${File2} ${Subtitle} ${DiffExp_Index}
-#----------------------------------------------------------------------------------
+
 #File1=Up_Genes_DESeq_GeneBody_Male_G83_M1M2_Female_G83_M3M4_HTSeq.txt
 #File2=Up_Genes_EdgeR_GeneBody_Male_G83_M1M2_Female_G83_M3M4_HTSeq.txt
 #Subtitle=GeneBody
 #DiffExp_Index=DiffExp_1a
 #Rscript Venn_Diff_Genes.R ${File1} ${File2} ${Subtitle} ${DiffExp_Index}
-#----------------------------------------------------------------------------------
-##############################################################################################
-#---------------------------------------------------------------------------------------------
+
 #Load packages:
 #install.packages("VennDiagram")
 library(VennDiagram)
-#---------------------------------------------------------------------------------------------
+
 #Pass arguments from sh into R
 args <- commandArgs(trailingOnly = TRUE)
 File1 <- args[1]
@@ -45,12 +43,12 @@ DiffExp_Index <- args[4]
 # File2 <- "Down_Genes_LncRNA_ExonCollapsed_featureCounts.txt"
 # Subtitle <- "LncRNA_ExonCollapsed"
 # DiffExp_Index <- "DiffExp_1d"
-#---------------------------------------------------------------------------------------------
+
 if(length(args) != 4){
 print("Need 4 arguments:")
 print("Usage: Rscript Venn_Diff_Genes.R <File1_Data> <File2_Data> <Subtitle> <DiffExp_Index>")
 }
-#---------------------------------------------------------------------------------------------
+
 print("Print arguments:")
 print("-----------------")
 print("File1:")
@@ -62,13 +60,14 @@ paste(Subtitle,sep="")
 print("DiffExp_Index:")
 paste(DiffExp_Index,sep="")
 print("-----------------")
-#---------------------------------------------------------------------------------------------
+
 #Need to set the dir so that this script can work in any folder:
 dir <- getwd()
 setwd(dir)
-#---------------------------------------------------------------------------------------------
+
 #Read in File1
 File1_Data <- read.table(file=File1, header=TRUE, as.is=TRUE, fill = TRUE)
+
 #Just rename 1st column:
 colnames(File1_Data)[1] <- "Gene.Symbol"
 #Useful to get the file name
@@ -103,9 +102,16 @@ Count_Program <- ifelse(grepl("featureCounts",File1_Name),"featureCounts","HTSeq
 #Once I get each part; paste them together
 File1_Label <- paste(Direction, R_Package,feature_counted,  Count_Program, sep=".")
 print(File1_Label)
-#---------------------------------------------------------------------------------------------
+
 #Read in File2
 File2_Data <- read.table(file=File2, header=TRUE, as.is=TRUE, fill = TRUE)
+
+# interrupt without error (do not draw venn diagram)
+if (nrow(File2_Data) == 0 && nrow(File1_Data) == 0) {
+       print(paste0("WARNING: Bot input files is zero length! Do nothing!"))
+       quit(save = "no", status = 0, runLast = F)
+}
+
 #Just rename 1st column:
 colnames(File2_Data)[1] <- "Gene.Symbol"
 #Useful to get the file name

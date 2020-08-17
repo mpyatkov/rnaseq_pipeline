@@ -7,6 +7,10 @@
 #./DiffExp_Summary.sh
 ##################################################################################
 
+set -o errexit
+set -o pipefail
+set -o nounset
+
 echo
 echo 'Loading required modules...'
 echo
@@ -24,6 +28,7 @@ module load R/3.6.0
 eval "$(../00_Setup_Pipeline/01_Pipeline_Setup.py --export)"
 
 SCRIPT_DIR=$(pwd)
+
 #Source job-specific variables:
 source setup_DiffExp.sh
 #---------------------------------------------------------------------------------
