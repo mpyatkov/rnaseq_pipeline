@@ -7,6 +7,10 @@
 # The result fo this script copies all the Diffexp_v2_genebody (.txt) files from DE analysis (FeatureCount Method) and copies in the current directory. These files are then used as input bu the Pearson_Script.R to generate pearson correlation plots and matrices.
 # The output of this script is two folders: 1) Pearson_All (All genes were involved to calculate the pearson) 2) Pearson_Filtered (Genes filtered by rpkm  > 1 are used for calculating the pearson values)
 
+set -o errexit
+set -o pipefail
+set -o nounset
+
 module load gcc/8.1.0
 module load R/3.6.0
 

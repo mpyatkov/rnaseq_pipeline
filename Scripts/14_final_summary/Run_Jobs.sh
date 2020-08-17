@@ -53,25 +53,23 @@ cp -rf  ${Level_UP}/07_CollectInsertSizeMetrics/Job_Summary/CollectInsertSizeMet
 cp -rf  ${Level_UP}/08b_Extract_Counts_featureCounts/Job_Summary/featureCounts_summary_Illumina_GTF.txt  .
 cp -rf  ${Level_UP}/08b_Extract_Counts_featureCounts/Job_Summary/featureCounts_summary_LncRNA_Exon_Collapsed_GTF.txt  .
 cp -rf ${Level_UP}/13b_Pearson_Correlation_featureCounts/PCA* .
-cp -rf ${Level_UP}/13c_Pearson_Correlation_featureCounts_lncRNA/PCA* .
+cp -rf ${Level_UP}/13c_Pearson_Correlation_lncRNA/PCA* .
 
 mv *.txt ${Level_UP}/14_final_summary/output
 mv *.pdf ${Level_UP}/14_final_summary/output
-mv *.csv ${Level_UP}/14_final_summary/output
-
-
+# mv *.csv ${Level_UP}/14_final_summary/output
 
 #echo 'Setup_Pipeline_DIR :' $Setup_Pipeline_DIR
 cc=$(find ../ -name "[0-9][0-9]*b_DE_*_FEATURECOUNTS" | wc -l);
 echo $cc
 start=1
 for((i=$start; i <=$cc; i++))
-   { 	
-       cp -rf ${Level_UP}/09b_DE_${i}_FEATURECOUNTS/Summary_Differential_Expression/SEGEX_Upload_Files/Individual/*_GeneBody_forSEGEXUpload_TPM_EdgeR_featureCounts.txt .
-       cp -rf ${Level_UP}/09b_DE_${i}_FEATURECOUNTS/Summary_Differential_Expression/SEGEX_Upload_Files/Individual/*_GeneBody_forSEGEXUpload_EdgeR_featureCounts.txt .
-       cp -rf ${Level_UP}/09c_DE_${i}_LNCRNA/Summary_Differential_Expression/SEGEX_Upload_Files/Individual/*_GeneBody_forSEGEXUpload_TPM_EdgeR_featureCounts.txt .
-       cp -rf ${Level_UP}/09c_DE_${i}_LNCRNA/Summary_Differential_Expression/SEGEX_Upload_Files/Individual/*_GeneBody_forSEGEXUpload_EdgeR_featureCounts.txt .
-   }
-   mv *.txt ${Level_UP}/14_final_summary/output	
+{ 	
+    cp -rf ${Level_UP}/09b_DE_${i}_FEATURECOUNTS/Summary_Differential_Expression/SEGEX_Upload_Files/Individual/*_GeneBody_forSEGEXUpload_TPM_EdgeR_featureCounts.txt .
+    cp -rf ${Level_UP}/09b_DE_${i}_FEATURECOUNTS/Summary_Differential_Expression/SEGEX_Upload_Files/Individual/*_GeneBody_forSEGEXUpload_EdgeR_featureCounts.txt .
+    cp -rf ${Level_UP}/09c_DE_${i}_LNCRNA/Summary_Differential_Expression/SEGEX_Upload_Files/Individual/*_GeneBody_forSEGEXUpload_TPM_EdgeR_featureCounts.txt .
+    cp -rf ${Level_UP}/09c_DE_${i}_LNCRNA/Summary_Differential_Expression/SEGEX_Upload_Files/Individual/*_GeneBody_forSEGEXUpload_EdgeR_featureCounts.txt .
+}
 
-   echo "All files copied  Done "
+mv *.txt ${Level_UP}/14_final_summary/output	
+echo "All files copied. Done "
