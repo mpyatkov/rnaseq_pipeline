@@ -1,4 +1,9 @@
 #!/bin/bash
+
+set -o errexit
+set -o pipefail
+set -o nounset
+
 ##################################################################################
 #Andy Rampersaud, 02.23.16
 #This script would be used to summarize Read_Strandness statistics 
@@ -6,10 +11,6 @@
 #Usage: 
 #./Read_Strandness_Summary.sh
 ##################################################################################
-
-set -o errexit
-set -o pipefail
-set -o nounset
 
 # export all variables from Pipeline_Setup.conf
 eval "$(../00_Setup_Pipeline/01_Pipeline_Setup.py --export)"
