@@ -8,9 +8,9 @@
 #./Generate_Tracks.sh 
 ##################################################################################
 
-# set -o errexit
-# set -o pipefail
-# set -o nounset
+set -o errexit
+set -o pipefail
+set -o nounset
 
 # export all variables from Pipeline_Setup.conf
 eval "$(../00_Setup_Pipeline/01_Pipeline_Setup.py --export)"
@@ -51,7 +51,7 @@ rm -rf ${OUTPUT_DIR} && mkdir -p ${OUTPUT_DIR}
 
 ###############################
 cd ${SCRIPT_DIR}
-OUTPUT_FILE_PileUp=${OUTPUT_DIR}/${Dataset_Label}'_Tracks_PileUp.txt'
+OUTPUT_FILE_PileUp=${OUTPUT_DIR}/${DATASET_LABEL}'_Tracks_PileUp.txt'
 rm -rf  ${OUTPUT_FILE_PileUp}; 
 
 echo
@@ -133,7 +133,7 @@ do
     Sample_DIR=${samples[i]}
     Sample_ID=${samples[i+1]}
     Description=${samples[i+2]}
-    Color=${myArray[i+3]}
+    Color=${samples[i+3]}
 
     #visibility options for bw files:
     #full, dense, hide
@@ -152,10 +152,10 @@ do
     then
 
         #Make bigWig tracks (reads):
-        echo 'track type=bigWig name="'${Sample_ID}'_Forward_norm" description="'${Description}'_Forward_norm" db=mm9 visibility='${BW_Visual}' autoScale=on viewLimits=0.0:100.0 color="'${Color}'" yLineOnOff=off windowingFunction=mean smoothingWindow=3 maxHeightPixels=100:64:8 bigDataUrl=http://waxmanlabvm.bu.edu/'${BU_USER}'/'${Dataset_Label}'/'${Sample_ID}'.Forward.bw'
+        echo 'track type=bigWig name="'${Sample_ID}'_Forward_norm" description="'${Description}'_Forward_norm" db=mm9 visibility='${BW_Visual}' autoScale=on viewLimits=0.0:100.0 color="'${Color}'" yLineOnOff=off windowingFunction=mean smoothingWindow=3 maxHeightPixels=100:64:8 bigDataUrl=http://waxmanlabvm.bu.edu/'${BU_USER}'/'${DATASET_LABEL}'/'${Sample_ID}'.Forward.bw'
 
         #Make bigWig tracks (reads):
-        echo 'track type=bigWig name="'${Sample_ID}'_Reverse_norm" description="'${Description}'_Reverse_norm" db=mm9 visibility='${BW_Visual}' autoScale=on viewLimits=0.0:100.0 color="'${Color}'" yLineOnOff=off windowingFunction=mean smoothingWindow=3 negateValues=off maxHeightPixels=100:64:8 bigDataUrl=http://waxmanlabvm.bu.edu/'${BU_USER}'/'${Dataset_Label}'/'${Sample_ID}'.Reverse.bw'
+        echo 'track type=bigWig name="'${Sample_ID}'_Reverse_norm" description="'${Description}'_Reverse_norm" db=mm9 visibility='${BW_Visual}' autoScale=on viewLimits=0.0:100.0 color="'${Color}'" yLineOnOff=off windowingFunction=mean smoothingWindow=3 negateValues=off maxHeightPixels=100:64:8 bigDataUrl=http://waxmanlabvm.bu.edu/'${BU_USER}'/'${DATASET_LABEL}'/'${Sample_ID}'.Reverse.bw'
     fi
 
     #---------------------------------------------------------------------------------
@@ -163,7 +163,7 @@ do
     #---------------------------------------------------------------------------------
     if [ "${STRAND_RULE}" == "none" ];
     then
-        echo 'track type=bigWig name="'${Sample_ID}'_norm" description="'${Description}'" db=mm9 visibility='${BW_Visual}' autoScale=on viewLimits=0.0:100.0 color="'${Color}'" yLineOnOff=off windowingFunction=mean smoothingWindow=3 maxHeightPixels=100:64:8 bigDataUrl=http://waxmanlabvm.bu.edu/'${BU_USER}'/'${Dataset_Label}'/'${Sample_ID}'.bw'
+        echo 'track type=bigWig name="'${Sample_ID}'_norm" description="'${Description}'" db=mm9 visibility='${BW_Visual}' autoScale=on viewLimits=0.0:100.0 color="'${Color}'" yLineOnOff=off windowingFunction=mean smoothingWindow=3 maxHeightPixels=100:64:8 bigDataUrl=http://waxmanlabvm.bu.edu/'${BU_USER}'/'${DATASET_LABEL}'/'${Sample_ID}'.bw'
     fi
 
     #---------------------------------------------------------------------------------
@@ -181,14 +181,14 @@ do
     #BAM_Visual=squish
     #---------------------------
 
-    echo 'track type=bam name="'${Sample_ID}'_'${Description}'" description="'${Sample_ID}'_'${Description}'" bamColorMode=strand db=mm9 visibility='${BAM_Visual}' bigDataUrl=http://waxmanlabvm.bu.edu/'${BU_USER}'/'${Dataset_Label}'/'${Sample_ID}'_primary_unique.bam'
+    echo 'track type=bam name="'${Sample_ID}'_'${Description}'" description="'${Sample_ID}'_'${Description}'" bamColorMode=strand db=mm9 visibility='${BAM_Visual}' bigDataUrl=http://waxmanlabvm.bu.edu/'${BU_USER}'/'${DATASET_LABEL}'/'${Sample_ID}'_primary_unique.bam'
 done  >> ${OUTPUT_FILE_PileUp}
 echo
 echo 'End *_Tracks_PileUp.txt'
 echo
 
 ##################################################################################
-OUTPUT_FILE_Wiggle=${OUTPUT_DIR}/${Dataset_Label}'_Tracks_Wiggle.txt'
+OUTPUT_FILE_Wiggle=${OUTPUT_DIR}/${DATASET_LABEL}'_Tracks_Wiggle.txt'
 rm -rf ${OUTPUT_FILE_Wiggle}
 
 echo
@@ -269,7 +269,7 @@ do
     Sample_DIR=${samples[i]}
     Sample_ID=${samples[i+1]}
     Description=${samples[i+2]}
-    Color=${myArray[i+3]}
+    Color=${samples[i+3]}
 
     #---------------------------
     #visibility options for bw files:
@@ -289,10 +289,10 @@ do
     then
 
         #Make bigWig tracks (reads):
-        echo 'track type=bigWig name="'${Sample_ID}'_Forward_norm" description="'${Description}'_Forward_norm" db=mm9 visibility='${BW_Visual}' autoScale=off viewLimits=0.0:100.0 color="'${Color}'" yLineOnOff=off windowingFunction=mean smoothingWindow=3 maxHeightPixels=100:64:8 bigDataUrl=http://waxmanlabvm.bu.edu/'${BU_USER}'/'${Dataset_Label}'/'${Sample_ID}'.Forward.bw'
+        echo 'track type=bigWig name="'${Sample_ID}'_Forward_norm" description="'${Description}'_Forward_norm" db=mm9 visibility='${BW_Visual}' autoScale=off viewLimits=0.0:100.0 color="'${Color}'" yLineOnOff=off windowingFunction=mean smoothingWindow=3 maxHeightPixels=100:64:8 bigDataUrl=http://waxmanlabvm.bu.edu/'${BU_USER}'/'${DATASET_LABEL}'/'${Sample_ID}'.Forward.bw'
 
         #Make bigWig tracks (reads):
-        echo 'track type=bigWig name="'${Sample_ID}'_Reverse_norm" description="'${Description}'_Reverse_norm" db=mm9 visibility='${BW_Visual}' autoScale=off viewLimits=0.0:100.0 color="'${Color}'" yLineOnOff=off windowingFunction=mean smoothingWindow=3 negateValues=off maxHeightPixels=100:64:8 bigDataUrl=http://waxmanlabvm.bu.edu/'${BU_USER}'/'${Dataset_Label}'/'${Sample_ID}'.Reverse.bw'
+        echo 'track type=bigWig name="'${Sample_ID}'_Reverse_norm" description="'${Description}'_Reverse_norm" db=mm9 visibility='${BW_Visual}' autoScale=off viewLimits=0.0:100.0 color="'${Color}'" yLineOnOff=off windowingFunction=mean smoothingWindow=3 negateValues=off maxHeightPixels=100:64:8 bigDataUrl=http://waxmanlabvm.bu.edu/'${BU_USER}'/'${DATASET_LABEL}'/'${Sample_ID}'.Reverse.bw'
     fi
 
     #---------------------------------------------------------------------------------
@@ -300,7 +300,7 @@ do
     #---------------------------------------------------------------------------------
     if [ "${STRAND_RULE}" == "none" ];
     then
-        echo 'track type=bigWig name="'${Sample_ID}'_norm" description="'${Description}'" db=mm9 visibility='${BW_Visual}' autoScale=off viewLimits=0.0:100.0 color="'${Color}'" yLineOnOff=off windowingFunction=mean smoothingWindow=3 maxHeightPixels=100:64:8 bigDataUrl=http://waxmanlabvm.bu.edu/'${BU_USER}'/'${Dataset_Label}'/'${Sample_ID}'.bw'
+        echo 'track type=bigWig name="'${Sample_ID}'_norm" description="'${Description}'" db=mm9 visibility='${BW_Visual}' autoScale=off viewLimits=0.0:100.0 color="'${Color}'" yLineOnOff=off windowingFunction=mean smoothingWindow=3 maxHeightPixels=100:64:8 bigDataUrl=http://waxmanlabvm.bu.edu/'${BU_USER}'/'${DATASET_LABEL}'/'${Sample_ID}'.bw'
     fi
     #---------------------------------------------------------------------------------
     #Make BAM tracks (reads):
@@ -316,13 +316,13 @@ do
     #BAM_Visual=pack
     #BAM_Visual=squish
     #---------------------------
-    echo 'track type=bam name="'${Sample_ID}'_'${Description}'" description="'${Sample_ID}'_'${Description}'" bamColorMode=strand db=mm9 visibility='${BAM_Visual}' bigDataUrl=http://waxmanlabvm.bu.edu/'${BU_USER}'/'${Dataset_Label}'/'${Sample_ID}'_primary_unique.bam'
+    echo 'track type=bam name="'${Sample_ID}'_'${Description}'" description="'${Sample_ID}'_'${Description}'" bamColorMode=strand db=mm9 visibility='${BAM_Visual}' bigDataUrl=http://waxmanlabvm.bu.edu/'${BU_USER}'/'${DATASET_LABEL}'/'${Sample_ID}'_primary_unique.bam'
 done >> ${OUTPUT_FILE_Wiggle}
 echo
 echo 'End *_Tracks_Wiggle.txt'
 echo
 ##################################################################################
-OUTPUT_FILE_Wiggle_autoON=${OUTPUT_DIR}/${Dataset_Label}'_Tracks_Wiggle_autoON.txt'
+OUTPUT_FILE_Wiggle_autoON=${OUTPUT_DIR}/${DATASET_LABEL}'_Tracks_Wiggle_autoON.txt'
 #---------------------------
 if [ -f ${OUTPUT_FILE_Wiggle_autoON} ]; then
     rm ${OUTPUT_FILE_Wiggle_autoON}; 
@@ -391,7 +391,7 @@ do
     Sample_DIR=${samples[i]}
     Sample_ID=${samples[i+1]}
     Description=${samples[i+2]}
-    Color=${myArray[i+3]}
+    Color=${samples[i+3]}
 
     #---------------------------
     #visibility options for bw files:
@@ -411,10 +411,10 @@ do
     then
 
         #Make bigWig tracks (reads):
-        echo 'track type=bigWig name="'${Sample_ID}'_Forward_norm" description="'${Description}'_Forward_norm" db=mm9 visibility='${BW_Visual}' autoScale=on viewLimits=0.0:100.0 color="'${Color}'" yLineOnOff=off windowingFunction=mean smoothingWindow=3 maxHeightPixels=100:64:8 bigDataUrl=http://waxmanlabvm.bu.edu/'${BU_USER}'/'${Dataset_Label}'/'${Sample_ID}'.Forward.bw'
+        echo 'track type=bigWig name="'${Sample_ID}'_Forward_norm" description="'${Description}'_Forward_norm" db=mm9 visibility='${BW_Visual}' autoScale=on viewLimits=0.0:100.0 color="'${Color}'" yLineOnOff=off windowingFunction=mean smoothingWindow=3 maxHeightPixels=100:64:8 bigDataUrl=http://waxmanlabvm.bu.edu/'${BU_USER}'/'${DATASET_LABEL}'/'${Sample_ID}'.Forward.bw'
 
         #Make bigWig tracks (reads):
-        echo 'track type=bigWig name="'${Sample_ID}'_Reverse_norm" description="'${Description}'_Reverse_norm" db=mm9 visibility='${BW_Visual}' autoScale=on viewLimits=0.0:100.0 color="'${Color}'" yLineOnOff=off windowingFunction=mean smoothingWindow=3 negateValues=off maxHeightPixels=100:64:8 bigDataUrl=http://waxmanlabvm.bu.edu/'${BU_USER}'/'${Dataset_Label}'/'${Sample_ID}'.Reverse.bw'
+        echo 'track type=bigWig name="'${Sample_ID}'_Reverse_norm" description="'${Description}'_Reverse_norm" db=mm9 visibility='${BW_Visual}' autoScale=on viewLimits=0.0:100.0 color="'${Color}'" yLineOnOff=off windowingFunction=mean smoothingWindow=3 negateValues=off maxHeightPixels=100:64:8 bigDataUrl=http://waxmanlabvm.bu.edu/'${BU_USER}'/'${DATASET_LABEL}'/'${Sample_ID}'.Reverse.bw'
     fi
 
     #---------------------------------------------------------------------------------
@@ -422,7 +422,7 @@ do
     #---------------------------------------------------------------------------------
     if [ "${STRAND_RULE}" == "none" ];
     then
-        echo 'track type=bigWig name="'${Sample_ID}'_norm" description="'${Description}'" db=mm9 visibility='${BW_Visual}' autoScale=on viewLimits=0.0:100.0 color="'${Color}'" yLineOnOff=off windowingFunction=mean smoothingWindow=3 maxHeightPixels=100:64:8 bigDataUrl=http://waxmanlabvm.bu.edu/'${BU_USER}'/'${Dataset_Label}'/'${Sample_ID}'.bw'
+        echo 'track type=bigWig name="'${Sample_ID}'_norm" description="'${Description}'" db=mm9 visibility='${BW_Visual}' autoScale=on viewLimits=0.0:100.0 color="'${Color}'" yLineOnOff=off windowingFunction=mean smoothingWindow=3 maxHeightPixels=100:64:8 bigDataUrl=http://waxmanlabvm.bu.edu/'${BU_USER}'/'${DATASET_LABEL}'/'${Sample_ID}'.bw'
     fi
 
     #---------------------------------------------------------------------------------
@@ -440,7 +440,7 @@ do
     #BAM_Visual=squish
     #---------------------------
 
-    echo 'track type=bam name="'${Sample_ID}'_'${Description}'" description="'${Sample_ID}'_'${Description}'" bamColorMode=strand db=mm9 visibility='${BAM_Visual}' bigDataUrl=http://waxmanlabvm.bu.edu/'${BU_USER}'/'${Dataset_Label}'/'${Sample_ID}'_primary_unique.bam'
+    echo 'track type=bam name="'${Sample_ID}'_'${Description}'" description="'${Sample_ID}'_'${Description}'" bamColorMode=strand db=mm9 visibility='${BAM_Visual}' bigDataUrl=http://waxmanlabvm.bu.edu/'${BU_USER}'/'${DATASET_LABEL}'/'${Sample_ID}'_primary_unique.bam'
 done  >> ${OUTPUT_FILE_Wiggle_autoON}
 echo
 echo 'End *_Tracks_Wiggle_autoON.txt'
