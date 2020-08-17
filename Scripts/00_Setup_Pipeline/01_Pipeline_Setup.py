@@ -254,6 +254,7 @@ class DiffExpression():
         """
 
         cond_value = getattr(compar_config, condition_num)
+        # TODO: when only one sample raise error
         cond_samples = sample_config.samplesByGroup(cond_value)
         condition_name = cond_samples[0].Condition_Name
         
@@ -261,7 +262,7 @@ class DiffExpression():
             header = "Sample_DIR\tSample_ID\tDescription\n"
             Condition.write(header)
             samples = [f"{s.Sample_DIR}\t{s.Sample_ID}\t{s.Condition_Name}" for s in cond_samples]
-            samples = "\n".join(samples)
+            samples = "\n".join(samples)+"\n"
             Condition.write(samples)
         return condition_name
 
@@ -273,7 +274,7 @@ class DiffExpression():
                 DIR_NAME = os.path.basename(TMPL).replace('TEMPLATE_','')
                 DIR_NAME = DIR_NAME.replace('NN', CMP.Comparison_Number)
 
-                SCRIPT_PATH = os.getenv('SETUP_PIPELINE_DIR')
+                SCRIPT_PATH = os.getcwd('SETUP_PIPELINE_DIR')
 
                 # TODO: change it to OUTPUT path (SCRIPT_PATH+"/"+)
                 
