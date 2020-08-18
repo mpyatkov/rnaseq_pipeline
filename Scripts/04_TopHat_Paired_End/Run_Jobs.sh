@@ -19,10 +19,10 @@ rm -rf *.e* *.o* *.po* *.pe*
 
 # we activated this module for case when we need run this script independently
 
-set +x
+set +eu
 module load anaconda2
 source activate RNAseq
-set -x
+set -eu
 
 # export all variables from Pipeline_Setup.conf
 eval "$(../00_Setup_Pipeline/01_Pipeline_Setup.py --export)"

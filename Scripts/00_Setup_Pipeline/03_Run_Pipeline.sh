@@ -94,8 +94,6 @@ fi
 #For loop over steps in the pipeline
 for STEP in ${PIPELINE_STEPS}
 do
-    echo ${PIPELINE_STEPS}
-    
     echo "Running: ${STEP} ..." 
     
     # cd "${STEP}"
