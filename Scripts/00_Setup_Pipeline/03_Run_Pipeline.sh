@@ -49,17 +49,17 @@ START_TIME=$(date +"%s")
 # export and print all variables from Pipeline_Setup.conf
 eval "$(./01_Pipeline_Setup.py --export)"
 
-# The Scripts folder is 1 level up from 00_Setup_Pipeline:
-cd ..
-STEPS_DIR=$(pwd)
-
 # if full pipeline than generate DE directories
-
 if [[ "${START_STEP}" == "FULL" ]]
 then
     ./01_Pipeline_Setup.py --generate
 fi
 # TODO: check existence of 09* directories
+
+
+# The Scripts folder is 1 level up from 00_Setup_Pipeline:
+cd ..
+STEPS_DIR=$(pwd)
 
 # get all steps (directories with numbers in the beginning)
 ALL_PIPELINE_STEPS=$(find . -maxdepth 1 -type d -name '[[:digit:]]*' | sort -n | xargs -n1 basename | sed -n '/^[0-9]/p' | sed '/00_Setup_Pipeline/d' | sed '/Rename_Folders/d' | sed '/Generate_Tracks/d')
