@@ -40,6 +40,7 @@ then
     echo "See 03_Run_Pipeline.sh for details."	
     exit 
 fi
+
 START_STEP=$1
 
 # Job time START_TIME in seconds
@@ -52,21 +53,25 @@ eval "$(./01_Pipeline_Setup.py --export)"
 cd ..
 STEPS_DIR=$(pwd)
 
+# if full pipeline than generate DE directories
+
+if [[ "${START_STEP}" == "FULL" ]]
+then
+    ./01_Pipeline_Setup.py --generate
+fi
+# TODO: check existence of 09* directories
+
 # get all steps (directories with numbers in the beginning)
-# ALL_PIPELINE_STEPS=$(find . -maxdepth 1 -type d -name '[[:digit:]]*' | sort -n | xargs -n1 basename | sed -n '/^[0-9]/p' | sed '/00_Setup_Pipeline/d' | sed '/Rename_Folders/d' | sed '/Generate_Tracks/d')
+ALL_PIPELINE_STEPS=$(find . -maxdepth 1 -type d -name '[[:digit:]]*' | sort -n | xargs -n1 basename | sed -n '/^[0-9]/p' | sed '/00_Setup_Pipeline/d' | sed '/Rename_Folders/d' | sed '/Generate_Tracks/d')
 
 # is full pipeline execution? Yes by default
 ISFULL=1
 
-# TODO: need refactoring twice ALL_PIPELINE_STEPS is not good here
-
-if [[ ${START_STEP} == "FULL" ]]
+if [[ "${START_STEP}" == "FULL" ]]
 then
-    ./01_Pipeline_Setup.py --generate
-    ALL_PIPELINE_STEPS=$(find . -maxdepth 1 -type d -name '[[:digit:]]*' | sort -n | xargs -n1 basename | sed -n '/^[0-9]/p' | sed '/00_Setup_Pipeline/d' | sed '/Rename_Folders/d' | sed '/Generate_Tracks/d')
     PIPELINE_STEPS=${ALL_PIPELINE_STEPS}
 else
-    ALL_PIPELINE_STEPS=$(find . -maxdepth 1 -type d -name '[[:digit:]]*' | sort -n | xargs -n1 basename | sed -n '/^[0-9]/p' | sed '/00_Setup_Pipeline/d' | sed '/Rename_Folders/d' | sed '/Generate_Tracks/d')
+    # discard lines before START_STEPS
     PIPELINE_STEPS=$(printf "%s\n" "${ALL_PIPELINE_STEPS}" | sed -n -e '/'${START_STEP}'/,$p')
     ISFULL=0
 fi
@@ -74,21 +79,17 @@ fi
 # START PIPELINE
 
 # Run 01_Rename_Folders before pipeline execution
-STEP_DIR=$(find . -maxdepth 1 -type d -name '[[:digit:]]*' | xargs -n1 basename | sed -n '/Rename_Folders/p')
-
-echo "Running: ${STEP_DIR}..." 
-
-# if full exectution
 if [[ $ISFULL -eq 1 ]]
 then
     #Go to the directory 01_Rename_Folders, run job and go back automaticaly:
     (
+	STEP_DIR=$(find . -maxdepth 1 -type d -name '[[:digit:]]*' | xargs -n1 basename | sed -n '/Rename_Folders/p')
+	echo "Running: ${STEP_DIR}..." 
 	cd "${STEP_DIR}"
 	./Rename_Folders.sh
+	echo "Done: ${STEP_DIR}"
     )
 fi
-
-echo "Done: ${STEP_DIR}"
 
 #For loop over steps in the pipeline
 for STEP in ${PIPELINE_STEPS}
@@ -151,12 +152,11 @@ do
 done
 
 # For the 12_Generate_Tracks - I just want to run this step 
-STEP_DIR=$(find . -maxdepth 1 -type d -name '[[:digit:]]*' | xargs -n1 basename | sed -n '/Generate_Tracks/p')
-
-echo "Running: ${STEP_DIR}..." 
-
 # Run the step 12_Generate_Tracks and automatically go back:
 (
+    STEP_DIR=$(find . -maxdepth 1 -type d -name '[[:digit:]]*' | xargs -n1 basename | sed -n '/Generate_Tracks/p')
+
+    echo "Running: ${STEP_DIR}..." 
     cd "${STEP_DIR}"
     ./Generate_Tracks.sh
 )
@@ -174,6 +174,7 @@ printf "Job run times that deviate from the average should be inspected for poss
 
 cd "${STEPS_DIR}"
 
+# set +eu
 # # scan all steps again to extract information about time
 # for STEP in ${ALL_PIPELINE_STEPS}
 # do
@@ -183,8 +184,8 @@ cd "${STEPS_DIR}"
 #         echo "${STEP}" >> "${OUTPUT_FILE}"
 #         grep 'elapsed' *.o* >> "${OUTPUT_FILE}"
 #     )
-
 # done
+# set -eu
 
 #Also want to print the time to run this script:
 echo '--------------------' >> "${OUTPUT_FILE}"
