@@ -39,7 +39,7 @@ do
     description=${samples[i+2]}
 
     #Need to cd to sample specific CollectInsertSizeMetrics folder
-    pushd "${DATASET_DIR}/${sample_id}/fastq/tophat2/CollectInsertSizeMetrics"
+    pushd "${DATASET_DIR}/${sample_id}/tophat2/CollectInsertSizeMetrics"
 
     #Copy hist file to output_dir
     cp ${sample_id}'_hist.pdf' ${output_dir}

@@ -82,7 +82,7 @@ do
             
             echo $sample_id
             #Need to cd to sample specific tophat2 folder
-            cd ${DATASET_DIR}/$sample_id/fastq/tophat2
+            cd ${DATASET_DIR}/$sample_id/tophat2
             #------------------------------------------
             #Get counts from *_align_summary.txt file
             # echo 'Getting the total number of mapped reads...'
@@ -101,7 +101,7 @@ do
             echo 'Getting READS_IN_EXONS...'
             #Need to cd to sample specific HTSeq folder
             #Need if statements to process the *_HTSeq.out file depending on the ANNOTATION_FILE used:
-            HTSeq_DIR=${DATASET_DIR}/$sample_id/fastq/tophat2/HTSeq
+            HTSeq_DIR=${DATASET_DIR}/$sample_id/tophat2/HTSeq
             #------------------------------------------
             if [ "${ANNOTATION_FILE}" == "genes.gtf" ];
             then
@@ -153,7 +153,7 @@ do
         
             echo $sample_id
             #Need to cd to sample specific tophat2 folder
-            cd ${DATASET_DIR}/$sample_id/fastq/tophat2
+            cd ${DATASET_DIR}/$sample_id/tophat2
             
             
             #Get counts from *_align_summary.txt file
@@ -178,7 +178,7 @@ do
             # Need if statements to process the *_HTSeq.out file depending on the
             # ANNOTATION_FILE used:
 
-            HTSeq_DIR=${DATASET_DIR}/$sample_id/fastq/tophat2/HTSeq
+            HTSeq_DIR=${DATASET_DIR}/$sample_id/tophat2/HTSeq
             #------------------------------------------
             
             if [ "${ANNOTATION_FILE}" == "genes.gtf" ];

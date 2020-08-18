@@ -105,7 +105,7 @@ do
         echo $sample_id
         #Need to cd to sample specific tophat2 folder
 
-        pushd ${DATASET_DIR}/$sample_id/fastq/tophat2
+        pushd ${DATASET_DIR}/$sample_id/tophat2
         #------------------------------------------
         #Get counts from *_align_summary.txt file
         # echo 'Getting the total number of mapped reads...'
@@ -126,7 +126,7 @@ do
         echo 'Getting READS_IN_EXONS...'
         #Need to cd to sample specific featureCounts folder
         #Need if statements to process the *_featureCounts.out file depending on the ANNOTATION_FILE used:
-        featureCounts_DIR=${DATASET_DIR}/$sample_id/fastq/tophat2/featureCounts
+        featureCounts_DIR=${DATASET_DIR}/$sample_id/tophat2/featureCounts
         
         if [ "${ANNOTATION_FILE}" == "genes.gtf" ];
         then
@@ -247,7 +247,7 @@ do
         sample_id=${samples[i+1]}
         description=${samples[i+2]}
 
-        pushd ${DATASET_DIR}/$sample_id/fastq/tophat2
+        pushd ${DATASET_DIR}/$sample_id/tophat2
         #------------------------------------------
         #Get counts from *_align_summary.txt file
         # echo 'Getting the total number of mapped reads...'
@@ -266,7 +266,7 @@ do
 
         #Need to cd to sample specific featureCounts folder
         #Need if statements to process the *_featureCounts.out file depending on the ANNOTATION_FILE used:
-        featureCounts_DIR=${DATASET_DIR}/$sample_id/fastq/tophat2/featureCounts
+        featureCounts_DIR=${DATASET_DIR}/$sample_id/tophat2/featureCounts
 
         if [ "${ANNOTATION_FILE}" == "genes.gtf" ];
         then

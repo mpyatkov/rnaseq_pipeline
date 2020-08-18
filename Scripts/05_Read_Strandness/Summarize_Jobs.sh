@@ -33,7 +33,7 @@ do
     # description=${samples[i+2]}
 
     # change directory, save location
-    pushd "${DATASET_DIR}/${sample_id}/fastq/tophat2/Read_Strandness"
+    pushd "${DATASET_DIR}/${sample_id}/tophat2/Read_Strandness"
     
     #Print $Sample_ID
     echo "${sample_id}:" >> $output_file

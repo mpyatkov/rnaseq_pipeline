@@ -37,7 +37,7 @@ do
     echo "${sample_id}"
 
     #Need to cd to sample specific CollectRnaSeqMetrics folder
-    pushd "${DATASET_DIR}/${sample_id}/fastq/tophat2/CollectRnaSeqMetrics"
+    pushd "${DATASET_DIR}/${sample_id}/tophat2/CollectRnaSeqMetrics"
 
     #Extract data from temp1.txt
 
