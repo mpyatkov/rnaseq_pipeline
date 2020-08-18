@@ -158,11 +158,13 @@ if(!is.na(list.filenames.HT[1])){
    # PCA plot
    pca <- autoplot(prcomp(df1), data= df, colour= "label", label = TRUE, label.size = 3.5)
    pca <- pca + ggtitle(paste("All genes (without filter), Genes:", length(rownames(dataset_grep_pc)),sep=" "))
- 
    
+   # if files > 2 than perplexity = 2 else perplexity = 1
+   perplexity = ifelse(length(as.vector(list.filenames.HT)) > 1, 2, 1)	
+
    set.seed(42)
    # tSNE
-   tsne_model_1 <- Rtsne(as.matrix(df1), check_duplicates=FALSE, pca=TRUE, perplexity=2, theta=0.5, dims=3, set.seed=TRUE)
+   tsne_model_1 <- Rtsne(as.matrix(df1), check_duplicates=FALSE, pca=TRUE, perplexity=perplexity, theta=0.5, dims=3, set.seed=TRUE)
    
    ## getting the two dimension matrix
   

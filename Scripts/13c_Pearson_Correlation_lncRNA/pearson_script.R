@@ -159,7 +159,11 @@ if(!is.na(list.filenames.HT[1])){
    pca <- pca + ggtitle(paste("All genes (without filter), Genes:", length(rownames(dataset_grep_pc)),sep=" "))
   
    #tSNE plot
-   tsne_model_1 = Rtsne(as.matrix(df1), check_duplicates=FALSE, pca=TRUE, perplexity=2, theta=0.5, dims=2)
+
+   # if files > 2 than perplexity = 2 else perplexity = 1
+   perplexity = ifelse(length(as.vector(list.filenames.HT)) > 1, 2, 1)	
+
+   tsne_model_1 = Rtsne(as.matrix(df1), check_duplicates=FALSE, pca=TRUE, perplexity=perplexity, theta=0.5, dims=2)
    
    ## getting the two dimension matrix
    d_tsne_1 = as.data.frame(tsne_model_1$Y)  
