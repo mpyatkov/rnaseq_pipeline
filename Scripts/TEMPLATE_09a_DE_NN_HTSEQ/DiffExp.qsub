@@ -224,17 +224,17 @@ do
     M_Num_Cond1_List+=${M_Num}
 
     echo 'Copy Condition_1 sample count files to Condition_1 folder'
-    cp ${Dataset_DIR}/${Sample_ID}/fastq/tophat2/HTSeq/${COUNT_DIR}/${Sample_ID}'_HTSeq.out' ./Input/Condition_1
+    cp ${Dataset_DIR}/${Sample_ID}/tophat2/HTSeq/${COUNT_DIR}/${Sample_ID}'_HTSeq.out' ./Input/Condition_1
 
     echo 'calculate mapped reads: '${Sample_ID}
 
     #The following samtools command is too time-consuming
-    #samtools view -c ${Dataset_DIR}/${Sample_ID}/fastq/tophat2/${Sample_ID}'_primary_unique.bam' > ./Input/Condition_1/${Sample_ID}'_num_mapped_reads.txt'
+    #samtools view -c ${Dataset_DIR}/${Sample_ID}/tophat2/${Sample_ID}'_primary_unique.bam' > ./Input/Condition_1/${Sample_ID}'_num_mapped_reads.txt'
 
     #The TopHat_Paired_End job already created a *_statistics_for_primary_unique_reads.txt
     #Extract the number of uniquely_mapped_reads, then save it to a text file:
     #Copy *_statistics_for_primary_unique_reads.txt to compute node:
-    cp ${Dataset_DIR}/${Sample_ID}/fastq/tophat2/$Sample_ID'_statistics_for_primary_unique_reads.txt' .
+    cp ${Dataset_DIR}/${Sample_ID}/tophat2/$Sample_ID'_statistics_for_primary_unique_reads.txt' .
 
     #Extract the number of uniquely_mapped_reads:
     uniquely_mapped_reads=$(grep 'total' $Sample_ID'_statistics_for_primary_unique_reads.txt'  | awk '{print $1}')
@@ -296,17 +296,17 @@ do
     M_Num_Cond2_List+=${M_Num}
 
     echo 'Copy Condition_2 sample count files to Condition_2 folder'
-    cp ${Dataset_DIR}/${Sample_ID}/fastq/tophat2/HTSeq/${COUNT_DIR}/${Sample_ID}'_HTSeq.out' ./Input/Condition_2
+    cp ${Dataset_DIR}/${Sample_ID}/tophat2/HTSeq/${COUNT_DIR}/${Sample_ID}'_HTSeq.out' ./Input/Condition_2
 
     echo 'calculate mapped reads: '${Sample_ID}
 
     #The following samtools command is too time-consuming
-    #samtools view -c ${Dataset_DIR}/${Sample_ID}/fastq/tophat2/${Sample_ID}'_primary_unique.bam' > ./Input/Condition_2/${Sample_ID}'_num_mapped_reads.txt'
+    #samtools view -c ${Dataset_DIR}/${Sample_ID}/tophat2/${Sample_ID}'_primary_unique.bam' > ./Input/Condition_2/${Sample_ID}'_num_mapped_reads.txt'
 
     #The TopHat_Paired_End job already created a *_statistics_for_primary_unique_reads.txt
     #Extract the number of uniquely_mapped_reads, then save it to a text file:
     #Copy *_statistics_for_primary_unique_reads.txt to compute node:
-    cp ${Dataset_DIR}/${Sample_ID}/fastq/tophat2/$Sample_ID'_statistics_for_primary_unique_reads.txt' .
+    cp ${Dataset_DIR}/${Sample_ID}/tophat2/$Sample_ID'_statistics_for_primary_unique_reads.txt' .
     #Extract the number of uniquely_mapped_reads:
     uniquely_mapped_reads=$(grep 'total' $Sample_ID'_statistics_for_primary_unique_reads.txt'  | awk '{print $1}')
     #save it to a text file:

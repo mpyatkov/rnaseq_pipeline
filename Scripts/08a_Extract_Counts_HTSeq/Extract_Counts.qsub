@@ -70,7 +70,7 @@ module load gcc/8.1.0
 module load samtools/0.1.19
 
 # copy user input data files to scratch
-cp "${DATASET_DIR}/${SAMPLE_ID}/fastq/tophat2/${SAMPLE_ID}_primary_unique.bam" .
+cp "${DATASET_DIR}/${SAMPLE_ID}/tophat2/${SAMPLE_ID}_primary_unique.bam" .
 
 #Copy gtf file (annotation file):
 cp "${GTF_FILES_DIR}/${ANNOTATION_FILE}" .
@@ -85,7 +85,7 @@ fi
 input_bam="${SAMPLE_ID}_primary_unique.bam"
 
 #Make output dir:
-storage_dir="${DATASET_DIR}/${SAMPLE_ID}/fastq/tophat2/HTSeq"
+storage_dir="${DATASET_DIR}/${SAMPLE_ID}/tophat2/HTSeq"
 
 #Need if statements to name the OUTPUT_DIR depending on the ANNOTATION_FILE used:
 if [ "${ANNOTATION_FILE}" == "genes.gtf" ];

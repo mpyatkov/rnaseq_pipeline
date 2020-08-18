@@ -239,9 +239,9 @@ do
     M_Num_Cond1_List+=${M_Num}
     #---------------------------
     echo 'Copy Condition_1 sample count files to Condition_1 folder'
-    cp ${Dataset_DIR}/${Sample_ID}/fastq/tophat2/featureCounts/${COUNT_DIR}/${Sample_ID}'_featureCounts.out' ./Input/Condition_1
+    cp ${Dataset_DIR}/${Sample_ID}/tophat2/featureCounts/${COUNT_DIR}/${Sample_ID}'_featureCounts.out' ./Input/Condition_1
     echo 'Copy Condition_1 sample count summary files to Condition_1 folder'
-    cp ${Dataset_DIR}/${Sample_ID}/fastq/tophat2/featureCounts/${COUNT_DIR}/${Sample_ID}'_featureCounts.out.summary' ./Input/Condition_1
+    cp ${Dataset_DIR}/${Sample_ID}/tophat2/featureCounts/${COUNT_DIR}/${Sample_ID}'_featureCounts.out.summary' ./Input/Condition_1
     #---------------------------
 done < Condition_1.temp
 #---------------------------
@@ -293,9 +293,9 @@ do
     M_Num_Cond2_List+=${M_Num}
     #---------------------------
     echo 'Copy Condition_2 sample count files to Condition_2 folder'
-    cp ${Dataset_DIR}/${Sample_ID}/fastq/tophat2/featureCounts/${COUNT_DIR}/${Sample_ID}'_featureCounts.out' ./Input/Condition_2
+    cp ${Dataset_DIR}/${Sample_ID}/tophat2/featureCounts/${COUNT_DIR}/${Sample_ID}'_featureCounts.out' ./Input/Condition_2
     echo 'Copy Condition_2 sample count summary files to Condition_2 folder'
-    cp ${Dataset_DIR}/${Sample_ID}/fastq/tophat2/featureCounts/${COUNT_DIR}/${Sample_ID}'_featureCounts.out.summary' ./Input/Condition_2
+    cp ${Dataset_DIR}/${Sample_ID}/tophat2/featureCounts/${COUNT_DIR}/${Sample_ID}'_featureCounts.out.summary' ./Input/Condition_2
     #---------------------------
 done < Condition_2.temp
 #---------------------------

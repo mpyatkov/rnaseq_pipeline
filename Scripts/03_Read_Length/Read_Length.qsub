@@ -61,10 +61,10 @@ echo
 
 # copy user input data files to scratch
 #Copy over the *R1*.fq.gz file(s):
-cp ${DATASET_DIR}/${sample_id}/fastq/*_1*.fq.gz .
+cp ${DATASET_DIR}/${sample_id}/*_1*.fq.gz .
 
 #Copy over the *R2*.fq.gz file(s):
-cp ${DATASET_DIR}/${sample_id}/fastq/*_2*.fq.gz .
+cp ${DATASET_DIR}/${sample_id}/*_2*.fq.gz .
 
 echo
 echo 'List files in scratch directory:'

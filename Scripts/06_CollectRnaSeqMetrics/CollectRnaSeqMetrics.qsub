@@ -76,7 +76,7 @@ echo 'Loading required modules...'
 module load picard
 
 # copy user input data files to scratch
-cp "${DATASET_DIR}/${SAMPLE_ID}/fastq/tophat2/${SAMPLE_ID}_primary_unique.bam" .
+cp "${DATASET_DIR}/${SAMPLE_ID}/tophat2/${SAMPLE_ID}_primary_unique.bam" .
 
 #Initialize INPUT_BAM:
 input_bam=${SAMPLE_ID}'_primary_unique.bam'
@@ -85,7 +85,7 @@ input_bam=${SAMPLE_ID}'_primary_unique.bam'
 cp "${script_dir}/Input_Regions/genes_refFlat" .
 cp "${script_dir}/Input_Regions/rRNA_intervalList_sorted" .
 
-storage_dir=${DATASET_DIR}/${SAMPLE_ID}/fastq/tophat2
+storage_dir=${DATASET_DIR}/${SAMPLE_ID}/tophat2
 
 #Create CollectRnaSeqMetrics output folder to store files:
 output_dir='CollectRnaSeqMetrics'

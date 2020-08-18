@@ -80,9 +80,9 @@ module load samtools/0.1.19
 
 # copy user input data files to scratch
 #Copy over the *R1*.fq.gz file(s):
-cp ${DATASET_DIR}/${SAMPLE_ID}/fastq/*_1*.fq.gz .
+cp ${DATASET_DIR}/${SAMPLE_ID}/*_1*.fq.gz .
 #Copy over the *R2*.fq.gz file(s):
-cp ${DATASET_DIR}/${SAMPLE_ID}/fastq/*_2*.fq.gz .
+cp ${DATASET_DIR}/${SAMPLE_ID}/*_2*.fq.gz .
 #Need the Bowtie2 index:
 cp -r ${BOWTIE2INDEX_DIR}/Bowtie2Index .
 #Copy RefSeq_GeneBody.gtf

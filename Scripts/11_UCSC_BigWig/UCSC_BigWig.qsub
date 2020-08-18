@@ -79,7 +79,7 @@ echo 'Loading required modules...'
 
 module load samtools/0.1.19
 
-cp ${Dataset_DIR}/${Sample_ID}/fastq/tophat2/${Sample_ID}'_primary_unique.bam' .
+cp ${Dataset_DIR}/${Sample_ID}/tophat2/${Sample_ID}'_primary_unique.bam' .
 #Initialize INPUT_BAM:
 INPUT_BAM=${Sample_ID}'_primary_unique.bam'
 
@@ -95,7 +95,7 @@ CHROMSIZE_FILE=mm9.chrom.sizes
 #cp ${SCRIPT_DIR}/UCSC_Tools/wigToBigWig .
 cp -r ${SCRIPT_DIR}/UCSC_Tools .
 
-STORAGE_DIR=${Dataset_DIR}/${Sample_ID}/fastq/tophat2
+STORAGE_DIR=${Dataset_DIR}/${Sample_ID}/tophat2
 #Create UCSC_BigWig output folder to store files:
 OUTPUT_DIR=${TMPDIR}/'UCSC_BigWig'
 

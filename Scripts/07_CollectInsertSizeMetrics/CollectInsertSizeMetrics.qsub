@@ -61,12 +61,12 @@ echo "$TMPDIR"
 
 echo 'Loading required modules...'
 
-cp "${DATASET_DIR}/${SAMPLE_ID}/fastq/tophat2/${SAMPLE_ID}_primary_unique.bam" .
+cp "${DATASET_DIR}/${SAMPLE_ID}/tophat2/${SAMPLE_ID}_primary_unique.bam" .
 
 #Initialize INPUT_BAM:
 input_bam="${SAMPLE_ID}_primary_unique.bam"
 
-storage_dir=${DATASET_DIR}/${SAMPLE_ID}/fastq/tophat2
+storage_dir=${DATASET_DIR}/${SAMPLE_ID}/tophat2
 
 #Create CollectInsertSizeMetrics output folder to store files:
 output_dir='CollectInsertSizeMetrics'

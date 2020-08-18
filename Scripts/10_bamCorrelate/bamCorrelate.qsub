@@ -240,9 +240,9 @@ do
     #	Used tophat2 for read mapping
     #	Input BAM file: ${Sample_ID}'_primary_unique.bam'
     #---------------------------------------------------------------------------------
-    cp ${Dataset_DIR}/${Sample_ID}/fastq/tophat2/${Sample_ID}'_primary_unique.bam' ./Input
+    cp ${Dataset_DIR}/${Sample_ID}/tophat2/${Sample_ID}'_primary_unique.bam' ./Input
     #Also need the index files:
-    cp ${Dataset_DIR}/${Sample_ID}/fastq/tophat2/${Sample_ID}'_primary_unique.bam.bai' ./Input
+    cp ${Dataset_DIR}/${Sample_ID}/tophat2/${Sample_ID}'_primary_unique.bam.bai' ./Input
     #---------------------------
 done 
 
