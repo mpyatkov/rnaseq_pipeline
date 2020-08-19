@@ -40,12 +40,12 @@ TOPHAT_STRANDEDNESS=$2
 DISTANCE_BT_READ_PAIR=$3
 
 #Print variables (make sure they appear correctly):
+
 echo "-----------------------"
 echo "Start of variable list:"
 echo "-----------------------"
 echo "SAMPLE_ID: ${SAMPLE_ID}"
 echo "Dataset_DIR: ${DATASET_DIR}"
-echo "Sample_Labels_DIR: ${SAMPLE_LABELS_DIR}"
 echo "Bowtie2Index_DIR: ${BOWTIE2INDEX_DIR}"
 echo "GTF_Files_DIR: ${GTF_FILES_DIR}"
 echo "ANNOTATION_FILE: ${ANNOTATION_FILE}"
@@ -287,7 +287,7 @@ spliced_reads=$(samtools view "${SAMPLE_ID}_primary_unique.bam" | awk '($6 ~ /[0
 printf "SAMPLE_ID\tskipped_region_READS\tsplice_junction_READS\n" >> "${output_file}"
 
 #Print to output file
-printf "%s\t%s\t%s\t\n" "${SAMPLE_ID}" "${skipped_reads}" "${spliced_reads}\n" >> "${output_file}"
+printf "%s\t%s\t%s\t\n" "${SAMPLE_ID}" "${skipped_reads}" "${spliced_reads}" >> "${output_file}"
 
 #cd out of ${output_dir}
 popd
@@ -310,3 +310,5 @@ end_time=$(date +"%s")
 diff=$((end_time-start_time))
 echo "$((diff / 3600)) hours, $(((diff / 60) % 60)) minutes and $((diff % 60)) seconds elapsed."
 echo "=========================================================="
+# special sign to show that execution is finished (do not remove)
+echo "IAMOK"
