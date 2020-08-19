@@ -137,6 +137,15 @@ do
         
 	JOB_COUNT=$(qstat -r -u ${BU_USER} | grep 'Full jobname:' | grep ${JOB_NAME} | wc -l)
     done
+    
+    # check if step failed
+    number_of_runs=$(find . -name "Step_*.o*" | wc -l)
+    number_of_ok=$(find . -name "Step_*.o*" | xargs grep -i "IAMOK" | wc -l)
+    if [[ "${number_of_runs}" -ne "${number_of_ok}" ]]
+    then
+	echo "FOUND ERROR. CHECK LOGS ON STEP --> ${STEP} <--"
+	exit 1
+    fi
 
     # prevent immediate exit if ./Summarize_Jobs.sh does not exist
     set +eu

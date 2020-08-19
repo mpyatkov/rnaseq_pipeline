@@ -238,3 +238,4 @@ End_Time=$(date +"%s")
 diff=$(($End_Time-$Start_Time))
 echo "$(($diff / 3600)) hours, $((($diff / 60) % 60)) minutes and $(($diff % 60)) seconds elapsed."
 echo "=========================================================="
+echo "IAMOK"
