@@ -2,14 +2,15 @@
 
 #$ -cwd
 #$ -j y
-# CHANGE TO YOUR PROJECT
-#$ -P PROJECT_NAME
 #$ -m be
 #$ -o output.log
 #$ -N install_env
 #$ -pe omp 4
 #$ -l mem_per_core=4G
 #$ -l h_rt=01:00:00
+# Change "PROJECT_NAME" to your project
+#$ -P PROJECT_NAME
+
 
 echo "=========================================================="
 echo "Starting on       : $(date)"
@@ -20,7 +21,6 @@ echo "Task index number : $TASK_ID"
 echo "=========================================================="
 
 module load anaconda2
-
 conda env create -f ./RNAseq_environment.yml
  
 echo "Finished  .............. $(date)"
