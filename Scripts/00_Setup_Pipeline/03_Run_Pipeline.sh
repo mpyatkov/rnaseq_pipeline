@@ -166,9 +166,9 @@ done
     echo "Running: ${STEP_DIR}..." 
     cd "${STEP_DIR}"
     ./Generate_Tracks.sh
+    printf "Done: %s\n\n -------------------------" "${STEP_DIR}"
 )
 
-printf "Done: %s\n\n -------------------------" "${STEP_DIR}"
 
 echo 'Printing job duration for all steps...'
 OUTPUT_FILE="${SETUP_PIPELINE_DIR}"/Pipeline_Runtime.txt
