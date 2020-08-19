@@ -16,8 +16,6 @@ Run the following command in the directory that you are going to use for RNAseq 
 git clone https://github.com/mpyatkov/rnaseq_pipeline.git pipeline 
 #+end_src
 
-For pipeline updating just use 
-
 ** Anaconda environment installation
 Because pipeline extensivelly use the anaconda packages first of all it is required to install these packages
 
