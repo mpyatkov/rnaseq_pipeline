@@ -66,6 +66,7 @@ It will give you 3 config files:
 3) *Comparisons.txt* - contains information about which group should be compared to each other. The main rule here: *Condition_2/Condition_1*. Information from this step is required for Differential Expression directories generation.
    
 *WARNING: DO NOT USE QUOTES IN CONFIG FILES*
+*WARNING: DO NOT USE SPACES IN VARIABLES IN CONFIG FILES, USE "_" INSTEAD*
 
 So fill out this configuration files and go to the next step.
 To start the pipeline you should run next command.
@@ -79,7 +80,6 @@ If you would like to restart pipeline with some step just use next command:
 #+begin_src 
 ./03_Run_Pipeline.sh <full name of step>
 #+end_src
-
 
 * COMMENT Local vars :noexport:
    ;; Local Variables:
