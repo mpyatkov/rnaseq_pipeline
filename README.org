@@ -1,0 +1,87 @@
+#+TITLE:     RNAseq pipeline
+#+DESCRIPTION: This document catalogs a set of scripts which allow to lab members reproduce this research
+
+#+KEYWORDS:  caspases, n-rule, cleavage sites, apoptosis
+#+LANGUAGE:  en
+#+OPTIONS:   H:4
+#+OPTIONS:   num:nil
+#+OPTIONS:   toc:2
+#+OPTIONS:   p:t
+#+OPTIONS: author:nil date:nil
+
+* Pipeline usage
+** Install last version of pipeline
+git clone https://github.com/mpyatkov/rnaseq_pipeline.git pipeline 
+
+** Anaconda environment installation
+Because pipeline extensivelly use the anaconda packages first of all it is required to install these packages
+
+go to anaconda directory
+
+#+begin_src sh
+cd anaconda
+#+end_src
+
+edit anaconda.qsub and change info to yours (email, project)
+
+Since the installation takes a lot of time and space, start it using the server queue
+
+#+begin_src sh
+qsub anaconda.qsub
+#+end_src
+
+The Anaconda environment will be installed in your home directory. In most cases there is enough space in the home directory for this environment, but in case of errors it should be set to a different path, which depends on the *PROJECT* you are attached to.
+
+To check that everything is ok, run the next to commands
+
+#+begin_src sh
+module load anaconda2
+conda source RNAseq
+#+end_src
+
+And if you did not see any error, congratulations!
+
+** Start the pipeline
+This step suppose that you already have installed anaconda environment and cloned version of pipeline.
+
+Go to the directory pipeline/Scripts/00_Setup_Pipeline
+
+You will see 3 files (01_Pipeline_Setup.py, 02_Review_Pipeline_Parameters.sh, 03_Run_Pipeline.sh). The most important are *01_Pipeline_Setup.py* and *03_Run_Pipeline.sh*. First of all to get config files you need to run next command:
+
+#+begin_src sh
+./01_Pipeline_Setup.py
+#+end_src
+
+It will give you 3 config files:
+
+1) *Pipeline_Setup.conf* - contains all information about locations of samples, project, some specific details. Probably to run the pipeline it will be enough to fill out only [USER] section.
+
+2) *Sample_Labels.txt* - this files contains information about all samples. The main columns are:
+   - *Group* - each sample should be associated with only one group
+   - *Condition_Name* - this name will appear in the names of the output files
+   - *Sample_DIR* and *Sample_ID* - for simplicity just use for this parameters the same name values.
+   - *Description* - the full description
+   - *Color* - the color to be used in the UCSC browser
+
+3) *Comparisons.txt* - contains information about which group should be compared to each other. The main rule here: *Condition_2/Condition_1*. Information from this step is required for Differential Expression directories generation.
+   
+*WARNING: DO NOT USE QUOTES IN CONFIG FILES*
+
+So fill out this configuration files and go to the next step.
+To start the pipeline you should run next command.
+
+#+begin_src sh
+./03_Run_Pipeline.sh FULL
+#+end_src
+
+If you would like to restart pipeline with some step just use next command:
+
+#+begin_src 
+./03_Run_Pipeline.sh <full name of step>
+#+end_src
+
+
+* COMMENT Local vars :noexport:
+   ;; Local Variables:
+   ;; eval: (add-hook 'after-save-hook (lambda ()(org-babel-tangle)) nil t)
+   ;; End:
