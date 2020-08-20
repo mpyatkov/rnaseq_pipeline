@@ -17,7 +17,7 @@ git clone https://github.com/mpyatkov/rnaseq_pipeline.git pipeline
 #+end_src
 
 ** Anaconda environment installation (one-time procedure)
-Because pipeline extensivelly use the anaconda packages first of all it is required to install these packages
+Because the pipeline extensivelly uses the anaconda packages, first of all install these packages
 
 go to anaconda directory
 
@@ -25,7 +25,7 @@ go to anaconda directory
 cd anaconda
 #+end_src
 
-edit the anaconda.qsub and change the project to yours
+edit the anaconda.qsub and change the PROJECT to yours
 
 Since the installation takes a lot of time and space, start it using the server queue
 
@@ -35,9 +35,9 @@ qsub anaconda.qsub
 
 It will take a little time, you can check the progress with *qstat -u <your_user_name>*
 
-The Anaconda environment by default will be installed in your home directory. In most cases there is enough space in the home directory for the installation, but in case of errors it should be set to a different path, which depends on the *PROJECT* you are attached to.
+The Anaconda environment will be installed by default in your home directory. In most cases there is enough space in the home directory for the installation, but in case of errors it should be set to a different path, which depends on the *PROJECT* you are assigned to.
 
-To check that everything is ok, run the following commands
+To check that everything is ok, run the following commands:
 
 #+begin_src sh
 module load anaconda2
@@ -47,11 +47,11 @@ conda source RNAseq
 And if you did not see any error messages, congratulations!
 
 ** Start the pipeline
-This step assumes that you already have installed anaconda environment and cloned version of pipeline.
+This step assumes that you have already installed anaconda environment and the cloned version of pipeline.
 
 Go to the directory pipeline/Scripts/00_Setup_Pipeline
 
-You will see 3 files (01_Pipeline_Setup.py, 02_Review_Pipeline_Parameters.sh, 03_Run_Pipeline.sh). The most important ones are *01_Pipeline_Setup.py* and *03_Run_Pipeline.sh*. First of all to get configuration files you need to run the following command:
+You will see 3 files (01_Pipeline_Setup.py, 02_Review_Pipeline_Parameters.sh, 03_Run_Pipeline.sh). The most important ones are *01_Pipeline_Setup.py* and *03_Run_Pipeline.sh*. First of all, you need to run the following command to get configuration files:
 
 #+begin_src sh
 ./01_Pipeline_Setup.py
@@ -59,27 +59,29 @@ You will see 3 files (01_Pipeline_Setup.py, 02_Review_Pipeline_Parameters.sh, 03
 
 It will give you 3 config files:
 
-1) *Pipeline_Setup.conf* - contains all information about locations of samples, project, some specific details. Probably to run the pipeline it will be enough to fill out only [USER] section.
+1) *Pipeline_Setup.conf* - contains all information about locations of samples, project, and other specific details. Probably to run the pipeline it will be enough to fill out only [USER] section.
 
 2) *Sample_Labels.txt* - this files contains information about all samples. The main columns are:
    - *Group* - each sample should be associated with only one group
-   - *Condition_Name* - this name will appear in the names of the output files
-   - *Sample_DIR* and *Sample_ID* - for simplicity just use for this parameters the same name values.
-   - *Description* - the full description
+   - *Condition_Name* - this condition ID will appear in the names of the output files
+   - *Sample_DIR* and *Sample_ID* - for simplicity, just use the same names for this parameters.
+   - *Description* - the full description of the sample
    - *Color* - the color to be used in the UCSC browser
 
-3) *Comparisons.txt* - contains information about which group should be compared to each other. The main rule here: *Condition_2/Condition_1*. Information from this step is required for Differential Expression directories generation.
+3) *Comparisons.txt* - contains information about which groups should be compared. The main rule here: *Condition_2/Condition_1*. Information from this step is required to generate directories for Differential Expression.
    
 *WARNING: DO NOT USE QUOTES IN CONFIG FILES*
 
 *WARNING: DO NOT USE SPACES IN VARIABLES IN CONFIG FILES, USE "_" INSTEAD*
 
-So fill out this configuration files and go to the next step.
-To start the pipeline you should run next command. In the case of *scc4*, the session will be closed after 15 minutes of inactivity. If you want the session to continue, use the *screen* or *tmux* - terminal multiplexers.
+Fill out this configuration files and go to the next step.
+To start the pipeline you should run the following command. 
 
 #+begin_src sh
 ./03_Run_Pipeline.sh FULL
 #+end_src
+
+In the case of *scc4*, the session will be closed after 15 minutes of inactivity. If you want the session to continue, use the *screen* or *tmux* - terminal multiplexers.
 
 If you want to restart the pipeline from any step, just use the following command:
 
