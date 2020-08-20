@@ -1,4 +1,6 @@
 #!/bin/bash -l
+
+exit 0
 ##################################################################################
 #Andy Rampersaud, 02.22.16
 #This script would be used to run bamCorrelate.qsub 

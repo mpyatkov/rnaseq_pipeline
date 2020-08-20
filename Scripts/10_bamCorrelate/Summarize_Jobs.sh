@@ -1,4 +1,6 @@
 #!/bin/bash
+
+exit 0
 ##################################################################################
 # Andy Rampersaud, 02.16.16
 #This script would be used to summarize bamCorrelate jobs
