@@ -58,10 +58,10 @@ module load fastqc
 
 # copy user input data files to scratch
 # Copy over the *R1*.fq.gz file(s):
-cp ${DATASET_DIR}/${sample_id}/*_1*.fq.gz .
+cp ${DATASET_DIR}/${sample_id}/*_1*.f*q.gz .
 
 # Copy over the *R2*.fq.gz file(s):
-cp ${DATASET_DIR}/${sample_id}/*_2*.fq.gz .
+cp ${DATASET_DIR}/${sample_id}/*_2*.f*q.gz .
 
 # Create FASTQC output folder to store files:
 fastqc_dir="${sample_id}_FASTQC"
@@ -77,12 +77,12 @@ time gzip -d *.gz
 printf "\nFinished unzipping\n"
 printf "\nPrint first 20 lines of fastq file:\n"
 
-head -20 *.fq
+head -20 *.f*q
 
 printf "\nStarting fastqC command\n"
 
 # Run the command for each fastq file:
-fastq_list=*.fq
+fastq_list=*.f*q
 for fastq_file in ${fastq_list}
 do
     printf "fastqc --outdir %s %s" "${fastqc_dir}" "${fastq_file}"
