@@ -21,6 +21,7 @@ set -o nounset
 #You can use option "-pe omp N", where N is the number of cores ( number of course on our system can be any integer between 1 and 16):
 #$ -pe omp 16
 
+#$ -l scratch_free=200G
 ##################################################################################
 # export all variables from Pipeline_Setup.conf
 eval "$(../00_Setup_Pipeline/01_Pipeline_Setup.py --export)"
