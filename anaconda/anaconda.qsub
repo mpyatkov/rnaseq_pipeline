@@ -9,7 +9,7 @@
 #$ -l mem_per_core=4G
 #$ -l h_rt=01:00:00
 # Change "PROJECT_NAME" to your project
-#$ -P PROJECT_NAME
+#$ -P wax-es
 
 
 echo "=========================================================="

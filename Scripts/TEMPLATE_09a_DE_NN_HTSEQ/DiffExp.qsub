@@ -532,8 +532,11 @@ echo '#-------------------------------------------------------------------------
 echo '#----------------------------------------------------------------------------------'
 echo 'Merging Count.Table(s) into one text file'
 echo '#----------------------------------------------------------------------------------'
+set +eu
 cat Count.Table.*.txt > ${DiffExp_Index}'_Venn_Tables_'${Comparison_Info}.txt
 rm Count.Table.*.txt
+set -eu
+
 echo "=========================================================="
 echo "Renaming the Differential_Expression_File"
 #mv ${Differential_Expression_File} ${OUTPUT_PREFIX}'_'${Comparison_Info}.txt
@@ -553,8 +556,10 @@ echo "=========================================================="
 cp ${TMPDIR}/Input/$Differential_Expression_File $OUTPUT_DIR
 cp ${TMPDIR}/Input/${SEGEX_File}* $OUTPUT_DIR
 cp ${TMPDIR}/Input/*_Genes*.txt $OUTPUT_DIR
+set +eu
 cp ${TMPDIR}/Input/*.png $OUTPUT_DIR
 cp ${TMPDIR}/Input/${DiffExp_Index}'_Venn_Tables_'${Comparison_Info}.txt $OUTPUT_DIR
+set -eu
 
 echo
 echo "List files in scratch"
@@ -578,6 +583,7 @@ do
     mv ${Text_file} ${file_name}'_'${COUNT_PROGRAM}'.txt'
 done
 #----------------------------------------------------------------
+set +eu
 PNG_file_list=*.png
 for PNG_file in ${PNG_file_list}
 do
@@ -588,6 +594,7 @@ do
     #Rename files:
     mv ${PNG_file} ${file_name}'_'${COUNT_PROGRAM}'.png'
 done
+set -eu
 #----------------------------------------------------------------
 echo
 echo "List files in OUTPUT_DIR"

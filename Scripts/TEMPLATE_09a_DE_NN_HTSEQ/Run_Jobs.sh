@@ -23,7 +23,8 @@ set -eu
 
 #Remove *.o files from previous jobs
 #Need the 2>/dev/null to supress the "No such file or directory"
-rm -rf *.o* *.e* Output_* Summary_Differential_Expression
+rm -rf ./logs Output_* Summary_Differential_Expression
+mkdir -p ./logs
 
 #Source job-specific variables:
 source setup_DiffExp.sh

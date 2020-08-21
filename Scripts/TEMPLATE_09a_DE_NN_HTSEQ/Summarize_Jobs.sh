@@ -293,11 +293,13 @@ do
     echo 'Print to OUTPUT_TABLE'
     echo ${DiffExp_Index} $'\t'${EdgeR_Output_File} $'\t'${Up_Genes_Count} $'\t'${Down_Genes_Count}  >> ${OUTPUT_TABLE}
     #---------------------------
+    set +eu
     echo 'Print to OUTPUT_TABLE_2'
     cat *_Venn_Tables*.txt >> ${OUTPUT_TABLE_2} 
     #---------------------------
     echo 'Copy PNG files to PNG_DIR'
     cp *.png ${PNG_DIR}
+    set -eu
     #---------------------------
     echo 'Copy Down_Genes*.txt and Up_Genes*.txt files to DE_Text_DIR'
     cp Down_Genes*.txt ${DE_Text_DIR}

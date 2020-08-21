@@ -17,8 +17,8 @@ set -o nounset
 eval "$(../00_Setup_Pipeline/01_Pipeline_Setup.py --export)"
 
 #Remove *.o files from previous jobs
-rm -rf *.o* *.e* Job_Summary
-
+rm -rf ./logs Job_Summary
+mkdir -p ./logs
 
 # samples contains array of (sample_dir, sample_id, description) for each sample
 samples=($("${SETUP_PIPELINE_DIR}"/01_Pipeline_Setup.py --samples))

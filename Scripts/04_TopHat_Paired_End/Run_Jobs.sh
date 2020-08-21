@@ -15,7 +15,9 @@ set -o nounset
 ##################################################################################
 
 #Remove *.o files from previous jobs
-rm -rf *.e* *.o* *.po* *.pe*
+rm -rf *.po* *.pe*
+rm -rf ./logs
+mkdir -p ./logs
 
 # we activated this module for case when we need run this script independently
 

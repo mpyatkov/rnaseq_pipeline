@@ -38,7 +38,7 @@ then
     echo "Usage: ./03_Run_Pipeline.sh <Start_Step>"
     echo "<Start_Step> = Needs to be either \"FULL\" or a specific pipeline step"
     echo "See 03_Run_Pipeline.sh for details."	
-    exit 
+    exit 0
 fi
 
 START_STEP=$1
@@ -139,8 +139,8 @@ do
     done
     
     # check if step failed
-    number_of_runs=$(find . -name "Step_*.o*" | wc -l)
-    number_of_ok=$(find . -name "Step_*.o*" | xargs grep -i "IAMOK" | wc -l)
+    number_of_runs=$(find ./logs/ -name "Step_*.o*" | wc -l)
+    number_of_ok=$(find ./logs/ -name "Step_*.o*" | xargs grep -i "IAMOK" | wc -l)
     if [[ "${number_of_runs}" -ne "${number_of_ok}" ]]
     then
 	echo "FOUND ERROR. CHECK LOGS ON STEP --> ${STEP} <--"

@@ -14,9 +14,11 @@ set -o nounset
 # Run on the current working directory
 #$ -cwd
 #$ -pe omp 16
-# Join standard output and error to a single file  
-#$ -j n
-# change to y if you want a single qlog file 
+# Join standard output and error to a single file
+# change to y if you want a single qlog file
+#$ -j y
+#$ -e ./logs/
+#$ -o ./logs/
 #$ -l scratch_free=200G
 ##################################################################################
 

@@ -538,8 +538,10 @@ Comparison_Info=${CONDITION_2_NAME}'_'${Dataset_Label}'_'${M_Num_Cond2_List}'_'$
 echo 'Comparison_Info:'
 echo ${Comparison_Info}
 echo '#----------------------------------------------------------------------------------'
+set +eu
 cat Count.Table.*.txt > ${DiffExp_Index}'_Venn_Tables_'${Comparison_Info}.txt
 rm Count.Table.*.txt
+set -eu
 echo "=========================================================="
 echo "Renaming the Differential_Expression_File"
 #mv ${Differential_Expression_File} ${OUTPUT_PREFIX}'_'${Comparison_Info}.txt
@@ -558,9 +560,10 @@ echo "=========================================================="
 cp ${TMPDIR}/Input/$Differential_Expression_File $OUTPUT_DIR
 cp ${TMPDIR}/Input/${SEGEX_File}* $OUTPUT_DIR
 cp ${TMPDIR}/Input/*_Genes*.txt $OUTPUT_DIR
+set +eu
 cp ${TMPDIR}/Input/*.png $OUTPUT_DIR
 cp ${TMPDIR}/Input/${DiffExp_Index}'_Venn_Tables_'${Comparison_Info}.txt $OUTPUT_DIR
-
+set -eu
 echo
 echo "List files in scratch"
 echo
@@ -583,6 +586,7 @@ file_name=${Text_file%\.txt}
 mv ${Text_file} ${file_name}'_'${COUNT_PROGRAM}'.txt'
 done
 #----------------------------------------------------------------
+set +eu
 PNG_file_list=*.png
 for PNG_file in ${PNG_file_list}
 do
@@ -593,6 +597,7 @@ file_name=${PNG_file%\.png}
 #Rename files:
 mv ${PNG_file} ${file_name}'_'${COUNT_PROGRAM}'.png'
 done
+set -eu
 #----------------------------------------------------------------
 echo
 echo "List files in OUTPUT_DIR"
