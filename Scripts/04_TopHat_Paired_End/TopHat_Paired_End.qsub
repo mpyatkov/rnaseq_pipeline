@@ -39,8 +39,10 @@ SAMPLE_ID=$1
 TOPHAT_STRANDEDNESS=$2
 DISTANCE_BT_READ_PAIR=$3
 
-#Print variables (make sure they appear correctly):
+# Default TopHat annotation file
+TOPHAT_ANNOTATION_FILE=RefSeq_GeneBody.gtf
 
+#Print variables (make sure they appear correctly):
 echo "-----------------------"
 echo "Start of variable list:"
 echo "-----------------------"
@@ -48,7 +50,6 @@ echo "SAMPLE_ID: ${SAMPLE_ID}"
 echo "Dataset_DIR: ${DATASET_DIR}"
 echo "Bowtie2Index_DIR: ${BOWTIE2INDEX_DIR}"
 echo "GTF_Files_DIR: ${GTF_FILES_DIR}"
-echo "ANNOTATION_FILE: ${ANNOTATION_FILE}"
 echo "STRANDEDNESS: ${TOPHAT_STRANDEDNESS}"
 echo "DISTANCE_BT_READ_PAIR: ${DISTANCE_BT_READ_PAIR}"
 echo "-----------------------"
@@ -86,7 +87,7 @@ cp ${DATASET_DIR}/${SAMPLE_ID}/*_2*.f*q.gz .
 #Need the Bowtie2 index:
 cp -r ${BOWTIE2INDEX_DIR}/Bowtie2Index .
 #Copy RefSeq_GeneBody.gtf
-cp ${GTF_FILES_DIR}/RefSeq_GeneBody.gtf .
+cp "${GTF_FILES_DIR}/${TOPHAT_ANNOTATION_FILE}" .
 
 #-----------------------------------------------------
 #As described by TopHat2:
@@ -126,7 +127,7 @@ echo 'Starting tophat'
 #Need the option: --no-coverage-search
 #------------------------------------------------------------------------------
 
-(set -x; tophat --no-coverage-search -o ${output_dir} -G ${ANNOTATION_FILE} -p $NSLOTS --library-type ${TOPHAT_STRANDEDNESS} -r ${DISTANCE_BT_READ_PAIR} --mate-std-dev ${param_std} Bowtie2Index/genome ${left_list} ${right_list})
+(set -x; tophat --no-coverage-search -o ${output_dir} -G ${TOPHAT_ANNOTATION_FILE} -p $NSLOTS --library-type ${TOPHAT_STRANDEDNESS} -r ${DISTANCE_BT_READ_PAIR} --mate-std-dev ${param_std} Bowtie2Index/genome ${left_list} ${right_list})
 
 echo 'Ending tophat'
 
