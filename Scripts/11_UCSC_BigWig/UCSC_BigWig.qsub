@@ -13,9 +13,10 @@ set -o nounset
 # Run on the current working directory
 #$ -cwd
 # Join standard output and error to a single file  
-#$ -j n
+#$ -j y
 # change to y if you want a single qlog file 
-
+#$ -e ./logs/
+#$ -o ./logs/
 ##################################################################################
 #Initialize variables from UCSC_BigWig.sh
 ##################################################################################

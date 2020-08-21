@@ -13,7 +13,7 @@ set -o nounset
 #./Run_Jobs.sh 
 ##################################################################################
 #Remove *.o files from previous jobs
-rm -rf *.o* *.e*
+rm -rf ./logs && mkdir -p ./logs
 
 set +eu
 module load anaconda2

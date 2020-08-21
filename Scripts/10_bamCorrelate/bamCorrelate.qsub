@@ -8,13 +8,15 @@
 # Run on the current working directory
 #$ -cwd
 # Join standard output and error to a single file  
-#$ -j n
+#$ -j y
 # change to y if you want a single qlog file 
 #$ -pe omp 16
 #After job submission, use the following to confirm multiple cores:
 #top -u <user_id>
 #The press "1"
 #This will list the multiple cores being used (not necessarily the same number requested)
+#$ -e ./logs/
+#$ -o ./logs/
 #---------------------------------------------------------------------------------
 
 # export all variables from Pipeline_Setup.conf

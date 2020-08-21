@@ -14,9 +14,10 @@ set -o nounset
 #$ -cwd
 
 # Join standard output and error to a single file  
-#$ -j n
+#$ -j y
 # change to y if you want a single qlog file 
-
+#$ -e ./logs/
+#$ -o ./logs/
 #$ -l scratch_free=200G
 ##################################################################################
 #Initialize variables from Extract_Counts.sh

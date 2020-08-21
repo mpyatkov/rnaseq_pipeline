@@ -7,9 +7,10 @@
 #$ -S /bin/bash
 # Run on the current working directory
 #$ -cwd
-
+#$ -e ./logs/
+#$ -o ./logs/
 # Join standard output and error to a single file  
-#$ -j n
+#$ -j y
 # change to y if you want a single qlog file 
 ##################################################################################
 #Initialize variables from CollectRnaSeqMetrics.sh

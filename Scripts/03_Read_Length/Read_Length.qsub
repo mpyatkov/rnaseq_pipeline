@@ -9,8 +9,10 @@
 # Run on the current working directory
 #$ -cwd
 # Join standard output and error to a single file  
-#$ -j n
-# change to y if you want a single qlog file 
+#$ -j y
+# change to y if you want a single qlog file
+#$ -e ./logs/
+#$ -o ./logs/
 ##################################################################################
 
 # export all variables from Pipeline_Setup.conf

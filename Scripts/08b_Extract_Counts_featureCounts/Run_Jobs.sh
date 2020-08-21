@@ -12,8 +12,7 @@ set -o nounset
 #Example: 
 #./Run_Jobs.sh
 ##################################################################################
-
-rm -rf *.o* *.e*
+rm -rf ./logs && mkdir -p ./logs
 
 # export all variables from Pipeline_Setup.conf
 eval "$(../00_Setup_Pipeline/01_Pipeline_Setup.py --export)"

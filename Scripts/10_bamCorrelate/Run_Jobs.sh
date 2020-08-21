@@ -15,7 +15,7 @@ set -o nounset
 
 #Remove *.o* files from previous jobs
 
-rm -rf *.o* *.e* *.pe* *.po*
+rm -rf ./logs && mkdir -p ./logs
 
 ##################################################################################
 # export all variables from Pipeline_Setup.conf
