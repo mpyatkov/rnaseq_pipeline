@@ -22,7 +22,7 @@ rm -rf "${output_dir}" && mkdir -p "${output_dir}"
 output_file="$output_dir/CollectRnaSeqMetrics_Stats.txt"
 rm -rf "${output_file}" && touch "${output_file}"
 
-echo SAMPLE_ID $'\t'DESCRIPTION $'\t'PCT_CODING_BASES $'\t'PCT_UTR_BASES $'\t'PCT_INTRONIC_BASES $'\t'PCT_INTERGENIC_BASES $'\t'PCT_MRNA_BASES $'\t'PCT_RIBOSOMAL_BASES >> $output_file
+echo SAMPLE_ID $'\t'DESCRIPTION $'\t'CODING_BASES $'\t'UTR_BASES $'\t'PCT_INTRONIC_BASES $'\t'PCT_INTERGENIC_BASES $'\t'PCT_MRNA_BASES $'\t'RIBOSOMAL_BASES >> $output_file
 
 # samples contains array of (sample_dir, sample_id, description) for each sample
 samples=($("${SETUP_PIPELINE_DIR}"/01_Pipeline_Setup.py --samples))
