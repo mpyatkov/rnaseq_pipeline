@@ -16,6 +16,8 @@ import configparser
 from distutils.dir_util import copy_tree
 import fileinput
 import argparse
+import glob
+import shutil
 
 PIPELINE_CONFIG ="Pipeline_Setup.conf"
 SAMPLES_CONFIG = "Sample_Labels.txt"
@@ -229,14 +231,14 @@ class DiffExpression():
         try:
             os.mkdir(path)
         except OSError:
-            print (f"Creation of the directory {path} failed ")
+            print (f"Creation of the directory {dirpath} failed ")
             exit(1)
 
     def remove_dir(self, dirpath):
         try:
-            os.rmdir(path)
+            shutil.rmtree(dirpath)
         except OSError:
-            print (f"Deletion of the directory {path} failed ")
+            print (f"Removing of the directory {dirpath} failed. Try to remove it manually.")
             exit(1)
 
     def copy_dir(self, src, dest):
@@ -264,6 +266,12 @@ class DiffExpression():
             Condition.write(samples)
         return condition_name
 
+    def clean(self, de_path = "./"):
+        de_dirs = glob.glob(de_path+"/09*")
+        for d in de_dirs:
+            print(f"Removing {d}")
+            self.remove_dir(d)
+
     def generate(self, output_location = "./"):
         # output_location start from SETUP_PIPELINE_DIR
         
@@ -280,7 +288,7 @@ class DiffExpression():
                 
                 DIR_PATH = output_location + "/" + DIR_NAME
 
-                print(TMPL,DIR_PATH)
+                print(f"Creating {DIR_PATH}")
                 # copy template dirs from TMPL to DIR_PATH
                 self.copy_dir(TMPL, DIR_PATH)
                 
@@ -353,18 +361,22 @@ if __name__ == "__main__":
         print(system_config.setup_env_variables())
         exit(0)
     elif args.generate:
-        # TODO: find all templates automatically
-        TEMPLATE_PATHS=["../TEMPLATE_09a_DE_NN_HTSEQ",
-                        "../TEMPLATE_09b_DE_NN_FEATURECOUNTS",
-                        "../TEMPLATE_09c_DE_NN_LNCRNA"]
+        
+        # by default all templates located in level up dir
+        TEMPLATE_PATHS=glob.glob("../TEMPLATE*")
 
         diffex = DiffExpression(TEMPLATE_PATHS,
                                 comparison_config,
                                 sample_config,
                                 system_config)
         
+        DE_DIR_PATH=os.path.dirname(TEMPLATE_PATHS[0])
+
+        # Remove DE directories before generation
+        diffex.clean(DE_DIR_PATH)
+
         # Output dir by default the same as TEMPLATES_PATH
-        diffex.generate(os.path.dirname(TEMPLATE_PATHS[0]))
+        diffex.generate(DE_DIR_PATH)
         print("Diff.ex directories generated")
         exit(0)
         
