@@ -16,7 +16,7 @@ set -o nounset
 eval "$(../00_Setup_Pipeline/01_Pipeline_Setup.py --export)"
 
 #Extract the folder name:
-dir_name=$(basename $(pwd))
+dir_name=$(pwd)
 
 output_dir=${dir_name}/Job_Summary
 
