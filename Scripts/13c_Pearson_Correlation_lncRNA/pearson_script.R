@@ -156,6 +156,17 @@ get_conditions <- function(filenames_prefix) {
    list(signif=list_data_cond, nonsignif=list_data_cond1)
 }
 
+# get out_names for PCA files
+get_outnames <- function(filenames) {
+    dataset = cbind.data.frame(lapply(filenames, fread, header=TRUE, sep="\t"))
+    dataset = dataset[unique(names(dataset))]
+    # return out_names
+    dataset %>% 
+           select(matches("_edgeRlogFC")) %>% 
+           colnames(.) %>% 
+           str_remove("_edgeRlogFC")
+}
+
 # read datasets and return back files for PCA, tSNE and correlation 
 read_dataset <- function(filenames, filter_condition = NULL) {
    dataset = cbind.data.frame(lapply(filenames, fread, header=TRUE, sep="\t"))
@@ -193,9 +204,8 @@ read_dataset <- function(filenames, filter_condition = NULL) {
 # plot PCA for significant, nonsignificant, and all conditions
 pca_3plot <- function(filename) {
    # get files names without suffixes and prefixes   
-   out_names <- filename %>% 
-      str_remove("DiffExp_v2_LncRNA_ExonCollapsed_") %>% 
-      str_remove("_featureCounts.txt")
+   
+    out_names <- get_outnames(filename)
    
    # get significant and not-significant genes
    cond <- get_conditions(out_names)
@@ -222,6 +232,7 @@ pca_3plot <- function(filename) {
 # use the pattern argument to define a common pattern  for import files with regex. Here: .txt
 list.filenames.HT <- list()
 list.filenames.HT<-list.files(pattern=".txt$")
+list.filenames.HT
 
 if(!is.na(list.filenames.HT[1])){
    
@@ -336,8 +347,8 @@ if(!is.na(list.filenames.HT[1])){
       # create pca plot for each group
       pca_3plot(list.filenames.HT[i])
       
-#      analyze_all(list.filenames.HT[i])
-#      analyze_rpkm(list.filenames.HT[i])
+      # analyze_all(list.filenames.HT[i])
+      # analyze_rpkm(list.filenames.HT[i])
 
    }
    
