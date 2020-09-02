@@ -52,18 +52,29 @@ echo ${SCRIPT_DIR}
 echo "Level_UP:"
 echo ${Level_UP}
 
-#echo 'Setup_Pipeline_DIR :' $Setup_Pipeline_DIR
 
-dd=$(find ../ -name "[0-9][0-9]*b_DE_*_FEATURECOUNTS" | wc -l);
-echo $dd
-start_dd=1
-for((j=$start_dd; j <=$dd; j++))
+dd=$(find ../09b_DE_* -name "DiffEx*GeneBody*txt")
+for fname in $dd
 do
-    cp -rf ${Level_UP}/09b_DE_${j}_FEATURECOUNTS/Output_DiffExp_${j}a_featureCounts_GeneBody/DiffExp_v2_GeneBody* .
+    # extract comparison number (09d_1_... --> 1)
+    prefix=$(echo $fname | grep -Po "_\K([0-9][0-9]?)(?=_)")
+    
+    # copy with prefix in the begining
+    cp $fname "./${prefix}_$(basename $fname)"
 done
-Rscript pearson_script.R
+
+
+# dd=$(find ../ -name "[0-9][0-9]*b_DE_*_FEATURECOUNTS" | wc -l);
+# echo $dd
+# start_dd=1
+# for((j=$start_dd; j <=$dd; j++))
+# do
+#     cp -rf ${Level_UP}/09b_DE_${j}_FEATURECOUNTS/Output_DiffExp_${j}a_featureCounts_GeneBody/DiffExp_v2_GeneBody* .
+# done
+
+Rscript pearson_script.R $DATASET_LABEL
 
 mv Pearson_Filtered_* Pearson_FPKM_Filtered/
 mv Pearson_All_* Pearson_All/
-mv PCA_* ./PCA/
-rm -rf DiffExp*
+mv *_PCA_* ./PCA/
+rm -rf *DiffExp*

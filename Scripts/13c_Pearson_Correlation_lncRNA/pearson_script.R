@@ -4,6 +4,10 @@
 # The result fo this script is Pearson correlation heatmaps and matrix (.csv) file for every sample replicate and also a merge sample file with correlation values for all samples and their replicates.
 
 ##################################################################################
+
+args <- commandArgs(T)
+DATASET_LABEL <- args[1]
+
 #---------------------------------------------------------------------------------
 wd <- getwd()
 if(!is.null(wd))
@@ -125,14 +129,19 @@ analyze_all <- function(filename)
    ggsave(f,plot= rpkm_plot, device = "pdf",path= wd, width = 30, height = 30, units = "cm")
 }
 
-plot_pca <- function(df_pca, df, header, out_names) {
+plot_pca <- function(df_pca, df, title, out_names) {
    # PCA plot
-   pca <- autoplot(prcomp(df_pca), data= df, colour= "label", label = TRUE, label.size = 6)
+   pca <- autoplot(prcomp(df_pca), data= df, colour= "label", label = F, label.size = 6)
    pca <- pca + 
-      ggtitle(paste(header, dim(df_pca)[[2]],sep=" "))+
-      scale_colour_brewer(type="qual", palette = 2)+theme_bw()
+      ggtitle(paste(title, dim(df_pca)[[2]],sep=" "))+
+      geom_label_repel(aes(label = rownames(df_pca), color = label), size = 6)+
+      scale_colour_brewer(type="qual", palette = 2)+
+      theme_bw()+
+      theme(text = element_text(size=14),
+            legend.title = element_text(size=15),
+            legend.text=element_text(size=15))
    
-   ggsave(paste0("PCA_",out_names,".pdf"),plot= pca, device = "pdf",path= wd, width = 60, height =30, units = "cm")   
+   ggsave(paste0(out_names,".pdf"),plot= pca, device = "pdf",path= wd, width = 50, height =30, units = "cm")   
 
 }
 
@@ -202,7 +211,7 @@ read_dataset <- function(filenames, filter_condition = NULL) {
 }
 
 # plot PCA for significant, nonsignificant, and all conditions
-pca_3plot <- function(filename) {
+pca_3plot <- function(filename, dataset_label, number) {
    # get files names without suffixes and prefixes   
    
     out_names <- get_outnames(filename)
@@ -211,19 +220,25 @@ pca_3plot <- function(filename) {
    cond <- get_conditions(out_names)
    
    # reassign out_names 
-   out_names <- ifelse(length(out_names) > 1, "All_Merge", out_names)
+   out_names <- ifelse(length(out_names) > 1, "Merge", out_names)
    
    # dataset without condition
    ds <- read_dataset(filename)
-   plot_pca(ds$df_pca, ds$df,"All genes (without filter), Genes:",out_names)
+   out_fname <- paste0(number, "_PCA_All_",out_names)
+   header <- paste0(dataset_label, ", ", out_fname, ", ", "All genes (without filter), Genes:")
+   plot_pca(ds$df_pca, ds$df, header, out_fname)
    
    # dataset with significant genes
    ds <- read_dataset(filename, cond$signif)
-   plot_pca(ds$df_pca, ds$df,"Significant genes (|FC|>2 and FDR<0.05), Genes:",paste0("Significant_",out_names))
+   out_fname <- paste0(number, "_PCA_Significant_",out_names)
+   header <- paste0(dataset_label, ", ", out_fname, ", ", "Significant genes (|FC|>2 and FDR<0.05), Genes:")
+   plot_pca(ds$df_pca, ds$df, header, out_fname)
    
    # dataset with non-significant genes
    ds <- read_dataset(filename, cond$nonsignif)
-   plot_pca(ds$df_pca, ds$df,"Non-significant genes (1.2 < |FC| < 1/|1.2|  and FDR >0.1, RPKM >1), Genes:",paste0("Non-significant_",out_names))
+   out_fname <- paste0(number, "_PCA_Non-significant_", out_names)
+   header <- paste0(dataset_label, ", ",  out_fname, ", ", "Non-significant genes (1.2 < |FC| < 1/|1.2|  and FDR >0.1, RPKM >1), Genes:")
+   plot_pca(ds$df_pca, ds$df, header, out_fname)
 }
 
 ####################################### FUNCTION ENDS ###################################
@@ -339,13 +354,13 @@ if(!is.na(list.filenames.HT[1])){
    
 
    # create 3 pca plot for all genes
-   pca_3plot(list.filenames.HT)
+   pca_3plot(list.filenames.HT, DATASET_LABEL, 0)
    
    for(i in 1:length(list.filenames.HT)){
       print(paste0("-->",list.filenames.HT[i]))
-      
+      number <- str_extract(list.filenames.HT[i], "(\\d)+")   
       # create pca plot for each group
-      pca_3plot(list.filenames.HT[i])
+      pca_3plot(list.filenames.HT[i], DATASET_LABEL, number)
       
       # analyze_all(list.filenames.HT[i])
       # analyze_rpkm(list.filenames.HT[i])
