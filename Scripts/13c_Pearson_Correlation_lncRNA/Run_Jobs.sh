@@ -24,6 +24,8 @@ rm -rf DiffExp_*
 rm -rf featureCounts
 rm -rf Pearson_FPKM_Filtered 
 rm -rf Pearson_All
+rm -rf PCA && mkdir -p PCA
+
 #mkdir  Pearson_FPKM_Filtered 
 #mkdir Pearson_All
 
@@ -62,6 +64,9 @@ do
 done
 Rscript pearson_script.R
 
+mv PCA_* ./PCA/
+
+rm -rf ./DiffExp*
 #        mv  Pearson_Filtered_* Pearson_FPKM_Filtered/
 #        mv  Pearson_All_* Pearson_All/
 

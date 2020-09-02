@@ -31,6 +31,8 @@ rm -rf  Pearson_All
 rm -rf Pearson_Filtered
 mkdir -p Pearson_All 
 mkdir -p Pearson_Filtered
+rm -rf PCA && mkdir -p PCA
+
 
 echo "DATASET_DIR:"
 echo ${DATASET_DIR}
@@ -61,7 +63,9 @@ Rscript pearson_script.R
 
 mv  Pearson_Filtered_* Pearson_Filtered/
 mv  Pearson_All_* Pearson_All/ 
-
+mv PCA_* ./PCA/
 echo "HTSeq Pearson Analysis Done "
 
 echo "#######################################################"
+
+rm -rf DiffEx
