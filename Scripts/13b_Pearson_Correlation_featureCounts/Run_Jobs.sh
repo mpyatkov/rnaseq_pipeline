@@ -1,3 +1,4 @@
+#!/usr/bin/bash -l
 ######################################################################################
 # Kritika Karri, 08.04.2017
 # Way to run script:
@@ -23,13 +24,13 @@ rm -rf *.csv
 rm -rf DiffExp_*
 rm -rf featureCounts
 
-rm -rf Pearson_FPKM_Filtered 
-rm -rf Pearson_All
-rm -rf PCA
+PCOR=Pearson_correlation
+SCOR=Spearman_correlation
 
-mkdir -p Pearson_FPKM_Filtered 
-mkdir -p Pearson_All
-mkdir -p PCA
+
+rm -rf PCA && mkdir -p PCA
+rm -rf ${PCOR} && mkdir -p ${PCOR}
+rm -rf ${SCOR} && mkdir -p ${SCOR}
 
 SCRIPT_DIR="$(pwd)"
 
@@ -74,7 +75,15 @@ done
 
 Rscript pearson_script.R $DATASET_LABEL
 
-mv Pearson_Filtered_* Pearson_FPKM_Filtered/
-mv Pearson_All_* Pearson_All/
+# mv ${PCOR}_Filtered_* ${PCOR}_FPKM_Filtered/
+# mv ${PCOR}_All_* ${PCOR}_All/
+
+mv *_Pearson* ./${PCOR}
+mv *_Spearman* ./${SCOR}
 mv *_PCA_* ./PCA/
+
 rm -rf *DiffExp*
+
+(cd ${PCOR}; pdfunite $(ls *.pdf | sort -n) Combined.pdf)
+(cd ${SCOR}; pdfunite $(ls *.pdf | sort -n) Combined.pdf)
+(cd PCA; pdfunite $(ls *.pdf | sort -n) Combined.pdf)

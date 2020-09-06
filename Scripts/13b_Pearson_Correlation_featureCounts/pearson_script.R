@@ -10,8 +10,7 @@ DATASET_LABEL <- args[1]
 
 #---------------------------------------------------------------------------------
 wd <- getwd()
-if(!is.null(wd))
-   setwd(wd)
+if(!is.null(wd)) {setwd(wd)}
 
 require(stringr)
 require(reshape2)
@@ -26,6 +25,7 @@ library(miscTools)
 library(caret)
 library(Rtsne)
 library(ggrepel)
+library(tidyr)
 ############################## FUNCTIONS ######################################
 
 delete.na <- function(DF, n=0) {
@@ -44,96 +44,58 @@ get_upper_tri <- function(cormat){
    return(cormat)
 }
 
-
-# Analyze_rpkm function takes DiffExp_v2_Genebody (.txt) file from Differential Expression and then calculate pearson correlation and outputs matrix and heatmap
-analyze_rpkm <- function(filename)
-{
-   filename
-   data= data.frame(read.table(filename, header = T ))
-   
-   data_grep <- data[, grepl( "rpkm_" , names( data ) ) ]
-   data_filter <- data_grep[data_grep[,grepl( "rpkm_mean" , names(data_grep ) )]>1,]
-   data_filter = as.matrix(delete.na(data_filter))
-   final <- cor(data_filter)
-   final1 <-as.matrix(final)
-   file1 <- file_path_sans_ext(filename)
-   file_path_sans_ext(file1)
-   
-   # Write the correlation matrix
-   f1 <- paste0("Pearson_Filtered_RPKM_",file1,".csv")
-   write.table(final,file=f1) # keeps the rownames
-   read.table(f1,header=TRUE,row.names=1) # says first column are rownames
-   
-   # Create the pearson plots   
-   m= round(min(final),3)
-   dm = m -0.01
-   M= round(max(final),3)
-   melted_cormat <- melt(final)
-   upper_tri <- get_upper_tri(final)
-   melted_cormat <- melt(upper_tri, na.rm = TRUE)
-   rpkm_plot <- ggplot(data = melted_cormat, aes(Var2, Var1, fill = value))+
-      geom_tile(color = "white")+
-      scale_fill_gradientn(colours = rainbow(4),limits=c(dm,M), space= "Lab",
-                           #scale_fill_gradient2(low = "blue", high = "red", mid = "white", 
-                           name="Pearson\nCorrelation filtered at RPKM >1") +
-      theme_minimal()+ 
-      theme(axis.text.x = element_text(angle = 45, vjust = 1, 
-                                       size = 12, hjust = 1))+
-      coord_fixed()
-   
-   f <- paste0("Pearson_Filtered_RPKM",file1,".pdf")
-   
-   # Save the correlation plot
-   ggsave(f,plot= rpkm_plot, device = "pdf",path= wd, width = 30, height = 30, units = "cm")
-}
-
-# Analyze_all function calculates the pearson correlation for all genes from DE files 
-analyze_all <- function(filename)
+# save correlation plot and table
+plot_cor <- function(df, title, method, out_name)
 {
    
-   data= data.frame(read.table(filename, header = T ))
+   # create correlation matrix
+   td <- df %>% 
+      drop_na() %>% 
+      as.matrix() %>% 
+      cor(., method = method) 
    
-   data_grep <- data[, grepl( "rpkm_" , names( data ) ) ]
-   final <- cor(data_grep)
-   final1 <-as.matrix(final)
-   file1 <- file_path_sans_ext(filename)
-   file_path_sans_ext(file1)
+   # remove duplicated rows and columns
+   duplicated.columns <- duplicated(t(td))
+   duplicated.rows <- duplicated(td)
+   td <- td[!duplicated.rows,!duplicated.columns]
    
-   # Write the correlation matrix
-   f1 <- paste0("Pearson_All_",file1,".csv")
-   write.table(final,file=f1) # keeps the rownames
-   read.table(f1,header=TRUE,row.names=1) # says first column are rownames
+   # get only lower triangle of matrix
+   td[upper.tri(td)] <- NA   
    
-   # Create the pearson plots   
-   m= round(min(final),3)
-   dm = m- 0.01
-   M= round(max(final),3)
-   melted_cormat <- melt(final)
-   upper_tri <- get_upper_tri(final)
-   melted_cormat <- melt(upper_tri, na.rm = TRUE)
-   rpkm_plot <- ggplot(data = melted_cormat, aes(Var2, Var1, fill = value))+
-      geom_tile(color = "white")+
-      scale_fill_gradientn(colours = rainbow(4),limits=c(dm,M), space= "Lab",
-                           
-                           #  scale_fill_gradient2(low = "blue", high = "red", mid = "white", 
-                           #                      midpoint = 0, limit = c(-1,1), space = "Lab", 
-                           name="Pearson\nCorrelation-All genes") +
+   # create pairwise table from matrix [Var1, Var2, value]
+   td_melt <- expand.grid(dimnames(td)) %>% 
+      cbind(., value = as.vector(td)) %>% 
+      drop_na() 
+   
+   # limits for legend
+   mn <- round(min(td),3) - 0.01
+   mx <- round(max(td),3)
+   
+   # plot correlation
+   rpkm_plot <- ggplot(data = td_melt, aes(Var1, Var2, fill = value))+
+      ggtitle(title)+
+      geom_tile(color = "white") +
+      scale_fill_gradientn(colours = rainbow(4),limits=c(mn,mx), space= "Lab",
+                           name=paste0(method,"\ncorrelation")) +
       theme_minimal()+ 
       theme(axis.text.x = element_text(angle = 45, vjust = 1, 
-                                       size = 12, hjust = 1))+
+                                       size = 13, hjust = 1),
+            text = element_text(size=12),
+            legend.title = element_text(size=14),
+            legend.text=element_text(size=14))+
       coord_fixed()
-   
-   f <- paste0("Pearson_All_",file1,".pdf")
-   
+  
    # Save the correlation plot
-   ggsave(f,plot= rpkm_plot, device = "pdf",path= wd, width = 30, height = 30, units = "cm")
+   # ggsave(f,plot= rpkm_plot, device = "pdf",path= wd, width = 30, height = 30, units = "cm")
+   ggsave(paste0(out_name,".pdf"),plot= rpkm_plot, device = "pdf",path= wd, width = 40, height =30, units = "cm")
+   write.table(td, file= paste0(out_name,".csv")) # keeps the rownames
 }
 
 plot_pca <- function(df_pca, df, title, out_names) {
    # PCA plot
    pca <- autoplot(prcomp(df_pca), data= df, colour= "label", label = F, label.size = 6)
    pca <- pca + 
-      ggtitle(paste(title, dim(df_pca)[[2]],sep=" "))+
+      ggtitle(title)+
       geom_label_repel(aes(label = rownames(df_pca), color = label), size = 6)+
       scale_colour_brewer(type="qual", palette = 2)+
       theme_bw()+
@@ -162,7 +124,7 @@ get_conditions <- function(filenames_prefix) {
    list_data_cond <- (paste(cond, collapse = "|") )                     # merge the list into string
    list_data_cond1 <- (paste(cond1, collapse = "|") )                     # merge the list into string
    
-   list(signif=list_data_cond, nonsignif=list_data_cond1)
+   list(signif=list(name="signif", cond=list_data_cond), nonsignif=list(name="nonsignif", cond=list_data_cond1))
 }
 
 # get out_names for PCA files
@@ -181,40 +143,48 @@ read_dataset <- function(filenames, filter_condition = NULL) {
    dataset = cbind.data.frame(lapply(filenames, fread, header=TRUE, sep="\t"))
    dataset = dataset[unique(names(dataset))]
    
-   # TODO: need to refactor and remove
-   dataset_grep <- dataset[, grepl( "rpkm_" , names( dataset ) ) ]
    
-   # choose only required columns
+   # choose only required columns (dataset for pca)
    dataset_grep_filter <- dataset %>%
-      select(matches("_edgeRFDR|_edgeRlogFC|rpkm")) %>% 
+      select(matches("_edgeRFDR|_edgeRlogFC|rpkm")) 
+   # %>% 
+   #    select(-contains("_mean_")) 
+   # 
+   
+   # filter conditions
+   if (!is.null(filter_condition)) {
+      dataset_grep_filter <- filter(dataset_grep_filter, eval(parse(text=filter_condition$cond)))
+      if (filter_condition$name == "nonsignif") {
+         # additional filtration for rpkm for non-significant
+         dataset_grep_filter <- dataset_grep_filter[which(apply(dataset_grep_filter, 1, function(x) max(x) > 1)),]
+      }
+   }
+
+   # dataset for correlation
+   dataset_grep_filter <- dataset_grep_filter %>% 
+      select(matches("rpkm_"))
+   
+   for_pca <- dataset_grep_filter %>% 
       select(-contains("_mean_")) 
    
-   if (!is.null(filter_condition)) {
-      # filter conditions
-      dataset_grep_filter <- filter(dataset_grep_filter, eval(parse(text=filter_condition)))
-   }
-   
    #extract only RPKM columns 
-   dataset_grep_filter <- dataset_grep_filter %>% 
-      select(matches("rpkm_"))     
-   
-   df_pca <- t(dataset_grep_filter)
+   df_pca <- t(for_pca)
    rownames(df_pca) <- str_remove(rownames(df_pca), "rpkm_")
    
-   df <- t(dataset_grep_filter)
+   df <- t(for_pca)
    rownames(df) <- str_remove(rownames(df), "rpkm_")
    row <- str_sub(rownames(df), 1, str_length(rownames(df))-1)
    row <- as.factor(t(row))
    df <- insertCol(df, 1, row, "label")
    df <- as.data.frame(df)
-   list(df_pca=df_pca, df=df, dg=dataset_grep)
+   list(df_pca=df_pca, df=df, df_cor=dataset_grep_filter)
 }
 
 # plot PCA for significant, nonsignificant, and all conditions
 pca_3plot <- function(filename, dataset_label, number) {
-   # get files names without suffixes and prefixes   
-   
-    out_names <- get_outnames(filename)
+
+      # get files names without suffixes and prefixes   
+   out_names <- get_outnames(filename)
    
    # get significant and not-significant genes
    cond <- get_conditions(out_names)
@@ -225,20 +195,52 @@ pca_3plot <- function(filename, dataset_label, number) {
    # dataset without condition
    ds <- read_dataset(filename)
    out_fname <- paste0(number, "_PCA_All_",out_names)
-   header <- paste0(dataset_label, ", ", out_fname, ", ", "All genes (without filter), Genes:")
+   header <- paste0(dataset_label, ", ", out_fname, ", ", "\nAll genes (without filter), Genes: ", dim(ds$df_pca)[[2]])
    plot_pca(ds$df_pca, ds$df, header, out_fname)
    
    # dataset with significant genes
    ds <- read_dataset(filename, cond$signif)
    out_fname <- paste0(number, "_PCA_Significant_",out_names)
-   header <- paste0(dataset_label, ", ", out_fname, ", ", "Significant genes (|FC|>2 and FDR<0.05), Genes:")
+   header <- paste0(dataset_label, ", ", out_fname, ", ", "\nSignificant genes (|FC|>2 and FDR<0.05), Genes: ", dim(ds$df_pca)[[2]])
    plot_pca(ds$df_pca, ds$df, header, out_fname)
    
    # dataset with non-significant genes
    ds <- read_dataset(filename, cond$nonsignif)
    out_fname <- paste0(number, "_PCA_Non-significant_", out_names)
-   header <- paste0(dataset_label, ", ",  out_fname, ", ", "Non-significant genes (1.2 < |FC| < 1/|1.2|  and FDR >0.1, RPKM >1), Genes:")
+   header <- paste0(dataset_label, ", ",  out_fname, ", ", "\nNon-significant genes (1.2 < |FC| < 1/|1.2|  and FDR >0.1, RPKM >1), Genes:", dim(ds$df_pca)[[2]])
    plot_pca(ds$df_pca, ds$df, header, out_fname)
+}
+
+# plot PCA for significant, nonsignificant, and all conditions
+cor_3plot <- function(filename, method, dataset_label, number) {
+   
+   # get files names without suffixes and prefixes   
+   out_names <- get_outnames(filename)
+   
+   # get significant and not-significant genes
+   cond <- get_conditions(out_names)
+   
+   # reassign out_names 
+   out_names <- ifelse(length(out_names) > 1, "Merge", out_names)
+   mname <- ifelse(method == "spearman", "Spearman", "Pearson")
+   
+   # dataset without condition
+   ds <- read_dataset(filename)
+   out_fname <- paste0(number, "_", mname, "_All_", out_names)
+   header <- paste0(dataset_label, ", ", out_fname, ", ", "\nAll genes (without filter), Genes: ", dim(ds$df_cor)[[1]])
+   plot_cor(ds$df_cor, header, method, out_fname)
+
+   # dataset with significant genes
+   ds <- read_dataset(filename, cond$signif)
+   out_fname <- paste0(number, "_", mname, "_Significant_", out_names)
+   header <- paste0(dataset_label, ", ", out_fname, ", ", "\nSignificant genes (|FC|>2 and FDR<0.05), Genes: ", dim(ds$df_cor)[[1]])
+   plot_cor(ds$df_cor, header, method, out_fname)
+   
+   # dataset with non-significant genes
+   ds <- read_dataset(filename, cond$nonsignif)
+   out_fname <- paste0(number, "_", mname, "_Non-significant_", out_names)
+   header <- paste0(dataset_label, ", ",  out_fname, ", ", "\nNon-significant genes (1.2 < |FC| < 1/|1.2|  and FDR >0.1, RPKM >1), Genes: ", dim(ds$df_cor)[[1]])
+   plot_cor(ds$df_cor, header, method, out_fname)
 }
 
 ####################################### FUNCTION ENDS ###################################
@@ -247,16 +249,17 @@ pca_3plot <- function(filename, dataset_label, number) {
 # use the pattern argument to define a common pattern  for import files with regex. Here: .txt
 list.filenames.HT <- list()
 list.filenames.HT<-list.files(pattern=".txt$")
+
 list.filenames.HT
 
 if(!is.na(list.filenames.HT[1])){
    
    dataset <- read_dataset(list.filenames.HT)
-   dataset_grep <- dataset$dg
+   # ttt <- get_conditions(list.filenames.HT[1])
    
-
+   
    ## tSNE   
-
+  
    # if files > 2 than perplexity = 2 else perplexity = 1
    perplexity = ifelse(length(as.vector(list.filenames.HT)) > 1, 2, 1)	
 
@@ -285,93 +288,29 @@ if(!is.na(list.filenames.HT[1])){
       theme_classic()
    ggsave("tSNE_All_Merge.pdf",plot= tsneplot, device = "pdf",path= wd, width = 80, height =40, units = "cm")   
    
-   
-   ## correlation
-   
-   final_dataset <- round(cor(dataset_grep),3)
-   duplicated.columns <- duplicated(t(final_dataset))
-   
-   duplicated.rows <- duplicated((final_dataset)) 
-   new.matrix <- final_dataset[!duplicated.rows,!duplicated.columns] 
-   
-   write.table(new.matrix,file= "Pearson_All_Merge_File.csv") # keeps the rownames
-   read.table("Pearson_All_Merge_File.csv",header=TRUE,row.names=1) # says first column are rownames
-   
-   # Create the pearson plots   
-   m= round(min(new.matrix),3)
-   dm= m-0.01
-   M= round(max(new.matrix),3)
-   melted_cormat <- melt(new.matrix)
-   upper_tri <- get_upper_tri(new.matrix)
-   melted_cormat <- melt(upper_tri, na.rm = TRUE)
-   rpkm_plot <- ggplot(data = melted_cormat, aes(Var2, Var1, fill = value))+
-      geom_tile(color = "white")+
-      #scale_fill_continuous(low= "red",high="green",limits=c(-1,1), space="Lab",
-      scale_fill_gradientn(colours = rainbow(4),limits=c(dm,M), space = "Lab",
-                           name="Pearson\nCorrelation-All genes\n") +
-      theme_minimal()+ 
-      theme(axis.text.x = element_text(angle = 45, vjust = 1, 
-                                       size = 12, hjust = 1))
-   coord_fixed()
-   rpkm_plot
-   # f <- paste0("Pearson_All",file1,".pdf")
-   
-   # Save the correlation plot
-   ggsave("Pearson_All_Merge_File.pdf",plot= rpkm_plot, device = "pdf",path= wd, width = 30, height = 30, units = "cm")
-   
-   ######################## for correlation ######################
-   dataset_filter <- dataset_grep[dataset_grep[,grepl( "rpkm_mean" , names(dataset_grep ) )]>1,]
-   dataset_filter = as.matrix(delete.na(dataset_filter))
-   final_dataset_filter <- round(cor(dataset_filter),3)
-   duplicated.columns.filter <- duplicated(t(final_dataset_filter))
-   
-   duplicated.rows.filter <- duplicated((final_dataset_filter)) 
-   new.matrix.filter <- final_dataset_filter[!duplicated.rows.filter,!duplicated.columns.filter] 
-   
-   write.table(new.matrix.filter,file= "Pearson_Filtered_Merge_File.csv") # keeps the rownames
-   read.table("Pearson_Filtered_Merge_File.csv",header=TRUE,row.names=1) # says first column are rownames
-   
-   # Create the pearson plots   
-   m= round(min(new.matrix.filter),3)
-   dm = m-0.01
-   M= round(max(new.matrix.filter),3)
-   melted_cormat_filter <- melt(new.matrix.filter)
-   upper_tri_filter <- get_upper_tri(new.matrix.filter)
-   melted_cormat_filter <- melt(upper_tri_filter, na.rm = TRUE)
-   rpkm_plot_filter <- ggplot(data = melted_cormat_filter, aes(Var2, Var1, fill = value))+
-      geom_tile(color = "white")+
-      #scale_fill_continuous(low= "red",high="green",limits=c(-1,1), space="Lab",
-      scale_fill_gradientn(colours = rainbow(4),limits=c(dm,M), space = "Lab",
-                           name="Pearson\nCorrelation-RPKM >1 genes\n") +
-      theme_minimal()+ 
-      theme(axis.text.x = element_text(angle = 45, vjust = 1, 
-                                       size = 12, hjust = 1))
-   coord_fixed()
-   rpkm_plot_filter
-   
-   # Save the correlation plot
-   ggsave("Pearson_Filtered_Merge_File.pdf",plot= rpkm_plot_filter, device = "pdf",path= wd, width = 30, height = 30, units = "cm")
-   
-
    # create 3 pca plot for all genes
    pca_3plot(list.filenames.HT, DATASET_LABEL, 0)
    
+   # create 3 correlation plot for all genes
+   cor_3plot(list.filenames.HT, "pearson", DATASET_LABEL, 0)
+
+   # create 3 correlation plot for all genes
+   cor_3plot(list.filenames.HT, "spearman", DATASET_LABEL, 0)
+   
    for(i in 1:length(list.filenames.HT)){
       print(paste0("-->",list.filenames.HT[i]))
-      number <- str_extract(list.filenames.HT[i], "(\\d)+")   
+      number <- str_extract(list.filenames.HT[i], "(\\d)+")
+      
       # create pca plot for each group
       pca_3plot(list.filenames.HT[i], DATASET_LABEL, number)
       
-      analyze_all(list.filenames.HT[i])
-      analyze_rpkm(list.filenames.HT[i])
-
+      # create correlation plots
+      cor_3plot(list.filenames.HT[i], "pearson", DATASET_LABEL, number)
+      cor_3plot(list.filenames.HT[i], "spearman", DATASET_LABEL, number)
    }
    
 } else{
    print("No  files in the folder !!")
    
 }
-
-
-
 
