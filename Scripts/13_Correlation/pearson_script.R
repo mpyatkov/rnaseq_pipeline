@@ -68,8 +68,8 @@ plot_cor <- function(df, title, method, out_name)
       drop_na() 
    
    # limits for legend
-   mn <- round(min(td),3) - 0.01
-   mx <- round(max(td),3)
+   mn <- round(min(td, na.rm = T), 3) - 0.01
+   mx <- round(max(td, na.rm = T), 3)
    
    # plot correlation
    rpkm_plot <- ggplot(data = td_melt, aes(Var1, Var2, fill = value))+
