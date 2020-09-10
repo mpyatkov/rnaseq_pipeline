@@ -128,6 +128,17 @@ echo "------------------------------------------"
 INPUT_DIR=$(pwd)
 OUTPUT_DIR=${INPUT_DIR}/Summary_Differential_Expression
 
+PREFIXNUM=$(echo ${INPUT_DIR} | grep -Po "_\K([0-9][0-9]?)(?=_)")
+
+# # rename segex files
+# segex_files=$(find ./Output* -name "*_forSEGEXUpload*.txt")
+# for sf in ${segex_files}
+# do
+#     fname=$(basename $sf)
+#     dname=$(dirname $sf)
+#     mv $sf ${dname}/${PREFIXNUM}_${fname}
+# done
+
 if [ ! -d ${OUTPUT_DIR} ]; then
     mkdir -p ${OUTPUT_DIR}
 else
@@ -165,8 +176,8 @@ else
     rm ${Individual_DIR}/*.txt
 fi
 
-DESEQ_OUTPUT_FILE=${Combined_DIR}/Combined_forSEGEXUpload_DESeq'.'${COUNT_PROGRAM}'.'${Comparison_Info}'.txt'
-EDGER_OUTPUT_FILE=${Combined_DIR}/Combined_forSEGEXUpload_EdgeR'.'${COUNT_PROGRAM}'.'${Comparison_Info}'.txt'
+DESEQ_OUTPUT_FILE=${Combined_DIR}/${PREFIXNUM}_Combined_forSEGEXUpload_DESeq'.'${COUNT_PROGRAM}'.'${Comparison_Info}'.txt'
+EDGER_OUTPUT_FILE=${Combined_DIR}/${PREFIXNUM}_Combined_forSEGEXUpload_EdgeR'.'${COUNT_PROGRAM}'.'${Comparison_Info}'.txt'
 
 if [ -f ${DESEQ_OUTPUT_FILE} ]
 then 
@@ -199,24 +210,39 @@ then
 else 
     rm -r ${DE_Text_DIR}/*
 fi
+
 ######################
 #For each output folder:
 #Copy the *_forSEGEXUpload*.txt file to the OUTPUT_DIR
 #Then paste the *_forSEGEXUpload*.txt files to get the combined file
 #---------------------------
-Output_list=Output_DiffExp_*
-for Output in $Output_list
+
+# rename segex files
+segex_files=$(find ./Output* -name "*_forSEGEXUpload*.txt")
+for sf in ${segex_files}
 do
-    echo "-----------------------"
-    echo ${Output}
-    echo "-----------------------"
-    #---------------------------
-    echo 'Copying *_forSEGEXUpload*.txt'
-    cd ${Output}
-    cp *_forSEGEXUpload*.txt ${OUTPUT_DIR}
-    #---------------------------
-    cd ..
+    fname=$(basename $sf)
+    # dname=$(dirname $sf)
+#    mv $sf ${dname}/${PREFIXNUM}_${fname}
+    cp $sf ${OUTPUT_DIR}/${PREFIXNUM}_${fname}
 done
+
+
+# Output_list=Output_DiffExp_*
+# for Output in $Output_list
+# do
+#     echo "-----------------------"
+#     echo ${Output}
+#     echo "-----------------------"
+#     #---------------------------
+#     echo 'Copying *_forSEGEXUpload*.txt'
+#     cd ${Output}
+#     cp *_forSEGEXUpload*.txt ${OUTPUT_DIR}
+#     #---------------------------
+#     cd ..
+# done
+
+
 #---------------------------
 cd ${OUTPUT_DIR}
 #---------------------------------------------------------------------------------
@@ -236,11 +262,19 @@ Exonic_Only_File=$(ls *'EdgeR_'${COUNT_PROGRAM}'.txt' | grep 'Exonic_Only')
 echo 'Running paste command'
 paste ${GeneBody_File} ${Intronic_Only_File} ${Exonic_Only_File} > ${EDGER_OUTPUT_FILE}
 #---------------------------------------------------------------------------------
-echo "Move files to Individual_DIR"
-mv *_forSEGEXUpload_'DESeq_'${COUNT_PROGRAM}'.txt' ${Individual_DIR}
-mv *_forSEGEXUpload_'TPM_DESeq_'${COUNT_PROGRAM}'.txt' ${Individual_DIR}
-mv *_forSEGEXUpload_'EdgeR_'${COUNT_PROGRAM}'.txt' ${Individual_DIR}
-mv *_forSEGEXUpload_'TPM_EdgeR_'${COUNT_PROGRAM}'.txt' ${Individual_DIR}
+
+IFPKMDIR=${Individual_DIR}/Segex_FPKM
+mkdir ${IFPKMDIR}
+mv *_forSEGEXUpload_'DESeq_'${COUNT_PROGRAM}'.txt' ${IFPKMDIR}
+mv *_forSEGEXUpload_'EdgeR_'${COUNT_PROGRAM}'.txt' ${IFPKMDIR}
+
+ITPMDIR=${Individual_DIR}/Segex_TPM
+mkdir ${ITPMDIR}
+mv *_forSEGEXUpload_'TPM_DESeq_'${COUNT_PROGRAM}'.txt' ${ITPMDIR}
+mv *_forSEGEXUpload_'TPM_EdgeR_'${COUNT_PROGRAM}'.txt' ${ITPMDIR}
+
+mv ${SEGEX_Upload_DIR} ../
+
 #---------------------------------------------------------------------------------
 OUTPUT_TABLE=${OUTPUT_DIR}/DE_Gene_Counts'.'${COUNT_PROGRAM}'.'${Comparison_Info}'.txt'
 ######################

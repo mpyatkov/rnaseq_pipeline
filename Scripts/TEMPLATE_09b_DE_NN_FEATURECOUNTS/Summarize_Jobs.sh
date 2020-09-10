@@ -1,9 +1,4 @@
 #!/bin/bash
-
-set -o errexit
-set -o pipefail
-set -o nounset
-
 ##################################################################################
 #Andy Rampersaud, 03.12.16
 #This script would be used to summarize DiffExp_* jobs
@@ -11,63 +6,59 @@ set -o nounset
 #Usage: 
 #./DiffExp_Summary.sh
 ##################################################################################
-#--------------------------------------
-echo
-echo 'Loading required modules...'
-echo
-#Make sure the shebang line = #!/bin/bash -l
-#Need the -l option to load modules
-#Search for latest program installed:
-#For captial "R" remove (-i Ignore case sensitivity.) option
-#module avail -t 2>&1 | grep R
-#module load R/R-3.1.1
-module load R/3.6.0
-#--------------------------------------
-#---------------------------------------------------------------------------------
+
+set -o errexit
+set -o pipefail
+set -o nounset
 
 # export all variables from Pipeline_Setup.conf
 eval "$(../00_Setup_Pipeline/01_Pipeline_Setup.py --export)"
 
-SCRIPT_DIR=$(pwd)
+SCRIPT_DIR="$(pwd)"
+
+echo 'Loading required modules...'
+
+module load R/3.6.0
 
 #Source job-specific variables:
 source setup_DiffExp.sh
-#---------------------------------------------------------------------------------
+
 #Need to get M_Num_Cond1_List:
 #Text file has a header line to ignore:
 tail -n +2 Condition_1.txt > Condition_1.temp
 echo "------------------------------------------"
+
 #Use a while loop to run jobs
 while IFS=$'\t' read -r -a myArray
 do
-#---------------------------
-##Check that text file is read in properly:
-#echo 'Sample_DIR:'
-Sample_DIR=${myArray[0]}
-#echo $Sample_DIR
-#echo 'Sample_ID:'
-Sample_ID=${myArray[1]}
-#echo $Sample_ID
-#echo 'Description:'
-Description=${myArray[2]}
-#echo $Description
-#---------------------------
-#Split by underscore and get the 2nd part (M number)
-M_Num=$(echo $Sample_ID | cut -d'_' -f 2)
-#echo "M_Num:"
-#echo ${M_Num}
-#Append variable string to itself:
-M_Num_Cond1_List+=${M_Num}
-#---------------------------
+    #---------------------------
+    ##Check that text file is read in properly:
+    #echo 'Sample_DIR:'
+    Sample_DIR=${myArray[0]}
+    #echo $Sample_DIR
+    #echo 'Sample_ID:'
+    Sample_ID=${myArray[1]}
+    #echo $Sample_ID
+    #echo 'Description:'
+    Description=${myArray[2]}
+    #echo $Description
+
+    #Split by underscore and get the 2nd part (M number)
+    M_Num=$(echo $Sample_ID | cut -d'_' -f 2)
+    #echo "M_Num:"
+    #echo ${M_Num}
+    #Append variable string to itself:
+    M_Num_Cond1_List+=${M_Num}
+
 done < Condition_1.temp
-#---------------------------
+
 echo "M_Num_Cond1_List:"
 echo ${M_Num_Cond1_List}
-#---------------------------
+
 #Remove the temp file:
 rm Condition_1.temp
 echo "------------------------------------------"
-#---------------------------------------------------------------------------------
+
 #Need to get M_Num_Cond2_List:
 #Text file has a header line to ignore:
 tail -n +2 Condition_2.txt > Condition_2.temp
@@ -75,30 +66,30 @@ echo "------------------------------------------"
 #Use a while loop to run jobs
 while IFS=$'\t' read -r -a myArray
 do
-#---------------------------
-##Check that text file is read in properly:
-#echo 'Sample_DIR:'
-Sample_DIR=${myArray[0]}
-#echo $Sample_DIR
-#echo 'Sample_ID:'
-Sample_ID=${myArray[1]}
-#echo $Sample_ID
-#echo 'Description:'
-Description=${myArray[2]}
-#echo $Description
-#---------------------------
-#Split by underscore and get the 2nd part (M number)
-M_Num=$(echo $Sample_ID | cut -d'_' -f 2)
-#echo "M_Num:"
-#echo ${M_Num}
-#Append variable string to itself:
-M_Num_Cond2_List+=${M_Num}
-#---------------------------
+
+    ##Check that text file is read in properly:
+    #echo 'Sample_DIR:'
+    Sample_DIR=${myArray[0]}
+    #echo $Sample_DIR
+    #echo 'Sample_ID:'
+    Sample_ID=${myArray[1]}
+    #echo $Sample_ID
+    #echo 'Description:'
+    Description=${myArray[2]}
+    #echo $Description
+
+    #Split by underscore and get the 2nd part (M number)
+    M_Num=$(echo $Sample_ID | cut -d'_' -f 2)
+    #echo "M_Num:"
+    #echo ${M_Num}
+    #Append variable string to itself:
+    M_Num_Cond2_List+=${M_Num}
+
 done < Condition_2.temp
-#---------------------------
+
 echo "M_Num_Cond2_List:"
 echo ${M_Num_Cond2_List}
-#---------------------------
+
 #Remove the temp file:
 rm Condition_2.temp
 echo "------------------------------------------"
@@ -110,12 +101,8 @@ echo "------------------------------------------"
 echo "-----------------------"
 echo "Start of variable list:"
 echo "-----------------------"
-echo "DATASET_DIR:"
-echo ${DATASET_DIR}
-echo "Dataset_Label:"
+echo "DATASET_LABEL:"
 echo ${DATASET_LABEL}
-echo "GTF_Files_DIR:"
-echo ${GTF_FILES_DIR}
 echo "CONDITION_1_NAME:"
 echo ${CONDITION_1_NAME}
 echo "CONDITION_2_NAME:"
@@ -136,99 +123,126 @@ Comparison_Info=${CONDITION_2_NAME}'.'${DATASET_LABEL}'.'${M_Num_Cond2_List}'.'$
 echo "Comparison_Info:"
 echo ${Comparison_Info}
 echo "------------------------------------------"
-#---------------------------------------------------------------------------------
+
 ##################################################################################
 INPUT_DIR=$(pwd)
 OUTPUT_DIR=${INPUT_DIR}/Summary_Differential_Expression
-###############################
+
+PREFIXNUM=$(echo ${INPUT_DIR} | grep -Po "_\K([0-9][0-9]?)(?=_)")
+
+# # rename segex files
+# segex_files=$(find ./Output* -name "*_forSEGEXUpload*.txt")
+# for sf in ${segex_files}
+# do
+#     fname=$(basename $sf)
+#     dname=$(dirname $sf)
+#     mv $sf ${dname}/${PREFIXNUM}_${fname}
+# done
+
 if [ ! -d ${OUTPUT_DIR} ]; then
-mkdir -p ${OUTPUT_DIR}
+    mkdir -p ${OUTPUT_DIR}
 else
-#Remove dir:
-rm -r ${OUTPUT_DIR}
-#Make new dir:
-mkdir -p ${OUTPUT_DIR}
+
+    #Remove dir:
+    rm -r ${OUTPUT_DIR}
+    #Make new dir:
+    mkdir -p ${OUTPUT_DIR}
 fi
-###############################
+
 SEGEX_Upload_DIR=${OUTPUT_DIR}/SEGEX_Upload_Files
-######################
+
 if [ ! -d ${SEGEX_Upload_DIR} ]
 then 
-mkdir -p ${SEGEX_Upload_DIR}
+    mkdir -p ${SEGEX_Upload_DIR}
 else 
-rm -r ${SEGEX_Upload_DIR}/*
+    rm -r ${SEGEX_Upload_DIR}/*
 fi
-######################
+
 Combined_DIR=${SEGEX_Upload_DIR}/Combined
-######################
+
 if [ ! -d ${Combined_DIR} ]
 then 
-mkdir -p ${Combined_DIR}
+    mkdir -p ${Combined_DIR}
 else 
-rm ${Combined_DIR}/*.txt
+    rm ${Combined_DIR}/*.txt
 fi
-######################
+
 Individual_DIR=${SEGEX_Upload_DIR}/Individual
-######################
+
 if [ ! -d ${Individual_DIR} ]
 then 
-mkdir -p ${Individual_DIR}
+    mkdir -p ${Individual_DIR}
 else 
-rm ${Individual_DIR}/*.txt
+    rm ${Individual_DIR}/*.txt
 fi
-######################
-DESEQ_OUTPUT_FILE=${Combined_DIR}/Combined_forSEGEXUpload_DESeq'.'${COUNT_PROGRAM}'.'${Comparison_Info}'.txt'
-EDGER_OUTPUT_FILE=${Combined_DIR}/Combined_forSEGEXUpload_EdgeR'.'${COUNT_PROGRAM}'.'${Comparison_Info}'.txt'
-######################
+
+DESEQ_OUTPUT_FILE=${Combined_DIR}/${PREFIXNUM}_Combined_forSEGEXUpload_DESeq'.'${COUNT_PROGRAM}'.'${Comparison_Info}'.txt'
+EDGER_OUTPUT_FILE=${Combined_DIR}/${PREFIXNUM}_Combined_forSEGEXUpload_EdgeR'.'${COUNT_PROGRAM}'.'${Comparison_Info}'.txt'
+
 if [ -f ${DESEQ_OUTPUT_FILE} ]
 then 
-rm ${DESEQ_OUTPUT_FILE}
+    rm ${DESEQ_OUTPUT_FILE}
 else
-touch ${DESEQ_OUTPUT_FILE}
+    touch ${DESEQ_OUTPUT_FILE}
 fi
-#---------------------------
+
 if [ -f ${EDGER_OUTPUT_FILE} ]
 then 
-rm ${EDGER_OUTPUT_FILE}
+    rm ${EDGER_OUTPUT_FILE}
 else
-touch ${EDGER_OUTPUT_FILE}
+    touch ${EDGER_OUTPUT_FILE}
 fi
 ######################
 PNG_DIR=${OUTPUT_DIR}/PNG_Files
 ######################
 if [ ! -d ${PNG_DIR} ]
 then 
-mkdir -p ${PNG_DIR}
+    mkdir -p ${PNG_DIR}
 else 
-rm -r ${PNG_DIR}/*
+    rm -r ${PNG_DIR}/*
 fi
 ######################
 DE_Text_DIR=${OUTPUT_DIR}/DE_Text_Files
 ######################
 if [ ! -d ${DE_Text_DIR} ]
 then 
-mkdir -p ${DE_Text_DIR}
+    mkdir -p ${DE_Text_DIR}
 else 
-rm -r ${DE_Text_DIR}/*
+    rm -r ${DE_Text_DIR}/*
 fi
+
 ######################
 #For each output folder:
 #Copy the *_forSEGEXUpload*.txt file to the OUTPUT_DIR
 #Then paste the *_forSEGEXUpload*.txt files to get the combined file
 #---------------------------
-Output_list=Output_DiffExp_*
-for Output in $Output_list
+
+# rename segex files
+segex_files=$(find ./Output* -name "*_forSEGEXUpload*.txt")
+for sf in ${segex_files}
 do
-echo "-----------------------"
-echo ${Output}
-echo "-----------------------"
-#---------------------------
-echo 'Copying *_forSEGEXUpload*.txt'
-cd ${Output}
-cp *_forSEGEXUpload*.txt ${OUTPUT_DIR}
-#---------------------------
-cd ..
+    fname=$(basename $sf)
+    # dname=$(dirname $sf)
+#    mv $sf ${dname}/${PREFIXNUM}_${fname}
+    cp $sf ${OUTPUT_DIR}/${PREFIXNUM}_${fname}
 done
+
+
+# Output_list=Output_DiffExp_*
+# for Output in $Output_list
+# do
+#     echo "-----------------------"
+#     echo ${Output}
+#     echo "-----------------------"
+#     #---------------------------
+#     echo 'Copying *_forSEGEXUpload*.txt'
+#     cd ${Output}
+#     cp *_forSEGEXUpload*.txt ${OUTPUT_DIR}
+#     #---------------------------
+#     cd ..
+# done
+
+
 #---------------------------
 cd ${OUTPUT_DIR}
 #---------------------------------------------------------------------------------
@@ -248,28 +262,36 @@ Exonic_Only_File=$(ls *'EdgeR_'${COUNT_PROGRAM}'.txt' | grep 'Exonic_Only')
 echo 'Running paste command'
 paste ${GeneBody_File} ${Intronic_Only_File} ${Exonic_Only_File} > ${EDGER_OUTPUT_FILE}
 #---------------------------------------------------------------------------------
-echo "Move files to Individual_DIR"
-mv *_forSEGEXUpload_'DESeq_'${COUNT_PROGRAM}'.txt' ${Individual_DIR}
-mv *_forSEGEXUpload_'TPM_DESeq_'${COUNT_PROGRAM}'.txt' ${Individual_DIR}
-mv *_forSEGEXUpload_'EdgeR_'${COUNT_PROGRAM}'.txt' ${Individual_DIR}
-mv *_forSEGEXUpload_'TPM_EdgeR_'${COUNT_PROGRAM}'.txt' ${Individual_DIR}
+
+IFPKMDIR=${Individual_DIR}/Segex_FPKM
+mkdir ${IFPKMDIR}
+mv *_forSEGEXUpload_'DESeq_'${COUNT_PROGRAM}'.txt' ${IFPKMDIR}
+mv *_forSEGEXUpload_'EdgeR_'${COUNT_PROGRAM}'.txt' ${IFPKMDIR}
+
+ITPMDIR=${Individual_DIR}/Segex_TPM
+mkdir ${ITPMDIR}
+mv *_forSEGEXUpload_'TPM_DESeq_'${COUNT_PROGRAM}'.txt' ${ITPMDIR}
+mv *_forSEGEXUpload_'TPM_EdgeR_'${COUNT_PROGRAM}'.txt' ${ITPMDIR}
+
+mv ${SEGEX_Upload_DIR} ../
+
 #---------------------------------------------------------------------------------
 OUTPUT_TABLE=${OUTPUT_DIR}/DE_Gene_Counts'.'${COUNT_PROGRAM}'.'${Comparison_Info}'.txt'
 ######################
 if [ -f ${OUTPUT_TABLE} ]
 then 
-rm ${OUTPUT_TABLE}
+    rm ${OUTPUT_TABLE}
 else
-touch ${OUTPUT_TABLE}
+    touch ${OUTPUT_TABLE}
 fi
 ######################
 OUTPUT_TABLE_2=${OUTPUT_DIR}/DE_Gene_Venn_Tables'.'${COUNT_PROGRAM}'.'${Comparison_Info}'.txt'
 ######################
 if [ -f ${OUTPUT_TABLE_2} ]
 then 
-rm ${OUTPUT_TABLE_2}
+    rm ${OUTPUT_TABLE_2}
 else
-touch ${OUTPUT_TABLE_2}
+    touch ${OUTPUT_TABLE_2}
 fi
 ######################
 #---------------------------------------------------------------------------------
@@ -282,53 +304,53 @@ cd ${INPUT_DIR}
 Output_list=Output_DiffExp_*
 for Output in $Output_list
 do
-echo "-----------------------"
-echo ${Output}
-echo "-----------------------"
-DiffExp_Index=${Output}
-cd ${Output}
-DESEQ_OUTPUT_FILE=$(ls *DiffExp_v2_*DESeq*.txt)
-echo 'Count for Up_Genes_DESeq_*.txt'
-Up_Genes_Count=$(wc -l Up_Genes_DESeq_*.txt | awk '{print $1-1}')
-echo 'Count for Down_Genes_DESeq_*.txt'
-Down_Genes_Count=$(wc -l Down_Genes_DESeq_*.txt | awk '{print $1-1}')
-#---------------------------
-echo 'Print to output file'
-echo ${DiffExp_Index} $'\t'${DESEQ_OUTPUT_FILE} $'\t'${Up_Genes_Count} $'\t'${Down_Genes_Count}  >> ${OUTPUT_TABLE}
-#---------------------------
-EdgeR_Output_File=$(ls *DiffExp_v2_*EdgeR*.txt)
-echo 'Count for Up_Genes_EdgeR_*.txt'
-Up_Genes_Count=$(wc -l Up_Genes_EdgeR_*.txt | awk '{print $1-1}')
-echo 'Count for Down_Genes_EdgeR_*.txt'
-Down_Genes_Count=$(wc -l Down_Genes_EdgeR_*.txt | awk '{print $1-1}')
-#---------------------------
-echo 'Print to OUTPUT_TABLE'
-echo ${DiffExp_Index} $'\t'${EdgeR_Output_File} $'\t'${Up_Genes_Count} $'\t'${Down_Genes_Count}  >> ${OUTPUT_TABLE}
-#---------------------------
-set +eu
-echo 'Print to OUTPUT_TABLE_2'
-cat *_Venn_Tables*.txt >> ${OUTPUT_TABLE_2} 
-#---------------------------
-echo 'Copy PNG files to PNG_DIR'
-cp *.png ${PNG_DIR}
-set -eu
-#---------------------------
-echo 'Copy Down_Genes*.txt and Up_Genes*.txt files to DE_Text_DIR'
-cp Down_Genes*.txt ${DE_Text_DIR}
-cp Up_Genes*.txt ${DE_Text_DIR}
-#---------------------------
-cd ..
+    echo "-----------------------"
+    echo ${Output}
+    echo "-----------------------"
+    DiffExp_Index=${Output}
+    cd ${Output}
+    DESeq_Output_File=$(ls *DiffExp_v2_*DESeq*.txt)
+    echo 'Count for Up_Genes_DESeq_*.txt'
+    Up_Genes_Count=$(wc -l Up_Genes_DESeq_*.txt | awk '{print $1-1}')
+    echo 'Count for Down_Genes_DESeq_*.txt'
+    Down_Genes_Count=$(wc -l Down_Genes_DESeq_*.txt | awk '{print $1-1}')
+    #---------------------------
+    echo 'Print to output file'
+    echo ${DiffExp_Index} $'\t'${DESeq_Output_File} $'\t'${Up_Genes_Count} $'\t'${Down_Genes_Count}  >> ${OUTPUT_TABLE}
+    #---------------------------
+    EdgeR_Output_File=$(ls *DiffExp_v2_*EdgeR*.txt)
+    echo 'Count for Up_Genes_EdgeR_*.txt'
+    Up_Genes_Count=$(wc -l Up_Genes_EdgeR_*.txt | awk '{print $1-1}')
+    echo 'Count for Down_Genes_EdgeR_*.txt'
+    Down_Genes_Count=$(wc -l Down_Genes_EdgeR_*.txt | awk '{print $1-1}')
+    #---------------------------
+    echo 'Print to OUTPUT_TABLE'
+    echo ${DiffExp_Index} $'\t'${EdgeR_Output_File} $'\t'${Up_Genes_Count} $'\t'${Down_Genes_Count}  >> ${OUTPUT_TABLE}
+    #---------------------------
+    set +eu
+    echo 'Print to OUTPUT_TABLE_2'
+    cat *_Venn_Tables*.txt >> ${OUTPUT_TABLE_2} 
+    #---------------------------
+    echo 'Copy PNG files to PNG_DIR'
+    cp *.png ${PNG_DIR}
+    set -eu
+    #---------------------------
+    echo 'Copy Down_Genes*.txt and Up_Genes*.txt files to DE_Text_DIR'
+    cp Down_Genes*.txt ${DE_Text_DIR}
+    cp Up_Genes*.txt ${DE_Text_DIR}
+    #---------------------------
+    cd ..
 done
 #---------------------------------------------------------------------------------
 OUTPUT_FILE_PDF=${OUTPUT_DIR}/DE_Genes_Venn_R_Package'.'${COUNT_PROGRAM}'.'${Comparison_Info}'.pdf'
 ######################
 if [ -f ${OUTPUT_FILE_PDF} ]
 then 
-rm ${OUTPUT_FILE_PDF}
+    rm ${OUTPUT_FILE_PDF}
 else
-touch ${OUTPUT_FILE_PDF}
+    touch ${OUTPUT_FILE_PDF}
 fi
-######################
+
 echo "-----------------------"
 echo 'Create montage of PNG files'
 cd ${PNG_DIR}
@@ -337,22 +359,25 @@ echo "-----------------------"
 cd ..
 #Remove ${PNG_DIR}:
 rm -r ${PNG_DIR}
-#---------------------------------------------------------------------------------
+
 cd ${DE_Text_DIR}
 OUTPUT_FILE_PDF_2=${OUTPUT_DIR}/DE_Genes_Venn_Count_Method'.'${COUNT_PROGRAM}'.'${Comparison_Info}'.pdf'
+
 ######################
 if [ -f ${OUTPUT_FILE_PDF_2} ]
 then 
-rm ${OUTPUT_FILE_PDF_2}
+    rm ${OUTPUT_FILE_PDF_2}
 else
-touch ${OUTPUT_FILE_PDF_2}
+    touch ${OUTPUT_FILE_PDF_2}
 fi
+
 ######################
 echo 'Copy Venn_Count_Method.R script to DE_Text_DIR'
 cp ${SCRIPT_DIR}/Scripts/Venn_Count_Method.R . 
 echo '#--------------------------------------------------------------------------'
 echo 'Run Venn_Count_Method.R commands'
 echo '#--------------------------------------------------------------------------'
+
 #Since renaming the files to include ${Comparison_Info} in the qsub
 #I need a different way to get the file names:
 #DESeq down files:
@@ -369,6 +394,7 @@ echo ${DESeq_Down_File3}
 echo '#--------------------------------------------------------------------------'
 Rscript Venn_Count_Method.R ${DESeq_Down_File1} ${DESeq_Down_File2} ${DESeq_Down_File3} 
 echo '#--------------------------------------------------------------------------'
+
 #DESeq up files:
 DESeq_Up_File1=$(ls Up_Genes_DESeq_Exonic_Only*)
 DESeq_Up_File2=$(ls Up_Genes_DESeq_GeneBody*)
@@ -383,6 +409,7 @@ echo ${DESeq_Up_File3}
 echo '#--------------------------------------------------------------------------'
 Rscript Venn_Count_Method.R ${DESeq_Up_File1} ${DESeq_Up_File2} ${DESeq_Up_File3} 
 echo '#--------------------------------------------------------------------------'
+
 #EdgeR down files:
 EdgeR_Down_File1=$(ls Down_Genes_EdgeR_Exonic_Only*)
 EdgeR_Down_File2=$(ls Down_Genes_EdgeR_GeneBody*)
@@ -397,6 +424,7 @@ echo ${EdgeR_Down_File3}
 echo '#--------------------------------------------------------------------------'
 Rscript Venn_Count_Method.R ${EdgeR_Down_File1} ${EdgeR_Down_File2} ${EdgeR_Down_File3} 
 echo '#--------------------------------------------------------------------------'
+
 #EdgeR up files:
 EdgeR_Up_File1=$(ls Up_Genes_EdgeR_Exonic_Only*)
 EdgeR_Up_File2=$(ls Up_Genes_EdgeR_GeneBody*)
@@ -415,6 +443,7 @@ echo 'Create montage of PNG files'
 montage -geometry 500x500 *.png ${OUTPUT_FILE_PDF_2}
 echo '#--------------------------------------------------------------------------'
 cd ..
+
 #Remove ${DE_Text_DIR}:
 rm -r ${DE_Text_DIR}
 echo '#--------------------------------------------------------------------------'
