@@ -6,7 +6,10 @@
 ##################################################################################
 
 args <- commandArgs(T)
-DATASET_LABEL <- args[1]
+# DATASET_LABEL <- args[1]
+
+EXTARGS=list(dataset_label=args[1],
+             detitle=args[2])
 
 #---------------------------------------------------------------------------------
 wd <- getwd()
@@ -27,22 +30,6 @@ library(Rtsne)
 library(ggrepel)
 library(tidyr)
 ############################## FUNCTIONS ######################################
-
-delete.na <- function(DF, n=0) {
-   DF[rowSums(is.na(DF)) <= n,]
-}
-
-# Get lower triangle of the correlation matrix
-get_lower_tri<-function(cormat){
-   cormat[upper.tri(cormat)] <- NA
-   return(cormat)
-}
-
-# Get upper triangle of the correlation matrix
-get_upper_tri <- function(cormat){
-   cormat[lower.tri(cormat)]<- NA
-   return(cormat)
-}
 
 # save correlation plot and table
 plot_cor <- function(df, title, method, out_name)
@@ -78,8 +65,9 @@ plot_cor <- function(df, title, method, out_name)
       scale_fill_gradientn(colours = rainbow(4),limits=c(mn,mx), space= "Lab",
                            name=paste0(method,"\ncorrelation")) +
       theme_minimal()+ 
-      theme(axis.text.x = element_text(angle = 45, vjust = 1, 
+      theme(axis.text.x = element_text(angle = 90, vjust = 1, 
                                        size = 13, hjust = 1),
+            axis.text.y = element_text(size=13),
             text = element_text(size=12),
             legend.title = element_text(size=14),
             legend.text=element_text(size=14))+
@@ -139,7 +127,7 @@ get_outnames <- function(filenames) {
 }
 
 # read datasets and return back files for PCA, tSNE and correlation 
-read_dataset <- function(filenames, filter_condition = NULL) {
+read_dataset <- function(filenames, filter_condition = NULL, meanonly = F) {
    dataset = cbind.data.frame(lapply(filenames, fread, header=TRUE, sep="\t"))
    dataset = dataset[unique(names(dataset))]
    
@@ -162,10 +150,19 @@ read_dataset <- function(filenames, filter_condition = NULL) {
 
    # dataset for correlation
    dataset_grep_filter <- dataset_grep_filter %>% 
-      select(matches("rpkm_"))
+      select(matches("rpkm_")) 
    
-   for_pca <- dataset_grep_filter %>% 
-      select(-contains("_mean_")) 
+   # select columns with "_mean_" only
+   if (meanonly == T) {
+      for_cor <- dataset_grep_filter %>% 
+         select(contains("_mean_")) 
+   } else {
+      for_cor <- dataset_grep_filter %>% 
+         select(-contains("_mean_"))
+   }
+
+   for_pca <- dataset_grep_filter %>%
+      select(-contains("_mean_"))
    
    #extract only RPKM columns 
    df_pca <- t(for_pca)
@@ -177,11 +174,11 @@ read_dataset <- function(filenames, filter_condition = NULL) {
    row <- as.factor(t(row))
    df <- insertCol(df, 1, row, "label")
    df <- as.data.frame(df)
-   list(df_pca=df_pca, df=df, df_cor=dataset_grep_filter)
+   list(df_pca=df_pca, df=df, df_cor=for_cor)
 }
 
 # plot PCA for significant, nonsignificant, and all conditions
-pca_3plot <- function(filename, dataset_label, number) {
+pca_3plot <- function(filename, extargs, number, meanonly = F) {
 
       # get files names without suffixes and prefixes   
    out_names <- get_outnames(filename)
@@ -193,26 +190,26 @@ pca_3plot <- function(filename, dataset_label, number) {
    out_names <- ifelse(length(out_names) > 1, "Merge", out_names)
    
    # dataset without condition
-   ds <- read_dataset(filename)
+   ds <- read_dataset(filename, meanonly = meanonly)
    out_fname <- paste0(number, "_PCA_All_",out_names)
-   header <- paste0(dataset_label, ", ", out_fname, ", ", "\nAll genes (without filter), Genes: ", dim(ds$df_pca)[[2]])
+   header <- paste0(extargs$dataset_label, ", ", out_fname, ", ", "\nAll genes (without filter), ",extargs$detitle,"_Genes: ", dim(ds$df_pca)[[2]])
    plot_pca(ds$df_pca, ds$df, header, out_fname)
    
    # dataset with significant genes
-   ds <- read_dataset(filename, cond$signif)
+   ds <- read_dataset(filename, filter_condition = cond$signif, meanonly = meanonly)
    out_fname <- paste0(number, "_PCA_Significant_",out_names)
-   header <- paste0(dataset_label, ", ", out_fname, ", ", "\nSignificant genes (|FC|>2 and FDR<0.05), Genes: ", dim(ds$df_pca)[[2]])
+   header <- paste0(extargs$dataset_label, ", ", out_fname, ", ", "\nSignificant genes (|FC|>2 and FDR<0.05), ",extargs$detitle,"_Genes: ", dim(ds$df_pca)[[2]])
    plot_pca(ds$df_pca, ds$df, header, out_fname)
    
    # dataset with non-significant genes
-   ds <- read_dataset(filename, cond$nonsignif)
+   ds <- read_dataset(filename, filter_condition = cond$nonsignif, meanonly = meanonly)
    out_fname <- paste0(number, "_PCA_Non-significant_", out_names)
-   header <- paste0(dataset_label, ", ",  out_fname, ", ", "\nNon-significant genes (1.2 < |FC| < 1/|1.2|  and FDR >0.1, RPKM >1), Genes:", dim(ds$df_pca)[[2]])
+   header <- paste0(extargs$dataset_label, ", ",  out_fname, ", ", "\nNon-significant genes (1.2 < |FC| < 1/|1.2|  and FDR >0.1, RPKM >1), ",extargs$detitle,"_Genes: ", dim(ds$df_pca)[[2]])
    plot_pca(ds$df_pca, ds$df, header, out_fname)
 }
 
 # plot PCA for significant, nonsignificant, and all conditions
-cor_3plot <- function(filename, method, dataset_label, number) {
+cor_3plot <- function(filename, method, extargs, number, meanonly = F) {
    
    # get files names without suffixes and prefixes   
    out_names <- get_outnames(filename)
@@ -224,22 +221,35 @@ cor_3plot <- function(filename, method, dataset_label, number) {
    out_names <- ifelse(length(out_names) > 1, "Merge", out_names)
    mname <- ifelse(method == "spearman", "Spearman", "Pearson")
    
+   # double starting zero of outname in case of mean-only
+   double_number <- function(outname, meanonly) {
+      if (meanonly) {
+         paste0("0", outname)
+      }
+      else {
+         outname
+      }
+   }
+   
    # dataset without condition
-   ds <- read_dataset(filename)
+   ds <- read_dataset(filename, meanonly = meanonly)
    out_fname <- paste0(number, "_", mname, "_All_", out_names)
-   header <- paste0(dataset_label, ", ", out_fname, ", ", "\nAll genes (without filter), Genes: ", dim(ds$df_cor)[[1]])
+   out_fname <- double_number(out_fname, meanonly)
+   header <- paste0(extargs$dataset_label, ", ", out_fname, ", ", "\nAll genes (without filter), ",extargs$detitle,"_Genes: ", dim(ds$df_cor)[[1]])
    plot_cor(ds$df_cor, header, method, out_fname)
 
    # dataset with significant genes
-   ds <- read_dataset(filename, cond$signif)
+   ds <- read_dataset(filename, filter_condition = cond$signif, meanonly = meanonly)
    out_fname <- paste0(number, "_", mname, "_Significant_", out_names)
-   header <- paste0(dataset_label, ", ", out_fname, ", ", "\nSignificant genes (|FC|>2 and FDR<0.05), Genes: ", dim(ds$df_cor)[[1]])
+   out_fname <- double_number(out_fname, meanonly)
+   header <- paste0(extargs$dataset_label, ", ", out_fname, ", ", "\nSignificant genes (|FC|>2 and FDR<0.05), ",extargs$detitle,"_Genes: ", dim(ds$df_cor)[[1]])
    plot_cor(ds$df_cor, header, method, out_fname)
    
    # dataset with non-significant genes
-   ds <- read_dataset(filename, cond$nonsignif)
+   ds <- read_dataset(filename, filter_condition = cond$nonsignif, meanonly = meanonly)
    out_fname <- paste0(number, "_", mname, "_Non-significant_", out_names)
-   header <- paste0(dataset_label, ", ",  out_fname, ", ", "\nNon-significant genes (1.2 < |FC| < 1/|1.2|  and FDR >0.1, RPKM >1), Genes: ", dim(ds$df_cor)[[1]])
+   out_fname <- double_number(out_fname, meanonly)
+   header <- paste0(extargs$dataset_label, ", ",  out_fname, ", ", "\nNon-significant genes (1.2 < |FC| < 1/|1.2|  and FDR >0.1, RPKM >1), ",extargs$detitle,"_Genes: ", dim(ds$df_cor)[[1]])
    plot_cor(ds$df_cor, header, method, out_fname)
 }
 
@@ -255,8 +265,7 @@ list.filenames.HT
 if(!is.na(list.filenames.HT[1])){
    
    dataset <- read_dataset(list.filenames.HT)
-   # ttt <- get_conditions(list.filenames.HT[1])
-   
+   #cor_3plot(list.filenames.HT, "pearson", EXTARGS, 0, meanonly = F)
    
    ## tSNE   
   
@@ -289,24 +298,30 @@ if(!is.na(list.filenames.HT[1])){
    ggsave("tSNE_All_Merge.pdf",plot= tsneplot, device = "pdf",path= wd, width = 80, height =40, units = "cm")   
    
    # create 3 pca plot for all genes
-   pca_3plot(list.filenames.HT, DATASET_LABEL, 0)
+   pca_3plot(list.filenames.HT, EXTARGS, 0)
    
-   # create 3 correlation plot for all genes
-   cor_3plot(list.filenames.HT, "pearson", DATASET_LABEL, 0)
+   # create 3 Pearson correlation plot for all genes
+   cor_3plot(list.filenames.HT, "pearson", EXTARGS, 0)
 
-   # create 3 correlation plot for all genes
-   cor_3plot(list.filenames.HT, "spearman", DATASET_LABEL, 0)
+   # create 3 Spearman correlation plot for all genes
+   cor_3plot(list.filenames.HT, "spearman", EXTARGS, 0)
+
+   # create 3 Pearson correlation plot for all genes (meanonly)
+   cor_3plot(list.filenames.HT, "pearson", EXTARGS, 0, meanonly = T)
    
+   # create 3 Spearman correlation plot for all genes (meanonly)
+   cor_3plot(list.filenames.HT, "spearman", EXTARGS, 0, meanonly = T)
+
    for(i in 1:length(list.filenames.HT)){
       print(paste0("-->",list.filenames.HT[i]))
       number <- str_extract(list.filenames.HT[i], "(\\d)+")
       
       # create pca plot for each group
-      pca_3plot(list.filenames.HT[i], DATASET_LABEL, number)
+      pca_3plot(list.filenames.HT[i], EXTARGS, number)
       
       # create correlation plots
-      cor_3plot(list.filenames.HT[i], "pearson", DATASET_LABEL, number)
-      cor_3plot(list.filenames.HT[i], "spearman", DATASET_LABEL, number)
+      cor_3plot(list.filenames.HT[i], "pearson", EXTARGS, number)
+      cor_3plot(list.filenames.HT[i], "spearman", EXTARGS, number)
    }
    
 } else{

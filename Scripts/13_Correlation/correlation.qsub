@@ -20,6 +20,7 @@ function calc_correlation()
 {
     local SEARCH_BODY=$1
     local OUTDIR=$2
+    local DETITLE=$3
 
     PCOR=Pearson_correlation
     SCOR=Spearman_correlation
@@ -42,7 +43,8 @@ function calc_correlation()
 	cp $fname "./${prefix}_$(basename $fname)"
     done
     
-    Rscript pearson_script.R $DATASET_LABEL
+    # DATASET_LABEL exported from the Pipeline_Setup.conf, Step_0
+    Rscript pearson_script.R $DATASET_LABEL $DETITLE
     
     # mv all plots to corresponding directories
     mv *_Pearson* ./${PCOR}
@@ -62,9 +64,9 @@ function calc_correlation()
     mv tSNE_All_Merge.pdf ./${OUTDIR}/
 }
 
-calc_correlation "../09a_DE_* -name 'DiffEx*GeneBody*txt'" 13a_HTSeq_GeneBody
-calc_correlation "../09b_DE_* -name 'DiffEx*GeneBody*txt'" 13b_featureCounts_GeneBody
-calc_correlation "../09c_DE_* -name 'DiffEx*ExonCollapsed*txt'" 13c_lncRNA_ExonCollapsed
+calc_correlation "../09a_DE_* -name 'DiffEx*GeneBody*txt'" 13a_HTSeq_GeneBody RefSeq
+calc_correlation "../09b_DE_* -name 'DiffEx*GeneBody*txt'" 13b_featureCounts_GeneBody RefSeq
+calc_correlation "../09c_DE_* -name 'DiffEx*ExonCollapsed*txt'" 13c_lncRNA_ExonCollapsed lnc
 
 rm -rf Job_Summary && mkdir -p Job_Summary
 mv ./13* ./Job_Summary
