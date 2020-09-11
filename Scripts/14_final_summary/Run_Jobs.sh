@@ -110,9 +110,29 @@ find ../09c_DE_* -name "*SEGEX*" | grep -i intronic | xargs -n1 -I{} cp {} ./out
 mkdir -p output/Segex_09c/Segex09c_Exonic_Only
 find ../09c_DE_* -name "*SEGEX*" | grep -i exonic | xargs -n1 -I{} cp {} ./output/Segex_09c/Segex09c_Exonic_Only/
 
+# summarize up and down genes
+# 09a
+
+INPUT_UPDOWN_FILE="./gene_counts.csv"
+SAMPLES_FILE="../00_Setup_Pipeline/Sample_Labels.txt"
+CMP_FILE="../00_Setup_Pipeline/Comparisons.txt"
+
+OUTPUT_FILE="$(pwd)/09a_DE_Genes_counts.csv"
+find ../09a_DE_* -iname  "*DE_Gene_C*" | xargs -n1 -I{} cat {} | grep -v "Output_File" >> ${INPUT_UPDOWN_FILE}
+Rscript ./Scripts/updown_genes.R ${INPUT_UPDOWN_FILE} ${CMP_FILE} ${SAMPLES_FILE} ${OUTPUT_FILE}
+mv ${OUTPUT_FILE} ./output && rm ${INPUT_UPDOWN_FILE}
+
+OUTPUT_FILE="$(pwd)/09b_DE_Genes_counts.csv"
+find ../09b_DE_* -iname "*DE_Gene_C*" | xargs -n1 -I{} cat {} | grep -v "Output_File" >> ${INPUT_UPDOWN_FILE}
+Rscript ./Scripts/updown_genes.R ${INPUT_UPDOWN_FILE} ${CMP_FILE} ${SAMPLES_FILE} ${OUTPUT_FILE}
+mv ${OUTPUT_FILE} ./output && rm ${INPUT_UPDOWN_FILE}
+
+OUTPUT_FILE="$(pwd)/09c_DE_Genes_counts.csv"
+find ../09c_DE_* -iname "*DE_Gene_C*" | xargs -n1 -I{} cat {} | grep -v "Output_File" >> ${INPUT_UPDOWN_FILE}
+Rscript ./Scripts/updown_genes.R ${INPUT_UPDOWN_FILE} ${CMP_FILE} ${SAMPLES_FILE} ${OUTPUT_FILE}
+mv ${OUTPUT_FILE} ./output && rm ${INPUT_UPDOWN_FILE}
 
 # mv *.csv ${Level_UP}/14_final_summary/output
-
 #echo 'Setup_Pipeline_DIR :' $Setup_Pipeline_DIR
 # cc=$(find ../ -name "[0-9][0-9]*b_DE_*_FEATURECOUNTS" | wc -l);
 # echo $cc
