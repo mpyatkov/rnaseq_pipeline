@@ -16,6 +16,14 @@ module load R/3.6.0
 # export all variables from Pipeline_Setup.conf
 eval "$(../00_Setup_Pipeline/01_Pipeline_Setup.py --export)"
 
+function combined_pdf() {
+    local OUTNAME=$1
+    ALL=$(find . -name "*All*pdf" -o -name "*_Sig*pdf" | sort -n)
+    ALL+=" "
+    ALL+=$(find . -iname "*_non*.pdf" | sort -n)
+    pdfunite $(echo $ALL | paste -s -d " ") ${OUTNAME}.pdf
+}
+
 function calc_correlation()
 {
     local SEARCH_BODY=$1
@@ -55,9 +63,10 @@ function calc_correlation()
     rm -rf *DiffExp*
     
     # create combined pdf files 
-    (cd ${PCOR}; pdfunite $(ls *.pdf | sort -n) ${OUTDIR}_Pearson_Combined.pdf)
-    (cd ${SCOR}; pdfunite $(ls *.pdf | sort -n) ${OUTDIR}_Spearman_Combined.pdf)
-    (cd PCA; pdfunite $(ls *.pdf | sort -n) ${OUTDIR}_PCA_Combined.pdf)
+    (cd ${PCOR}; combined_pdf ${OUTDIR}_Pearson_Combined.pdf)
+    (cd ${SCOR}; combined_pdf ${OUTDIR}_Spearman_Combined.pdf)
+    (cd PCA; combined_pdf ${OUTDIR}_PCA_Combined.pdf)
+
     mv ${PCOR} ./${OUTDIR}/
     mv ${SCOR} ./${OUTDIR}/
     mv PCA ./${OUTDIR}/
