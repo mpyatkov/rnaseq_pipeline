@@ -18,7 +18,7 @@ set -o nounset
 #$ -j y
 #$ -e ./logs/
 #$ -o ./logs/
-# change to y if you want a single qlog file 
+#$ -l scratch_free=200G
 ##################################################################################
 
 #checking the command line arg

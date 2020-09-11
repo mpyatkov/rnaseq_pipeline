@@ -13,6 +13,7 @@
 #$ -j y
 #$ -e ./logs/
 #$ -o ./logs/
+#$ -l scratch_free=200G
 ##################################################################################
 #Initialize variables from DiffExp.sh
 
