@@ -11,6 +11,12 @@ set -o errexit
 set -o pipefail
 set -o nounset
 
+if [ -d Summary_Differential_Expression -o -d SEGEX_Upload_Files ]
+then
+    echo "No summary required. Output folders exist"
+    exit 0
+fi
+
 echo
 echo 'Loading required modules...'
 echo

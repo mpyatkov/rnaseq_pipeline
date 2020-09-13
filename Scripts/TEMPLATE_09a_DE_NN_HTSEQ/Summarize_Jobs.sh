@@ -11,6 +11,12 @@ set -o errexit
 set -o pipefail
 set -o nounset
 
+if [ -d Summary_Differential_Expression -o -d SEGEX_Upload_Files ]
+then
+    echo "No summary required. Output folders exist"
+    exit 0
+fi
+
 # export all variables from Pipeline_Setup.conf
 eval "$(../00_Setup_Pipeline/01_Pipeline_Setup.py --export)"
 

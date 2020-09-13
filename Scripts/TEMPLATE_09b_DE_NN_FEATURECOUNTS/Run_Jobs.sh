@@ -22,7 +22,7 @@ set -eu
 
 ##################################################################################
 #Remove *.o files from previous jobs
-rm -rf ./logs Output_* Summary_Differential_Expression
+rm -rf ./logs Output_* Summary_Differential_Expression SEGEX_Upload_Files
 mkdir -p ./logs
 
 ##################################################################################

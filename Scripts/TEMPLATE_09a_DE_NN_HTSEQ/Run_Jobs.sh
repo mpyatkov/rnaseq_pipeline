@@ -23,7 +23,7 @@ set -eu
 
 #Remove *.o files from previous jobs
 #Need the 2>/dev/null to supress the "No such file or directory"
-rm -rf ./logs Output_* Summary_Differential_Expression
+rm -rf ./logs Output_* Summary_Differential_Expression SEGEX_Upload_Files
 mkdir -p ./logs
 
 #Source job-specific variables:
