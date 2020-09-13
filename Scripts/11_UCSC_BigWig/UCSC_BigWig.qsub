@@ -17,6 +17,7 @@ set -o nounset
 # change to y if you want a single qlog file 
 #$ -e ./logs/
 #$ -o ./logs/
+#$ -l scratch_free=200G
 ##################################################################################
 #Initialize variables from UCSC_BigWig.sh
 ##################################################################################
