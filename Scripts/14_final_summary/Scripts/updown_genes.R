@@ -34,7 +34,7 @@ samples <- read_delim(samples_file, delim=";", col_names = T, trim_ws = T) %>%
   select(Group, Condition_Name, Sample_ID) %>% 
   mutate(Sample_ID=str_extract(Sample_ID,"([:alnum:]+)$")) %>% 
   group_by(Group) %>% 
-  mutate(Samples=paste0(Sample_ID, collapse = ",")) %>% 
+  mutate(Samples=paste0(Sample_ID, collapse = "")) %>% 
   ungroup() %>% 
   select(-Sample_ID) %>% 
   distinct()
@@ -58,7 +58,7 @@ left_join(up.down.genes,cmp_samples) %>%
   unite(combine,feature,variable, sep = ".") %>% 
   spread(combine, value) %>% 
   arrange(comparison) %>% 
-  write_excel_csv2(., output_name)
-
+#  write_excel_csv2(., output_name) # separator ";"
+  write_csv(., output_name) # separator ","
 
 

@@ -59,9 +59,9 @@ cp -rf ${Level_UP}/13_Correlation/Job_Summary/* ./output/
 mv *.pdf ${Level_UP}/14_final_summary/output
 
 # remove from 09abc/Output* all segex files
-# set +eu
-# find ../09* -name "*_forSEGEXUpload*.txt" | grep Output | xargs -n1 rm -rf 
-# set -eu
+set +eu
+find ../09* -name "*_forSEGEXUpload*.txt" | grep Output | xargs -n1 rm -rf 
+set -eu
 
 # copy all segex files in 
 # 09a 
@@ -117,12 +117,12 @@ CMP_FILE="../00_Setup_Pipeline/Comparisons.txt"
 
 OUTPUT_FILE="$(pwd)/09a_DE_Genes_counts.csv"
 find ../09a_DE_* -iname  "*DE_Gene_C*" | xargs -n1 -I{} cat {} | grep -v "Output_File" >> ${INPUT_UPDOWN_FILE}
-Rscript ./Scripts/updown_genes.R ${INPUT_UPDOWN_FILE} ${CMP_FILE} ${SAMPLES_FILE} ${OUTPUT_FILE}
+Rscript ./Scripts/updown_genes.R ${INPUT_UPDOWN_FILE} ${CMP_FILE} ${SAMPLES_FILE} ${OUTPUT_FILE} ${DATASET_LABEL}
 mv ${OUTPUT_FILE} ./output && rm ${INPUT_UPDOWN_FILE}
 
 OUTPUT_FILE="$(pwd)/09b_DE_Genes_counts.csv"
 find ../09b_DE_* -iname "*DE_Gene_C*" | xargs -n1 -I{} cat {} | grep -v "Output_File" >> ${INPUT_UPDOWN_FILE}
-Rscript ./Scripts/updown_genes.R ${INPUT_UPDOWN_FILE} ${CMP_FILE} ${SAMPLES_FILE} ${OUTPUT_FILE}
+Rscript ./Scripts/updown_genes.R ${INPUT_UPDOWN_FILE} ${CMP_FILE} ${SAMPLES_FILE} ${OUTPUT_FILE} ${DATASET_LABEL}
 mv ${OUTPUT_FILE} ./output && rm ${INPUT_UPDOWN_FILE}
 
 OUTPUT_FILE="$(pwd)/09c_DE_Genes_counts.csv"
