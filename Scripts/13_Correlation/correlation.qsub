@@ -21,7 +21,7 @@ function combined_pdf() {
     ALL=$(find . -name "*All*pdf" -o -name "*_Sig*pdf" | sort -n)
     ALL+=" "
     ALL+=$(find . -iname "*_non*.pdf" | sort -n)
-    pdfunite $(echo $ALL | paste -s -d " ") ${OUTNAME}.pdf
+    pdfunite $(echo $ALL | paste -s -d " ") ${OUTNAME}
 }
 
 function calc_correlation()
@@ -45,7 +45,7 @@ function calc_correlation()
     for fname in $defiles
     do
 	# extract comparison number (09d_1_... --> 1)
-	prefix=$(echo $fname | grep -Po "_\K([0-9][0-9]?)(?=_)")
+	prefix=$(echo $fname | grep -Po "_\K([0-9][0-9]?)(?=_)" | head -n1 |tr -d '\n')
 	
 	# copy with prefix in the begining
 	cp $fname "./${prefix}_$(basename $fname)"
