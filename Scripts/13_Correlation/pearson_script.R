@@ -57,11 +57,15 @@ plot_cor <- function(df, title, method, out_name)
    # limits for legend
    mn <- round(min(td, na.rm = T), 3) - 0.01
    mx <- round(max(td, na.rm = T), 3)
+
+   # adaptive font size
+   font_size <- function(x) {-0.34*x+11.36}
    
    # plot correlation
    rpkm_plot <- ggplot(data = td_melt, aes(Var1, Var2, fill = value))+
       ggtitle(title)+
-      geom_tile(color = "white") +
+      geom_tile(aes(fill = value)) +
+      geom_text(aes(label = round(value, 2)), size = font_size(dim(td)[1]))+
       scale_fill_gradientn(colours = rainbow(4),limits=c(mn,mx), space= "Lab",
                            name=paste0(method,"\ncorrelation")) +
       theme_minimal()+ 
