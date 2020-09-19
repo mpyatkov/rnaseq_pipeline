@@ -54,6 +54,8 @@ cp -rf  ${Level_UP}/08b_Extract_Counts_featureCounts/Job_Summary/featureCounts_s
 # cp -rf ${Level_UP}/13b_Pearson_Correlation_featureCounts/PCA* .
 # cp -rf ${Level_UP}/13c_Pearson_Correlation_lncRNA/PCA* .
 cp -rf ${Level_UP}/13_Correlation/Job_Summary/* ./output/
+find ./output/13* -name "*.pdf" | grep -iv "combined" | xargs rm -rf
+find ./output/13* \( -name "*.csv" -o -name "*.txt" \) | xargs rm -rf
 
 # mv *.txt ${Level_UP}/14_final_summary/output
 mv *.pdf ${Level_UP}/14_final_summary/output
@@ -69,13 +71,13 @@ mkdir -p output/Segex_09a/
 find ../09a_DE_* -name "*SEGEX*" | grep -iv output | grep -i fpkm | grep -i genebody | grep -i edger | xargs -n1 -I{} cp {} ./output/Segex_09a/
 
 mkdir -p output/Segex_09a/Segex09a_GeneBody=ExonCollapsed
-find ../09a_DE_* -name "*SEGEX*" | grep -iv output | grep -i genebody | xargs -n1 -I{} cp {} ./output/Segex_09a/Segex09a_GeneBody=ExonCollapsed/
+find ../09a_DE_* -name "*SEGEX*" | grep -iv output | grep -i fpkm | grep -i edger | grep -i genebody | xargs -n1 -I{} cp {} ./output/Segex_09a/Segex09a_GeneBody=ExonCollapsed/
 
 mkdir -p output/Segex_09a/Segex09a_Intronic_Only
-find ../09a_DE_* -name "*SEGEX*" | grep -iv output | grep -i intronic | xargs -n1 -I{} cp {} ./output/Segex_09a/Segex09a_Intronic_Only/
+find ../09a_DE_* -name "*SEGEX*" | grep -iv output | grep -i fpkm | grep -i edger | grep -i intronic | xargs -n1 -I{} cp {} ./output/Segex_09a/Segex09a_Intronic_Only/
 
 mkdir -p output/Segex_09a/Segex09a_Exonic_Only
-find ../09a_DE_* -name "*SEGEX*" | grep -iv output | grep -i exonic | xargs -n1 -I{} cp {} ./output/Segex_09a/Segex09a_Exonic_Only/
+find ../09a_DE_* -name "*SEGEX*" | grep -iv output | grep -i fpkm | grep -i edger | grep -i exonic | xargs -n1 -I{} cp {} ./output/Segex_09a/Segex09a_Exonic_Only/
 
 # 09b
 
@@ -83,13 +85,13 @@ mkdir output/Segex_09b
 find ../09b_DE_* -name "*SEGEX*" | grep -iv output | grep -i fpkm | grep -i genebody | grep -i edger | xargs -n1 -I{} cp {} ./output/Segex_09b/
 
 mkdir -p output/Segex_09b/Segex09b_GeneBody=ExonCollapsed
-find ../09b_DE_* -name "*SEGEX*" | grep -i genebody | grep -iv output | xargs -n1 -I{} cp {} ./output/Segex_09b/Segex09b_GeneBody=ExonCollapsed/
+find ../09b_DE_* -name "*SEGEX*" | grep -i genebody | grep -iv output | grep -i fpkm | grep -i edger |  xargs -n1 -I{} cp {} ./output/Segex_09b/Segex09b_GeneBody=ExonCollapsed/
 
 mkdir -p output/Segex_09b/Segex09b_Intronic_Only
-find ../09b_DE_* -name "*SEGEX*" | grep -i intronic | grep -iv output | xargs -n1 -I{} cp {} ./output/Segex_09b/Segex09b_Intronic_Only/
+find ../09b_DE_* -name "*SEGEX*" | grep -i intronic | grep -iv output | grep -i fpkm | grep -i edger | xargs -n1 -I{} cp {} ./output/Segex_09b/Segex09b_Intronic_Only/
 
 mkdir -p output/Segex_09b/Segex09b_Exonic_Only
-find ../09b_DE_* -name "*SEGEX*" | grep -i exonic | grep -iv output | xargs -n1 -I{} cp {} ./output/Segex_09b/Segex09b_Exonic_Only/
+find ../09b_DE_* -name "*SEGEX*" | grep -i exonic | grep -iv output | grep -i fpkm | grep -i edger | xargs -n1 -I{} cp {} ./output/Segex_09b/Segex09b_Exonic_Only/
 
 # 09c
 
@@ -97,16 +99,16 @@ mkdir output/Segex_09c
 find ../09c_DE_* -name "*SEGEX*" | grep -iv output | grep -i fpkm | grep -i exoncoll | grep -i edger | xargs -n1 -I{} cp {} ./output/Segex_09c/
 
 mkdir -p output/Segex_09c/Segex09c_ExonCollapsed
-find ../09c_DE_* -name "*SEGEX*" | grep -iv output | grep -i exoncoll | xargs -n1 -I{} cp {} ./output/Segex_09c/Segex09c_ExonCollapsed/
+find ../09c_DE_* -name "*SEGEX*" | grep -iv output | grep -i exoncoll | grep -i fpkm | grep -i edger | xargs -n1 -I{} cp {} ./output/Segex_09c/Segex09c_ExonCollapsed/
 
 mkdir -p output/Segex_09c/Segex09c_GeneBody
-find ../09c_DE_* -name "*SEGEX*" | grep -iv output | grep -i genebody | xargs -n1 -I{} cp {} ./output/Segex_09c/Segex09c_GeneBody/
+find ../09c_DE_* -name "*SEGEX*" | grep -iv output | grep -i genebody | grep -i fpkm | grep -i edger | xargs -n1 -I{} cp {} ./output/Segex_09c/Segex09c_GeneBody/
 
 mkdir -p output/Segex_09c/Segex09c_Intronic_Only
-find ../09c_DE_* -name "*SEGEX*" | grep -iv output | grep -i intronic | xargs -n1 -I{} cp {} ./output/Segex_09c/Segex09c_Intronic_Only/
+find ../09c_DE_* -name "*SEGEX*" | grep -iv output | grep -i intronic | grep -i fpkm | grep -i edger | xargs -n1 -I{} cp {} ./output/Segex_09c/Segex09c_Intronic_Only/
 
 mkdir -p output/Segex_09c/Segex09c_Exonic_Only
-find ../09c_DE_* -name "*SEGEX*" | grep -iv output | grep -i exonic | xargs -n1 -I{} cp {} ./output/Segex_09c/Segex09c_Exonic_Only/
+find ../09c_DE_* -name "*SEGEX*" | grep -iv output | grep -i exonic | grep -i fpkm | grep -i edger | xargs -n1 -I{} cp {} ./output/Segex_09c/Segex09c_Exonic_Only/
 
 # summarize up and down genes
 # 09a
