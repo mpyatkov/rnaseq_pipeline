@@ -29,12 +29,22 @@ up.down.genes <- read_delim(input_file, delim = " ", col_names = F, trim_ws = T)
 cmp <- read_delim(comparisons, delim = ";", col_names = T, trim_ws = T) %>% 
   select(comparison = Comparison_Number, Condition_1, Condition_2)
 
+# combine samples by dataset_id and samples_id
+get_samples_line <- function(smpl){
+  tibble(s=smpl) %>% 
+    separate(s, c("dataset", "sample"),sep = "_") %>% 
+    arrange(sample) %>% 
+    group_by(dataset) %>% 
+    summarise(samples = str_c(sample, collapse = "")) %>% 
+    ungroup() %>%
+    unite(res,dataset:samples) %>% pull() %>% paste0(., collapse = "_")
+}
+
 # samples df
 samples <- read_delim(samples_file, delim=";", col_names = T, trim_ws = T) %>% 
   select(Group, Condition_Name, Sample_ID) %>% 
-  mutate(Sample_ID=str_extract(Sample_ID,"([:alnum:]+)$")) %>% 
   group_by(Group) %>% 
-  mutate(Samples=paste0(Sample_ID, collapse = "")) %>% 
+  mutate(Samples=get_samples_line(Sample_ID)) %>% 
   ungroup() %>% 
   select(-Sample_ID) %>% 
   distinct()
