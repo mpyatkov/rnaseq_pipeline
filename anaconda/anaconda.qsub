@@ -2,13 +2,11 @@
 
 #$ -cwd
 #$ -j y
-#$ -m be
-#$ -o output.log
+#$ -o log.txt
 #$ -N install_env
-#$ -pe omp 4
-#$ -l mem_per_core=4G
-#$ -l h_rt=01:00:00
-# Change "PROJECT_NAME" to your project
+#$ -pe omp 1
+#$ -l mem_per_core=16G
+#$ -l h_rt=06:00:00
 #$ -P wax-es
 
 
@@ -20,7 +18,17 @@ echo "Current job name  : $JOB_NAME"
 echo "Task index number : $TASK_ID"
 echo "=========================================================="
 
-module load anaconda2
-conda env create -f ./RNAseq_environment.yml
- 
+module load miniconda
+
+# add channel in oposite order of priority
+conda config --add channels defaults
+conda config --add channels r
+conda config --add channels bioconda
+conda config --add channels conda-forge
+
+# make the order strict (1. conda-forge, 2. bioconda, ...)
+
+# create named environment from yml file
+conda env create --name RNAseq --file env.yml
+
 echo "Finished  .............. $(date)"
