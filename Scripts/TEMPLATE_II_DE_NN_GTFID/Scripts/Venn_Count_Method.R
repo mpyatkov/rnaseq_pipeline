@@ -33,18 +33,12 @@ args <- commandArgs(trailingOnly = TRUE)
 #           "Down_Genes_EdgeR_LncRNA_Intronic_Only_Male_G83_M1M2_Female_G83_M3M4_featureCounts.txt")
 
 #---------------------------------------------------------------------------------------------
-if(length(args) != 4){
-print("Need 4 arguments:")
-print("Usage: Rscript Venn_Count_Method.R <File1_Data> <File2_Data> <File3_Data> <File4_Data>")
-}
-#---------------------------------------------------------------------------------------------
-print("Print arguments:")
-print("-----------------")
+
 for(i in seq(1,length(args))){
   print(paste("File", i, ":"))
   print(args[i])
 }
-print("-----------------")
+
 #---------------------------------------------------------------------------------------------
 #Need to set the dir so that this script can work in any folder:
 dir <- getwd()
@@ -67,17 +61,18 @@ for(i in seq(1,length(args))){
   # print(Direction)
   R_Package <- ifelse(grepl("DESeq",File_Name),"DESeq","EdgeR")
   # print(R_Package)
-  if(grepl("ExonCollapsed", File_Name, ignore.case = FALSE)) {
-    feature_counted <- "ExonCollapsed"
+
+  if(grepl("Exon_Only|Exonic_Only", File_Name, ignore.case = FALSE)) {
+    feature_counted <- "Exonic_Only"
   } else if(grepl("GeneBody", File_Name, ignore.case = FALSE)) {
     feature_counted <- "GeneBody"
-  } else if(grepl("Exonic_Only", File_Name, ignore.case = FALSE)) {
-    feature_counted <- "Exonic_Only"
-  } else if(grepl("Intronic_Only", File_Name, ignore.case = FALSE)) {
+  } else if(grepl("Exon_|Exon_Collapsed|ExonCollapsed", File_Name, ignore.case = FALSE)) {
+    feature_counted <- "ExonCollapsed"
+  } else if(grepl("Intron|Intronic_Only", File_Name, ignore.case = FALSE)) {
     feature_counted <- "Intronic_Only"
   }
-  #End of if statement
-  # print(feature_counted)
+  print(feature_counted)
+
   Count_Program <- ifelse(grepl("featureCounts",File_Name),"featureCounts","HTSeq")
   # print(Count_Program)
   #Once I get each part; paste them together
@@ -121,7 +116,8 @@ cex = 2.0,
 cat.default.pos = "text",
 fontfamily = "serif",
 fontface = "bold",
-cat.col = c("black", "black", "black", "black"),
+#cat.col = c("black", "black", "black", "black"),
+cat.col = rep("black", length(args)),
 cat.cex = 1.0,
 cat.fontfamily = "serif",
 cat.fontface = "bold",
@@ -131,7 +127,8 @@ cat.pos = 0,
 #List (length = 1/2/3/4 based on set number) of Vectors of length 2 indicating horizontal and vertical justification for each category name
 #The 1st number controls left/right position of label
 #The 2nd number controls up/down position of label
-cat.just=list(c(0.5,0), c(0.5,0), c(0.5,1), c(0.5,-2)),
+# cat.just=list(c(0.5,0), c(0.5,0), c(0.5,1), c(0.5,-2)),
+cat.just=rep(list(c(0.5,0)),length(args)),
 main = "Gene Symbol Comparison",
 main.cex = 2,
 sub.cex = 2
@@ -140,6 +137,7 @@ sub.cex = 2
 #Options explained:
 #http://www.inside-r.org/packages/cran/VennDiagram/docs/venn.diagram
 #Create the image file
+# print(paste("OUTPUTFNAME: Venn_", paste(FileDataLabelList, sep="", collapse="."), ".png", sep=""))
 png(file=paste("Venn_", paste(FileDataLabelList, sep="", collapse="."), ".png", sep=""))
 grid.draw(Venn_Diagram)
 dev.off()

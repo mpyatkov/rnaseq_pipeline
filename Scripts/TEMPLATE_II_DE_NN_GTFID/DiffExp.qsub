@@ -1,0 +1,355 @@
+#!/bin/bash -l
+
+# Specify which shell to use
+#$ -S /bin/bash
+#$ -cwd
+#$ -j y
+#$ -e ./logs/
+#$ -o ./logs/
+#$ -l scratch_free=200G
+
+set -o errexit
+set -o pipefail
+set -o nounset
+
+# export all variables from Pipeline_Setup.conf
+eval "$(../00_Setup_Pipeline/01_Pipeline_Setup.py --export)"
+
+#checking the command line arg
+#-ne : "is not equal to"
+if [ $# -ne 14 ] ; then
+    echo "Need 14 arguments for the qsub command:"
+    echo "qsub -N ${Job_Name}'_'${DiffExp_Index} -P wax-dk -l h_rt=${TIME_LIMIT} DiffExp.qsub ${SCRIPT_DIR} ${Dataset_DIR} ${Dataset_Label} ${ANNOTATION_FILE_DIR} ${ANNOTATION_FILE}  ${CONDITION_1_NAME} ${CONDITION_2_NAME} ${Lengths_DIR} ${GENE_LENGTHS_FILE} ${COUNT_DIR} ${OUTPUT_PREFIX} ${DiffExp_Index} ${COL_SUFFIX} ${COUNT_PROGRAM}"
+    exit 0
+fi
+
+set +eu
+module load anaconda2
+source activate RNAseq
+set -eu
+
+#process the command line arguments
+SCRIPT_DIR=$1            # just pwd 
+Dataset_DIR=$2           # from config
+Dataset_Label=$3         # from config
+ANNOTATION_FILE_DIR=$4   # gtf files dir from config
+ANNOTATION_FILE=$5       # gtf file
+CONDITION_1_NAME=$6      # +
+CONDITION_2_NAME=$7      # +
+Lengths_DIR=$8           # gtf_files_dir + lengths
+GENE_LENGTHS_FILE=$9     # from gtf file name
+#COUNT_DIR=$10
+#OUTPUT_PREFIX=$11
+#DiffExp_Index=$12
+#COL_SUFFIX=$13
+#COUNT_PROGRAM=$14
+
+echo "Need shift 5 command (have more than 9 arguments):"
+# The "shift" command allows users to move through an argument list (if there are
+# more than 9 arguments) It removes the arguments that occur at the beginning of
+# the list and shifts arguments at the end of the list so that they are now within
+# the list of 9 arguments
+
+shift 5
+
+# process the command line arguments
+COUNT_DIR=$5           # OUTPUT_DIR from gtf config
+OUTPUT_PREFIX=$6       # from OUTPUT_DIR
+DiffExp_Index=$7       # from OUTPUT_DIR
+COL_SUFFIX=$8          # from OUTPUT_DIR
+COUNT_PROGRAM=$9       # +
+
+# Now let's keep track of some information just in case anything goes wrong
+echo "=========================================================="
+Start_Time=$(date +"%s")
+echo "Starting on : $(date)"
+echo "Running on node : $(hostname)"
+echo "Current directory : $(pwd)"
+echo "Current job ID : $JOB_ID"
+echo "Current job name : $JOB_NAME"
+echo "Task index number : $SGE_TASK_ID"
+echo "Parameter for multiple cores : $NSLOTS"
+echo "=========================================================="
+
+# Go to local scratch directory
+cd ${TMPDIR}
+
+module load gcc/8.1.0
+module load R/3.6.0
+module load samtools/0.1.19
+
+#Output dir:
+OUTPUT_DIR=${SCRIPT_DIR}/'Output_'${DiffExp_Index}'_'${COUNT_PROGRAM}'_'${COL_SUFFIX}
+rm -rf ${OUTPUT_DIR} && mkdir -p ${OUTPUT_DIR}
+
+#Create folders to store input files:
+mkdir -p Input/Condition_1
+mkdir -p Input/Condition_2
+
+#Copy over text files indicating Condition_1 and Condition_2 samples:
+cp ${SCRIPT_DIR}/Condition_1.txt .
+cp ${SCRIPT_DIR}/Condition_2.txt .
+
+#Copy Rscripts:
+cp ${SCRIPT_DIR}/Scripts/differentialAnalysis.R .
+cp ${SCRIPT_DIR}/Scripts/formatForSegex_ver3.R .
+cp ${SCRIPT_DIR}/Scripts/formatForSegex_ver4.R .
+cp ${SCRIPT_DIR}/Scripts/Diff_Genes.R .
+cp ${SCRIPT_DIR}/Scripts/Venn_Diff_Genes.R . 
+
+# list of samples for each condition
+samples_line(){
+    local fname=$1
+    a=$(tail -n+2 $fname | cut -f2 | cut -d "_" -f 1 | sort | uniq)
+
+    res=""
+    for i in $a
+    do
+	group="${i}_$(grep ${i} $fname | cut -f 2 | cut -d "_" -f 2 | paste -s -d '')_"
+	res+=$group
+	# res+="_"
+    done
+
+    echo $res
+}
+
+M_Num_Cond1_List=$(samples_line Condition_1.txt)
+M_Num_Cond1_List=${M_Num_Cond1_List%\_}
+M_Num_Cond2_List=$(samples_line Condition_2.txt)
+M_Num_Cond2_List=${M_Num_Cond2_List%\_}
+
+# M_Num_Cond1_List=$(tail -n+2 Condition_1.txt | cut -f 2| cut -d "_" -f2 | paste -s -d "")
+# M_Num_Cond2_List=$(tail -n+2 Condition_2.txt | cut -f 2| cut -d "_" -f2 | paste -s -d "")
+
+# number replicate per condition
+NUM_REP_CONDITION1=$(tail -n+2 Condition_1.txt | wc -l)
+NUM_REP_CONDITION2=$(tail -n+2 Condition_2.txt | wc -l)
+
+#Need to preprocess the Condition_*.txt files to make sure they will work:
+#This will guarantee that only tabs exists between columns:
+awk '{print $1"\t"$2"\t"$3}' Condition_1.txt > Condition_1.temp1
+mv Condition_1.temp1 Condition_1.txt
+
+awk '{print $1"\t"$2"\t"$3}' Condition_2.txt > Condition_2.temp1
+mv Condition_2.temp1 Condition_2.txt
+
+# ex: copy_files Condition_1 CONDITION_1_NAME
+copy_files() {
+    local condfile=$1
+    local condname=$2
+    #Text file has a header line to ignore:
+    tail -n +2 "${condfile}.txt" > "${condfile}.temp"
+
+    #Use a while loop to run jobs
+    while IFS=$'\t' read -r -a myArray
+    do
+	Sample_DIR=${myArray[0]}
+	Sample_ID=${myArray[1]}
+	Description=${myArray[2]}
+
+	echo 'Copy ${condfile} sample count files to Condition_1 folder'
+	(set +x; cp "${Dataset_DIR}/${Sample_ID}/tophat2/${COUNT_PROGRAM}/${COUNT_DIR}/${Sample_ID}_${COUNT_PROGRAM}.out" ./Input/${condfile}/${condname}_${Sample_ID})
+	
+	pushd ./Input/${condfile}/
+
+	# by default we using summary file from samtools
+	cat "${Dataset_DIR}/${Sample_ID}/tophat2/${Sample_ID}_statistics_for_primary_unique_reads.txt" | \
+	    grep "total" | \
+	    awk '{print $1}' > "${condname}_${Sample_ID}_summary"
+	
+	ls -la
+	
+	if [[ ${COUNT_PROGRAM} == "htseq" ]]
+	then
+	    # trim tail for htseq file
+	    head -n -5 "${condname}_${Sample_ID}" > "${condname}_${Sample_ID}.temp1"
+            mv "${condname}_${Sample_ID}.temp1" "${condname}_${Sample_ID}"
+	else
+	    # in case of featureCounts RefSeq files we should use also samtools summary file
+	    # line numbers are the only difference between RefSeq summary and LncRna (hehe. legacy!)
+	    # 12 for lncrna and 26 for RefSeq
+
+	    num_lines=$(wc -l "${Dataset_DIR}/${Sample_ID}/tophat2/${COUNT_PROGRAM}/${COUNT_DIR}/${Sample_ID}_${COUNT_PROGRAM}.out.summary")
+	    echo "num_lines: ${num_lines}"
+
+	    if [[ "${num_lines}" < "20" ]]
+	    then
+	    # copy new summary file (copy summary file)
+
+		cat "${Dataset_DIR}/${Sample_ID}/tophat2/${COUNT_PROGRAM}/${COUNT_DIR}/${Sample_ID}_${COUNT_PROGRAM}.out.summary" | \
+		    grep "Assigned\|Unassigned_NoFeatures" | \
+		    awk '{sum+=$2} END {print sum}' > "${condname}_${Sample_ID}_summary"
+	    fi
+	fi
+	popd
+
+    done < ${condfile}.temp
+
+    rm ${condfile}.temp
+}
+
+echo "---> ${CONDITION_1_NAME}"
+copy_files Condition_1 ${CONDITION_1_NAME}
+copy_files Condition_2 ${CONDITION_2_NAME}
+
+#Need to check if NUM_REP_CONDITION* equals 1
+#If there's only 1 replicate (1 sample) per condition can't run current DE analysis
+if [ "${NUM_REP_CONDITION1}" == "1" ] || [ "${NUM_REP_CONDITION2}" == "1" ] ;
+then
+    echo
+    echo "WARNING:"
+    echo
+    echo "Either your Condition_1 or Condition_2 has only 1 sample (no replicates)"
+    echo "The differential expression analysis is designed for cases where there are at least 2 replicates/biological condition."
+    echo "The resulting differential expression analysis will be converted to a stringent version due to absence of replicate samples."
+    echo "Samples from this comparison will be treated as \"replicates\" to estimate the gene level variance in edgeR and, separately in, DESeq2."
+    echo "Expect very few to zero DE genes from DESeq2, EdgeR should yield a DE gene count."
+    echo "Interpreting the results: use the edgeR fold change or DESeq ratio (not DESeq fold change)"
+    echo "Note regarding the SEGEX upload file(s):"
+    echo "Since DESeq2 fold changes are not the same as the ratio of the normalized counts between the conditions, so the output of the segex upload file will be different between \"DESeq ratio\" and \"DESeq foldChange\". The former is truly the ratio between the normalized counts between the two conditions (plus pseudocounts) whereas the latter is the fold change estimated by DESeq."
+fi
+
+echo "=========================================================="
+
+
+#Rename folder names to match CONDITION_1_NAME and CONDITION_2_NAME
+mv ./Input/Condition_1 ./Input/$CONDITION_1_NAME
+mv ./Input/Condition_2 ./Input/$CONDITION_2_NAME
+
+#copying lengths
+cp ${Lengths_DIR}/${GENE_LENGTHS_FILE} ${TMPDIR}/Input/.
+
+#Initialize variables:
+OUTPUT_COUNT_FOLDER=${TMPDIR}/Input
+
+cd ${TMPDIR}
+# run my commands.
+
+echo 'Printing Rscript command:'
+#Run the command:
+(set -x; Rscript differentialAnalysis.R $CONDITION_1_NAME $CONDITION_2_NAME ${NUM_REP_CONDITION1} ${NUM_REP_CONDITION2} $ANNOTATION_FILE $OUTPUT_COUNT_FOLDER $OUTPUT_PREFIX $GENE_LENGTHS_FILE)
+
+#Output file will be in "Input folder"
+echo "Create SEGEX formatted file:"
+
+#cd in to Input folder to run script:
+cd ${TMPDIR}/Input
+
+#Move formatForSegex_ver3.R to Input folder
+mv ${TMPDIR}/formatForSegex_ver3.R ${TMPDIR}/Input/
+
+#Call the Rscript
+#Rscript formatForSegex_ver3.R <input file> <output file> <pseudocount>
+#<output file> = <SEGEX#>_<Condition 1 Description>_vs_<Condition 2 Description>_refseq_ForSegexUpload.txt
+#For the DiffExp file, do not change the following line:
+
+Differential_Expression_File="${OUTPUT_PREFIX}_${CONDITION_1_NAME}_${CONDITION_2_NAME}.txt"
+SEGEX_File="${CONDITION_2_NAME}_${M_Num_Cond2_List}_vs_${CONDITION_1_NAME}_${M_Num_Cond1_List}_${OUTPUT_PREFIX}_forSEGEXUpload"
+pseudocount=1
+echo 'Printing Rscript command:'
+echo "Rscript formatForSegex_ver3.R  $Differential_Expression_File $SEGEX_File $pseudocount $COL_SUFFIX"
+
+# only for debug
+# rm -rf ${SCRIPT_DIR}/LTMP && mkdir -p ${SCRIPT_DIR}/LTMP 
+# cp -a ./* ${SCRIPT_DIR}/LTMP/
+
+(set -x; Rscript formatForSegex_ver3.R  $Differential_Expression_File $SEGEX_File $pseudocount $COL_SUFFIX)
+
+#===================== TPM for formatForSegex_ver4.R ===================================
+
+#Move formatForSegex_ver3.R to Input folder
+mv ${TMPDIR}/formatForSegex_ver4.R ${TMPDIR}/Input/
+#Call the Rscript
+#Rscript formatForSegex_ver4.R <input file> <output file> <pseudocount>
+#<output file> = <SEGEX#>_<Condition 1 Description>_vs_<Condition 2 Description>_refseq_ForSegexUpload.txt
+#For the DiffExp file, do not change the following line:
+Differential_Expression_File=$OUTPUT_PREFIX'_'$CONDITION_1_NAME'_'$CONDITION_2_NAME.txt
+SEGEX_File=${CONDITION_2_NAME}'_'${M_Num_Cond2_List}'_vs_'${CONDITION_1_NAME}'_'${M_Num_Cond1_List}'_'${OUTPUT_PREFIX}'_forSEGEXUpload'
+pseudocount=1
+echo 'Printing Rscript command:'
+echo "Rscript formatForSegex_ver4.R  $Differential_Expression_File $SEGEX_File $pseudocount $COL_SUFFIX"
+Rscript formatForSegex_ver4.R  $Differential_Expression_File $SEGEX_File $pseudocount $COL_SUFFIX
+
+### Diff genes
+Comparison_Info="${CONDITION_2_NAME}_${M_Num_Cond2_List}_${CONDITION_1_NAME}_${M_Num_Cond1_List}"
+
+echo 'Running Diff_Genes.R'
+
+#Copy Diff_Genes.R to Input folder
+mv ${TMPDIR}/Diff_Genes.R ${TMPDIR}/Input/
+
+#Call the Rscript
+(set -x; Rscript Diff_Genes.R ${SEGEX_File}_DESeq.txt 2 0.05 DESeq ${COL_SUFFIX}'_'${Comparison_Info})
+(set -x; Rscript Diff_Genes.R ${SEGEX_File}_EdgeR.txt 2 0.05 EdgeR ${COL_SUFFIX}'_'${Comparison_Info})
+
+#Move Venn_Diff_Genes.R to Input folder
+mv ${TMPDIR}/Venn_Diff_Genes.R ${TMPDIR}/Input/
+
+
+#Down DE gene comparison:
+Down_DE_Gene_File1="Down_Genes_DESeq_"${COL_SUFFIX}'_'${Comparison_Info}".txt"
+Down_DE_Gene_File2="Down_Genes_EdgeR_"${COL_SUFFIX}'_'${Comparison_Info}".txt"
+(set -x; Rscript Venn_Diff_Genes.R ${Down_DE_Gene_File1} ${Down_DE_Gene_File2} ${COL_SUFFIX}'_Counting' ${DiffExp_Index})
+
+#Up DE gene comparison:
+Up_DE_Gene_File1="Up_Genes_DESeq_"${COL_SUFFIX}'_'${Comparison_Info}".txt"
+Up_DE_Gene_File2="Up_Genes_EdgeR_"${COL_SUFFIX}'_'${Comparison_Info}".txt"
+(set -x; Rscript Venn_Diff_Genes.R ${Up_DE_Gene_File1} ${Up_DE_Gene_File2} ${COL_SUFFIX}'_Counting' ${DiffExp_Index})
+
+#echo 'Merging png images into one pdf'
+#convert *.png ${DiffExp_Index}'_Venn_Diagrams'.pdf
+#Since I want to have all *.png on a single page after the DiffExp_Summary.sh, I just want to copy the *.png to storage
+echo 'Merging Count.Table(s) into one text file'
+set +eu
+cat Count.Table.*.txt > ${DiffExp_Index}'_Venn_Tables_'${Comparison_Info}.txt
+rm Count.Table.*.txt
+set -eu
+
+echo "=========================================================="
+echo "Renaming the Differential_Expression_File"
+Differential_Expression_File=$OUTPUT_PREFIX'_'$CONDITION_1_NAME'_'$CONDITION_2_NAME.txt
+
+cd ${TMPDIR}
+ls -al ${TMPDIR}/Input/*
+
+#Copy files back to storage
+cp ${TMPDIR}/Input/$Differential_Expression_File $OUTPUT_DIR
+cp ${TMPDIR}/Input/${SEGEX_File}* $OUTPUT_DIR
+cp ${TMPDIR}/Input/*_Genes*.txt $OUTPUT_DIR
+
+set +eu
+cp ${TMPDIR}/Input/*.png $OUTPUT_DIR
+cp ${TMPDIR}/Input/${DiffExp_Index}'_Venn_Tables_'${Comparison_Info}.txt $OUTPUT_DIR
+set -eu
+
+
+echo "=========================================================="
+echo "Re-naming files in OUTPUT_DIR"
+echo "Need to append the COUNT_PROGRAM name to all output files"
+cd ${OUTPUT_DIR}
+
+Text_file_list=*.txt
+for Text_file in ${Text_file_list}
+do
+    file_name=${Text_file%\.txt}
+    mv ${Text_file} ${file_name}'_'${COUNT_PROGRAM}'.txt'
+done
+
+
+set +eu
+PNG_file_list=*.png
+for PNG_file in ${PNG_file_list}
+do
+    file_name=${PNG_file%\.png}
+    mv ${PNG_file} ${file_name}'_'${COUNT_PROGRAM}'.png'
+done
+set -eu
+
+echo "Finished on : $(date)"
+
+#End_Time in seconds
+End_Time=$(date +"%s")
+diff=$(($End_Time-$Start_Time))
+echo "$(($diff / 60)) minutes and $(($diff % 60)) seconds elapsed."
+echo "=========================================================="
+echo "IAMOK"
