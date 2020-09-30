@@ -73,9 +73,9 @@ function calc_correlation()
     mv tSNE_All_Merge.pdf ./${OUTDIR}/
 }
 
-calc_correlation "../09a_DE_* -name 'DiffEx*GeneBody*txt'" 13a_HTSeq_GeneBody RefSeq
-calc_correlation "../09b_DE_* -name 'DiffEx*GeneBody*txt'" 13b_featureCounts_GeneBody RefSeq
-calc_correlation "../09c_DE_* -name 'DiffEx*ExonCollapsed*txt'" 13c_lncRNA_ExonCollapsed lnc
+calc_correlation "../09a_DE_* -name 'DiffEx*ExonCollapsed*txt'" 13a_HTSeq_ExonCollapsed RefSeq24k
+calc_correlation "../09b_DE_* -name 'DiffEx*ExonCollapsed*txt'" 13b_featureCounts_ExonCollapsed RefSeq24k
+calc_correlation "../09c_DE_* -name 'DiffEx*ExonCollapsed*txt'" 13c_lncRNA_ExonCollapsed LncRNA15k
 
 rm -rf Job_Summary && mkdir -p Job_Summary
 mv ./13* ./Job_Summary

@@ -59,7 +59,10 @@ plot_cor <- function(df, title, method, out_name)
    mx <- round(max(td, na.rm = T), 3)
 
    # adaptive font size
-   font_size <- function(x) {-0.34*x+11.36}
+   font_size <- function(x) {
+   	     f <- floor(-0.34*x+11.36)-1
+	     ifelse(f<2,2,f)
+   }
    
    # plot correlation
    rpkm_plot <- ggplot(data = td_melt, aes(Var1, Var2, fill = value))+
