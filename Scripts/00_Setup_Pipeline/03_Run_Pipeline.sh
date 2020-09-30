@@ -62,7 +62,7 @@ cd ..
 STEPS_DIR=$(pwd)
 
 # get all steps (directories with numbers in the beginning)
-ALL_PIPELINE_STEPS=$(find . -maxdepth 1 -type d -name '[[:digit:]]*' | sort -n | xargs -n1 basename | sed -n '/^[0-9]/p' | sed '/00_Setup_Pipeline/d' | sed '/Rename_Folders/d' | sed '/Generate_Tracks/d')
+ALL_PIPELINE_STEPS=$(find . -maxdepth 1 -type d -name '[[:digit:]]*' | sort -n | xargs -n1 basename | sed -n '/^[0-9]/p' | sed '/00_Setup_Pipeline/d' | sed '/Generate_Tracks/d')
 
 # is full pipeline execution? Yes by default
 ISFULL=1
@@ -77,19 +77,6 @@ else
 fi
 
 # START PIPELINE
-
-# Run 01_Rename_Folders before pipeline execution
-if [[ $ISFULL -eq 1 ]]
-then
-    #Go to the directory 01_Rename_Folders, run job and go back automaticaly:
-    (
-	STEP_DIR=$(find . -maxdepth 1 -type d -name '[[:digit:]]*' | xargs -n1 basename | sed -n '/Rename_Folders/p')
-	echo "Running: ${STEP_DIR}..." 
-	cd "${STEP_DIR}"
-	./Rename_Folders.sh
-	echo "Done: ${STEP_DIR}"
-    )
-fi
 
 #For loop over steps in the pipeline
 for STEP in ${PIPELINE_STEPS}
