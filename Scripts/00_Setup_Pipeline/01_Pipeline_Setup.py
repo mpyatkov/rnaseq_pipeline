@@ -27,10 +27,6 @@ DEFAULT_COMPARISON_CONFIG="""
 Comparison_Number; Condition_1; Condition_2
 1;                 A;           B
 2;                 A;           C
-3;                 A;           D
-4;                 B;           C
-5;                 B;           D
-6;                 C;           D
 """.strip()
 
 DEFAULT_SAMPLES_CONFIG="""
@@ -44,9 +40,6 @@ B;      E0771_4HC_T72;       G180_M6;     G180_M6;    E0771_5uM_4HC_72h;        
 C;      E0771_4HC_Ab_T72;    G180_M7;     G180_M7;    E0771_5uM_4HC_AntiIFNAR_72h; 0,0,255
 C;      E0771_4HC_Ab_T72;    G180_M8;     G180_M8;    E0771_5uM_4HC_AntiIFNAR_72h; 0,0,255
 C;      E0771_4HC_Ab_T72;    G180_M9;     G180_M9;    E0771_5uM_4HC_AntiIFNAR_72h; 0,0,255
-D;      E0771_IFNB_T6;       G180_M10;    G180_M10;   E0771_IFNB_6h;               127,0,255
-D;      E0771_IFNB_T6;       G180_M11;    G180_M11;   E0771_IFNB_6h;               127,0,255
-D;      E0771_IFNB_T6;       G180_M12;    G180_M12;   E0771_IFNB_6h;               127,0,255
 """.strip()
 
 DEFAULT_PIPELINE_CONFIG="""
@@ -84,7 +77,8 @@ STRANDEDNESS=1
 MODE=2
 
 [SYSTEM]
-GTF_FILES_DIR=/unprotected/projects/waxmanlab/routines/GTF_Files
+GTF_FILES_DIR=/projectnb2/wax-dk/max/rnaseq_files/GTF_Files_default
+GTF_FILES_CONFIG=${SYSTEM:GTF_FILES_DIR}/default.csv
 BOWTIE2INDEX_DIR=/restricted/projectnb/waxmanlab/routines/BowtieIndex
 VM_DIR_FASTQC=/net/waxman-server/mnt/data/waxmanlabvm_home/waxmanlab/FASTQC/${USER:DATASET_LABEL}
 VM_DIR_UCSC=/net/waxman-server/mnt/data/waxmanlabvm_home/${USER:BU_USER}/${USER:DATASET_LABEL}
@@ -184,6 +178,72 @@ class ComparisonsConfig:
             groups = groups.union(set(comparison.Condition_2.split(",")))
         return groups
 
+class GTFconfig():
+    separator=";"
+
+    def __init__(self, configpath):
+        self.gtf_files = self.__read_config(configpath, self.separator)
+        
+    def __read_config(self, configpath, separator):
+        with open(configpath, "r") as config:
+            header_and_data = map(lambda x: x.strip(), config.readlines())
+
+            # ignore empty lines
+            header_and_data = list(filter(lambda s: len(s) > 0, header_and_data))
+            
+            header = header_and_data[0].replace(separator,",")
+            GTFLine = namedtuple('GTFline', header)
+            result = []
+            for gtf_line in header_and_data[1:]:
+                gtf_line = gtf_line.split(separator)
+
+                # strip trailing spaces
+                gtf_line = list(map(lambda s: s.strip(), gtf_line))
+                result.append(GTFLine(*gtf_line))
+                
+            return result
+
+    def __str__(self):
+        return "\n".join(map(lambda x: str(x), self.gtf_files))
+
+    def export_by_name_and_counter(self, gtfname, counter):
+
+        exports = []
+        # TODO: should be only one line ???
+        # What if somebody would like map both (single and multimapping) we can use different output directories for such mapping
+
+        # get gtfline
+        try:
+            gtfline = list(filter(lambda x: x.ANNOTATION_FILE == gtfname and x.COUNTER == counter, self.gtf_files))[0]
+        except IndexError:
+            print(f"Such ANNOTATION_FILE = {gtfname} or COUNTER = {counter} are not exist in GTF config file")
+            exit(1)
+
+        # TODO: Add path to dir with GTF files
+        # create list of exports
+        exports = "\n".join([f"export {e}={getattr(gtfline, e)}" for e in gtfline._fields])
+        return exports
+    
+    def gtfNameCounterToBash(self):
+        result = []
+        for gtf in self.gtf_files:
+            result.append(gtf.ANNOTATION_FILE)
+            result.append(gtf.COUNTER)
+        return " ".join(result)
+
+    def gtf_by_de_index(self, deix):
+        filtered_gtf = filter(lambda g: g.DE_INDEX == deix, self.gtf_files)
+        unique_gtf = set(map(lambda x: (x.ANNOTATION_FILE, x.COUNTER), filtered_gtf))
+        flatten_set=list(sum(unique_gtf, ()))
+        return " ".join(flatten_set)
+
+    def counter_by_de_index(self, deix):
+        filtered_gtf = filter(lambda g: g.DE_INDEX == deix, self.gtf_files)
+        unique_counter = set(map(lambda x: x.COUNTER, filtered_gtf))
+        list_of_counters = list(unique_counter)
+        # TODO: if list contains more than 1 value --> error
+        return list_of_counters[0]
+
 class EnvInterpolation(configparser.ExtendedInterpolation):
     """Interpolation which expands environment variables in values."""
 
@@ -220,12 +280,13 @@ class DiffExpression():
     Generate folders for step 9a,9b,9c according to configuration and
     TEMPLATES directories
     """
-    def __init__(self, templates, comp_config, sample_config, sys_config):
+    def __init__(self, templates, comp_config, sample_config, sys_config, gtf_config):
         # check template path
         self.templates = templates
         self.comp_config = comp_config
         self.sample_config = sample_config
         self.sys_config = sys_config
+        self.gtf_config = gtf_config
 
     def create_dir(self, dirpath):
         try:
@@ -272,55 +333,81 @@ class DiffExpression():
             print(f"Removing {d}")
             self.remove_dir(d)
 
+    def replace_in_file(self, fname, list_of_replacements):
+        with fileinput.input(fname, inplace=True) as runjobs:
+            for line in runjobs:
+                found = False
+                for rp in list_of_replacements:
+                    if rp[0] in line:
+                        found=True
+                        newline = line.replace("TEMPLATE", rp[1])
+                        print(newline, end='')
+                if not found:
+                    print(line,  end='')
+
     def generate(self, output_location = "./"):
         # output_location start from SETUP_PIPELINE_DIR
-        
+        # set(map(lambda x: x.DE_INDEX,self.gtf_config.gtf_files()))
         for CMP in self.comp_config.comparisons:
             for TMPL in self.templates:
-                DIR_NAME = os.path.basename(TMPL).replace('TEMPLATE_','')
-                DIR_NAME = DIR_NAME.replace('NN', CMP.Comparison_Number)
+                for DEIX,GTFID,COUNTER in set(map(lambda x: (x.DE_INDEX, x.OUTPUT_DIR.split("_")[0], x.COUNTER), self.gtf_config.gtf_files)):
+                    DIR_NAME = os.path.basename(TMPL).replace('TEMPLATE_','')
+                    DIR_NAME = DIR_NAME.replace('NN', CMP.Comparison_Number)
+                    DIR_NAME = DIR_NAME.replace('II', DEIX)
+                    DIR_NAME = DIR_NAME.replace('GTFID', GTFID)
 
-                #SCRIPT_PATH = os.getenv('SETUP_PIPELINE_DIR')
+                    #SCRIPT_PATH = os.getenv('SETUP_PIPELINE_DIR')
 
-                SCRIPT_PATH = os.getcwd()
+                    SCRIPT_PATH = os.getcwd()
 
-                # TODO: change it to OUTPUT path (SCRIPT_PATH+"/"+)
-                
-                DIR_PATH = output_location + "/" + DIR_NAME
+                    # TODO: change it to OUTPUT path (SCRIPT_PATH+"/"+)
 
-                print(f"Creating {DIR_PATH}")
-                # copy template dirs from TMPL to DIR_PATH
-                self.copy_dir(TMPL, DIR_PATH)
-                
-                # go to inside diff.ex task directory
-                os.chdir(DIR_PATH)
+                    DIR_PATH = output_location + "/" + DIR_NAME
 
-                # write Condition_{1,2} files, return condition_name
-                cond_name_1 = self.write_condition(DIR_PATH, sample_config, CMP, "Condition_1")
-                cond_name_2 = self.write_condition(DIR_PATH, sample_config, CMP, "Condition_2")
+                    print(f"Creating {DIR_PATH}")
+                    # copy template dirs from TMPL to DIR_PATH
+                    self.copy_dir(TMPL, DIR_PATH)
 
-                # inplace changing Run_Jobs.sh
-                cond_1_tmpl="CONDITION_1_NAME=TEMPLATE"
-                cond_2_tmpl="CONDITION_2_NAME=TEMPLATE"
-                compar_num="COMPAR_NUM=TEMPLATE"
-                
-                with fileinput.input("setup_DiffExp.sh", inplace=True) as runjobs:
+                    # go to inside diff.ex task directory
+                    os.chdir(DIR_PATH)
 
-                    for line in runjobs:
-                        if cond_1_tmpl in line:
-                            newline = line.replace("TEMPLATE", f'"{cond_name_1}"')
-                            print(newline, end='')
-                        elif cond_2_tmpl in line:
-                            newline = line.replace("TEMPLATE", f'"{cond_name_2}"')
-                            print(newline, end='')
-                        elif compar_num in line:
-                            newline = line.replace("TEMPLATE", str(CMP.Comparison_Number))
-                            print(newline, end='')
-                        else:
-                            print(line,  end='')
-                                                
-                # go back to script directory
-                os.chdir(SCRIPT_PATH)
+                    # write Condition_{1,2} files, return condition_name
+                    cond_name_1 = self.write_condition(DIR_PATH, sample_config, CMP, "Condition_1")
+                    cond_name_2 = self.write_condition(DIR_PATH, sample_config, CMP, "Condition_2")
+
+                    # inplace changing Run_Jobs.sh
+                    cond_1_tmpl="CONDITION_1_NAME=TEMPLATE"
+                    cond_2_tmpl="CONDITION_2_NAME=TEMPLATE"
+                    compar_num="COMPAR_NUM=TEMPLATE"
+
+                    replacement_list = [
+                        ("CONDITION_1_NAME=TEMPLATE", cond_name_1),
+                        ("CONDITION_2_NAME=TEMPLATE", cond_name_2),
+                        ("DE_INDEX=TEMPLATE", DEIX),
+                        ("COMPAR_NUM=TEMPLATE", str(CMP.Comparison_Number)),
+                        ("COUNT_PROGRAM=TEMPLATE", COUNTER)
+                    ]
+
+                    self.replace_in_file("Run_Jobs.sh", replacement_list)
+                    self.replace_in_file("Summarize_Jobs.sh", replacement_list)
+
+                    # with fileinput.input("setup_DiffExp.sh", inplace=True) as runjobs:
+
+                    #     for line in runjobs:
+                    #         if cond_1_tmpl in line:
+                    #             newline = line.replace("TEMPLATE", f'"{cond_name_1}"')
+                    #             print(newline, end='')
+                    #         elif cond_2_tmpl in line:
+                    #             newline = line.replace("TEMPLATE", f'"{cond_name_2}"')
+                    #             print(newline, end='')
+                    #         elif compar_num in line:
+                    #             newline = line.replace("TEMPLATE", str(CMP.Comparison_Number))
+                    #             print(newline, end='')
+                    #         else:
+                    #             print(line,  end='')
+
+                    # go back to script directory
+                    os.chdir(SCRIPT_PATH)
 
 def generate_example(config_path, default_config):
     if not os.path.exists(config_path):
@@ -347,7 +434,27 @@ if __name__ == "__main__":
     parser.add_argument("-c", "--samples_with_color",
                         help="return bash array of (DIR,ID,DESCR,COLOR)",
                         action="store_true")
-    
+
+    parser.add_argument("-f", "--gtf_annotation_and_counter",
+                        help="return bash array of pairs (GTF_ANNOTATION_FILE, COUNTER)",
+                        action="store_true")
+
+    parser.add_argument("-n", "--export_gtf_by_name_and_counter",
+                        nargs=2,
+                        metavar=('gtf_fname', 'counter'),
+                        help="export GTF variables by gtf filename and counter")
+
+    parser.add_argument("-i", "--gtf_by_DE_INDEX",
+                        nargs=1,
+                        metavar=('DE_INDEX'),
+                        help="return bash array of gtf files which groupped by DE_INDEX (9a,9b,...)")
+
+    parser.add_argument("-t", "--counter_by_DE_INDEX",
+                        nargs=1,
+                        metavar=('DE_INDEX'),
+                        help="return counter by DE_INDEX (9a,9b,...)")
+
+    # gtf_by_annotation_and_counter
     args = parser.parse_args()
 
     # directory with configs and python script
@@ -356,6 +463,11 @@ if __name__ == "__main__":
     system_config = SystemConfig(current_path+"/"+PIPELINE_CONFIG)
     sample_config = SampleConfig(current_path + "/" + SAMPLES_CONFIG)
     comparison_config = ComparisonsConfig(current_path + "/" + COMPARISON_CONFIG)
+
+    # TODO: if config is not exist make error exit
+    DEFAULT_GTF_CONFIG = system_config.config["SYSTEM"]["GTF_FILES_CONFIG"]
+    # DEFAULT_GTF_CONFIG = current_path + "/GTFconfig.csv"
+    gtf_config = GTFconfig(DEFAULT_GTF_CONFIG)
 
     if args.export:
         print(system_config.setup_env_variables())
@@ -368,7 +480,8 @@ if __name__ == "__main__":
         diffex = DiffExpression(TEMPLATE_PATHS,
                                 comparison_config,
                                 sample_config,
-                                system_config)
+                                system_config,
+                                gtf_config)
         
         DE_DIR_PATH=os.path.dirname(TEMPLATE_PATHS[0])
 
@@ -387,7 +500,22 @@ if __name__ == "__main__":
     elif args.samples_with_color:
         print(sample_config.samplesWithColorToBash())
         exit(0)
+
+    elif args.gtf_annotation_and_counter:
+        print(gtf_config.gtfNameCounterToBash())
+        exit(0)
         
+    elif args.export_gtf_by_name_and_counter:
+        a = args.export_gtf_by_name_and_counter
+        print(gtf_config.export_by_name_and_counter(a[0], a[1]))
+        exit(0)
+
+    elif args.gtf_by_DE_INDEX:
+        print(gtf_config.gtf_by_de_index(args.gtf_by_DE_INDEX[0]))
+
+    elif args.counter_by_DE_INDEX:
+        print(gtf_config.counter_by_de_index(args.counter_by_DE_INDEX[0]))
+
     else:
         parser.print_help()
 
