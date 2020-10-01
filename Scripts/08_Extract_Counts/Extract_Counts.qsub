@@ -126,6 +126,7 @@ rm -rf ${output_file} && touch ${output_file}
 # that overlap Intron_Only_Regions
 if [[ ${SUB_FILE} != 0 ]]
 then
+    echo "SUB_FILE option activated"
     # copy SUB_FILE if exist
     cp "${GTF_FILES_DIR}/${SUB_FILE}" .
     
@@ -139,6 +140,7 @@ fi
 # splice junction reads
 if [[ ${REM_SPLICE_JUNC} != 0 ]]
 then
+    echo "REM_SPLICE_JUNC option activated"
     # Need a regular expression to specifically find these spliced reads:
     # Bunch of numbers then "M", bunch of numbers then "N", bunch of numbers then "M":
     # print only lines which do NOT match regex (emulates "grep -v")
@@ -182,14 +184,16 @@ else
     # without double counting / simple double counting / special (legacy) double counting
     if [[ "${DBL_CNT}" == "0" ]]
     then
-
+	echo "DBL_CNT=0 option is activated"
         (set -x; featureCounts -p -T $NSLOTS -s ${strandedness_featurecount} -g ${FEATURE_ID} -t ${FEATURE_TYPE} -a ${ANNOTATION_FILE} -o ${output_file} "${SAMPLE_ID}_sorted.bam")
         
     elif [[ "${DBL_CNT}" == "1" ]]; then
+	echo "DBL_CNT=1 option is activated"
         
-        (set -x; featureCounts -O -T $NSLOTS -s ${strandedness_featurecount} -g ${FEATURE_ID} -t ${FEATURE_TYPE} -a ${ANNOTATION_FILE} -o ${output_file} "${SAMPLE_ID}_sorted.bam")
+        (set -x; featureCounts -O -p -T $NSLOTS -s ${strandedness_featurecount} -g ${FEATURE_ID} -t ${FEATURE_TYPE} -a ${ANNOTATION_FILE} -o ${output_file} "${SAMPLE_ID}_sorted.bam")
         
     else
+	echo "DBL_CNT=2 option is activated"
         # copy GeneSym_List.txt:
         cp ${GTF_FILES_DIR}/featureCount_Files/${ANNOTATION_FILE%\.gtf}/GeneSym_DoubleCounts/GeneSym_List.txt . 
 
@@ -252,6 +256,7 @@ fi
 
 if [[ "$SEGEX_ZERO_CNT" != "0" ]]
 then
+    echo "SEGEX_ZERO_CNT option is activated"
     if [[ $COUNTER == "htseq" ]]
     then
 
