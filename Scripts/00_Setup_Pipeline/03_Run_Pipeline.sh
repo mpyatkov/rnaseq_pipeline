@@ -27,16 +27,18 @@ set -o errexit
 #---------------------------------------------------------------------------------
 
 # Activate anaconda environment
-set +eu
-module load anaconda2
-source activate RNAseq
-set -eu
+# set +eu
+# module load anaconda2
+# source activate RNAseq
+# set -eu
 
 # Process system argument:
 if [[ $# -ne 1 ]]
 then
-    echo "Usage: ./03_Run_Pipeline.sh <Start_Step>"
-    echo "<Start_Step> = Needs to be either \"FULL\" or a specific pipeline step"
+    echo "Usage: ./03_Run_Pipeline.sh <option>"
+    echo "<option> = FULL - full pipeline run"
+    echo "<option> = start_step (ex. 05_Read_Strandness) start from specific step"
+    echo "<option> = DEONLY recalculate DE and summary directories (09abcd,13,14)"
     echo "See 03_Run_Pipeline.sh for details."	
     exit 0
 fi
@@ -64,16 +66,16 @@ STEPS_DIR=$(pwd)
 # get all steps (directories with numbers in the beginning)
 ALL_PIPELINE_STEPS=$(find . -maxdepth 1 -type d -name '[[:digit:]]*' | sort -n | xargs -n1 basename | sed -n '/^[0-9]/p' | sed '/00_Setup_Pipeline/d' | sed '/Generate_Tracks/d')
 
-# is full pipeline execution? Yes by default
-ISFULL=1
-
 if [[ "${START_STEP}" == "FULL" ]]
 then
     PIPELINE_STEPS=${ALL_PIPELINE_STEPS}
+elif [[ "${START_STEP}" == "DEONLY" ]]
+then
+    ./01_Pipeline_Setup.py --generate
+    PIPELINE_STEPS=$(printf "%s\n" "${ALL_PIPELINE_STEPS}" | grep "09\|13\|14")
 else
     # discard lines before START_STEPS
     PIPELINE_STEPS=$(printf "%s\n" "${ALL_PIPELINE_STEPS}" | sed -n -e '/'${START_STEP}'/,$p')
-    ISFULL=0
 fi
 
 # START PIPELINE
