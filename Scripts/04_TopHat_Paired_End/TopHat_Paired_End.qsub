@@ -42,7 +42,7 @@ TOPHAT_STRANDEDNESS=$2
 DISTANCE_BT_READ_PAIR=$3
 
 # Default TopHat annotation file
-TOPHAT_ANNOTATION_FILE=RefSeq_GeneBody.gtf
+TOPHAT_ANNOTATION_FILE=01_RefSeq24k_ExonCollapsed.gtf
 
 #Print variables (make sure they appear correctly):
 echo "-----------------------"
