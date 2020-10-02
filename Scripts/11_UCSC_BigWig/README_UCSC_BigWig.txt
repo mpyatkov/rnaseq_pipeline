@@ -20,16 +20,16 @@
 #1) Copy this folder to your corresponding "Scripts" folder in your data set dir
 #2) Update the setup_UCSC_BigWig.sh as needed
 #3) Navigate (cd) to the directory where you have all of your files from step (1) and change permissions by running the following on the terminal:
-chmod 700 *.sh
-chmod 700 *.qsub
+# chmod 700 *.sh
+# chmod 700 *.qsub
 #4) Run the UCSC_BigWig.sh:
-./UCSC_BigWig.sh
+# ./UCSC_BigWig.sh
 #5) As mentioned above, wait until all jobs have completed running. Then run UCSC_BigWig_Summary.sh:
-./UCSC_BigWig_Summary.sh
+# ./UCSC_BigWig_Summary.sh
 #This script will copy BAM and *.bw files to the the lab server (waxmanlabvm.bu.edu)
 #Note:
 #If you want to know each job's duration run the following command in the job folder:
-grep 'elapsed' *.o*
+# grep 'elapsed' *.o*
 #---------------------------------------------------------------------------------
 #Job output:
 #An output folder named "UCSC_BigWig" will be saved into your "tophat2" folder

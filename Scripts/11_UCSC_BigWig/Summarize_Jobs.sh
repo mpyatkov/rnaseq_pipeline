@@ -15,27 +15,20 @@ set -o nounset
 # export all variables from Pipeline_Setup.conf
 eval "$(../00_Setup_Pipeline/01_Pipeline_Setup.py --export)"
 
-SCRIPT_DIR=$(pwd)
 #---------------------------------------------------------------------------------
 #Check that each variable prints a value to the terminal:
 echo "-----------------------"
 echo "Start of variable list:"
 echo "-----------------------"
-echo "DATASET_DIR:"
-echo ${DATASET_DIR}
 echo "VM_DIR_UCSC:"
 echo ${VM_DIR_UCSC}
-echo "SCRIPT_DIR:"
-echo ${SCRIPT_DIR}
-echo "TIME_LIMIT:"
-echo ${TIME_LIMIT}
 echo "-----------------------"
 echo "End of variable list"
 echo "-----------------------"
 
 ##################################################################################
-INPUT_DIR=$(pwd)
-cd $INPUT_DIR
+# INPUT_DIR=$(pwd)
+# cd $INPUT_DIR
 
 # samples contains array of (sample_dir, sample_id, description) for each sample
 samples=($("${SETUP_PIPELINE_DIR}"/01_Pipeline_Setup.py --samples))
@@ -54,13 +47,9 @@ do
     cp ${DATASET_DIR}/${Sample_ID}/tophat2/UCSC_BigWig/*'.bw' ${VM_DIR_UCSC}
     set -eu
 done 
-cd $INPUT_DIR
+# cd $INPUT_DIR
 
-##################################################################################
-#waxmanlabvm:
-#If you want the number of files in a dir (check that all files transferred over)
-#ls -1 | wc -l
-##################################################################################
+./Generate_Tracks.sh
 
 echo 'UCSC files for data visualization should now be copied to the VM.'
 echo '#--------------------------------------------------------------------------'
