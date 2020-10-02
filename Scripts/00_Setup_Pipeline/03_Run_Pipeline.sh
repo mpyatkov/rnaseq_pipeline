@@ -147,18 +147,6 @@ do
     popd
 done
 
-# For the 12_Generate_Tracks - I just want to run this step 
-# Run the step 12_Generate_Tracks and automatically go back:
-(
-    STEP_DIR=$(find . -maxdepth 1 -type d -name '[[:digit:]]*' | xargs -n1 basename | sed -n '/Generate_Tracks/p')
-
-    echo "Running: ${STEP_DIR}..." 
-    cd "${STEP_DIR}"
-    ./Generate_Tracks.sh
-    printf "Done: %s\n\n -------------------------" "${STEP_DIR}"
-)
-
-
 echo 'Printing job duration for all steps...'
 OUTPUT_FILE="${SETUP_PIPELINE_DIR}"/Pipeline_Runtime.txt
 
