@@ -1,30 +1,47 @@
 #!/bin/bash -l
 
-set -o errexit
-set -o pipefail
-set -o nounset
-
 ##################################################################################
 #Andy Rampersaud, 02.22.16
 #This script is called by setup_CollectInsertSizeMetrics.sh
 ##################################################################################
-
 # Specify which shell to use
 #$ -S /bin/bash
-# Run on the current working directory
 #$ -cwd
-
-# Join standard output and error to a single file  
 #$ -j y
-# change to y if you want a single qlog file 
 #$ -e ./logs/
 #$ -o ./logs/
 ##################################################################################
 #Initialize variables from CollectInsertSizeMetrics.sh
 ##################################################################################
 
+
+set -o errexit
+set -o pipefail
+set -o nounset
+
+# load anaconda environment
+set +eu
+module load anaconda2
+source activate RNAseq
+set -eu
+
 # export all variables from Pipeline_Setup.conf
 eval "$(../00_Setup_Pipeline/01_Pipeline_Setup.py --export)"
+
+# Calculate strand_specificity from STRANDEDNESS
+#CollectRnaSeqMetrics: strand_specificity
+if [ ${STRANDEDNESS} -eq 0 ]
+then
+strand_specificity="NONE"
+
+elif [ ${STRANDEDNESS} -eq 2 ]
+then
+strand_specificity="FIRST_READ_TRANSCRIPTION_STRAND"
+
+elif [ ${STRANDEDNESS} -eq 1 ]
+then
+strand_specificity="SECOND_READ_TRANSCRIPTION_STRAND"
+fi
 
 #checking the command line arg
 #-ne : "is not equal to"
@@ -35,12 +52,12 @@ fi
 
 SAMPLE_ID=$1
 
+script_dir="$(pwd)"
+
 # Now let's keep track of some information just in case anything goes wrong
-echo "=========================================================="
 #Use to calculate job time:
 #Start_Time in seconds
 start_time=$(date +"%s")
-
 echo "Starting on : $(date)"
 echo "Running on node : $(hostname)"
 echo "Current directory : $(pwd)"
@@ -52,45 +69,34 @@ echo "=========================================================="
 
 # Go to local scratch directory
 
-echo 'Change dir to scratch directory'
-
 cd "${TMPDIR}"
-
-echo 'Print scratch directory location:'
-
-echo "$TMPDIR"
-
-echo 'Loading required modules...'
-
 cp "${DATASET_DIR}/${SAMPLE_ID}/tophat2/${SAMPLE_ID}_primary_unique.bam" .
 
 #Initialize INPUT_BAM:
 input_bam="${SAMPLE_ID}_primary_unique.bam"
 
+# copy CollectRnaSeqMetrics required files:
+cp "${script_dir}/Input_Regions/genes_refFlat" .
+cp "${script_dir}/Input_Regions/rRNA_intervalList_sorted" .
+
 storage_dir=${DATASET_DIR}/${SAMPLE_ID}/tophat2
 
-#Create CollectInsertSizeMetrics output folder to store files:
-output_dir='CollectInsertSizeMetrics'
-
+echo "CollectInsertSizeMetrics"
+# create CollectInsertSizeMetrics output folder to store files:
+output_dir="CollectInsertSizeMetrics"
 mkdir -p "$output_dir"
-
-echo 'List files in scratch directory:'
-
-ls -alh
-
-echo 'Starting to run my commands'
-
-echo 'Starting CollectInsertSizeMetrics command'
-
-echo 'Printing command:'
 (set -x; picard CollectInsertSizeMetrics HISTOGRAM_FILE="${output_dir}/${SAMPLE_ID}_hist.pdf" INPUT="${input_bam}" OUTPUT="${output_dir}/${SAMPLE_ID}_metrics")
-
 echo 'Finished CollectInsertSizeMetrics command'
-echo 'Copy output to storage dir'
 cp -r "$output_dir" "$storage_dir"
 
-echo "List files in scratch"
-ls -alh
+# ----------
+
+echo "CollectRnaSeqMetrics"
+# create CollectRnaSeqMetrics output folder to store files:
+output_dir="CollectRnaSeqMetrics"
+mkdir -p "${output_dir}"
+(set -x; picard CollectRnaSeqMetrics REF_FLAT=genes_refFlat RIBOSOMAL_INTERVALS=rRNA_intervalList_sorted STRAND="${strand_specificity}" INPUT="${input_bam}" OUTPUT="${output_dir}/${SAMPLE_ID}_metrics")
+cp -r ${output_dir} ${storage_dir}
 
 echo "=========================================================="
 echo "Finished on : $(date)"
