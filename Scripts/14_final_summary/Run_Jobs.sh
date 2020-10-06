@@ -85,6 +85,14 @@ copy_feature 09c IntronicOnly
 copy_feature 09c ExonicOnly
 copy_feature 09c FullGeneBody
 
+# # 09d
+mkdir output/Segex_09d
+find ../09d_DE_* -name "*SEGEX*" | grep -iv output | grep -i fpkm | grep -i exoncoll | grep -i edger | xargs -n1 -I{} cp {} ./output/Segex_09d/
+
+copy_feature 09d ExonCollapsed
+copy_feature 09d FullGeneBody
+
+
 # summarize up and down genes
 function updown_genes() {
     local de_index=$1
@@ -103,6 +111,7 @@ function updown_genes() {
 updown_genes 09a
 updown_genes 09b
 updown_genes 09c
+updown_genes 09d
 
 # mv *.txt ${Level_UP}/14_final_summary/output
 # mv *.pdf ${Level_UP}/14_final_summary/output

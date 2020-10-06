@@ -76,6 +76,7 @@ function calc_correlation()
 calc_correlation "../09a_DE_* -name 'DiffEx*ExonCollapsed*txt'" 13a_HTSeq_ExonCollapsed RefSeq24k
 calc_correlation "../09b_DE_* -name 'DiffEx*ExonCollapsed*txt'" 13b_featureCounts_ExonCollapsed RefSeq24k
 calc_correlation "../09c_DE_* -name 'DiffEx*ExonCollapsed*txt'" 13c_lncRNA_ExonCollapsed LncRNA15k
+calc_correlation "../09d_DE_* -name 'DiffEx*ExonCollapsed*txt'" 13d_lncRNA_ExonCollapsed RefSeqLncRNA76k
 
 rm -rf Job_Summary && mkdir -p Job_Summary
 mv ./13* ./Job_Summary
