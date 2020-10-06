@@ -77,7 +77,7 @@ STRANDEDNESS=1
 MODE=2
 
 [SYSTEM]
-GTF_FILES_DIR=/projectnb2/wax-dk/max/rnaseq_files/GTF_Files_default
+GTF_FILES_DIR=/projectnb/wax-es/routines/GTF_Files_default
 GTF_FILES_CONFIG=${SYSTEM:GTF_FILES_DIR}/default.csv
 BOWTIE2INDEX_DIR=/restricted/projectnb/waxmanlab/routines/BowtieIndex
 VM_DIR_FASTQC=/net/waxman-server/mnt/data/waxmanlabvm_home/FASTQC/${USER:DATASET_LABEL}

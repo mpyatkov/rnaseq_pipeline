@@ -13,13 +13,13 @@ set -o nounset
 #$ -S /bin/bash
 # Run on the current working directory
 #$ -cwd
-#$ -pe omp 16
+#$ -pe omp 8
 # Join standard output and error to a single file
 # change to y if you want a single qlog file
 #$ -j y
 #$ -e ./logs/
 #$ -o ./logs/
-#$ -l scratch_free=200G
+#$ -l scratch_free=300G
 ##################################################################################
 
 # export all variables from Pipeline_Setup.conf
