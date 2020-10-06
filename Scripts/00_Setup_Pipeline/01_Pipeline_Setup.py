@@ -67,6 +67,7 @@ READ_LEN=150
 # 0="unstranded"
 # 1="firststrand"
 # 2="secondstrand"
+# 3="auto"
 STRANDEDNESS=1
 
 # Refer to the Parameter_Descriptions.txt in the Extract_Counts folder for more
@@ -76,10 +77,14 @@ STRANDEDNESS=1
 # 2="intersection-nonempty"
 MODE=2
 
+# if you need tracks for samples and BigWig files put 1 in the option below
+BIGWIG_ENABLE=0
+
 [SYSTEM]
 GTF_FILES_DIR=/projectnb/wax-es/routines/GTF_Files_default
 GTF_FILES_CONFIG=${SYSTEM:GTF_FILES_DIR}/default.csv
-BOWTIE2INDEX_DIR=/restricted/projectnb/waxmanlab/routines/BowtieIndex
+BOWTIE2INDEX_DIR=/projectnb/wax-es/routines/BowtieIndex
+HISAT2INDEX_DIR=/projectnb/wax-es/routines/hisat2index
 VM_DIR_FASTQC=/net/waxman-server/mnt/data/waxmanlabvm_home/FASTQC/${USER:DATASET_LABEL}
 VM_DIR_UCSC=/net/waxman-server/mnt/data/waxmanlabvm_home/${USER:BU_USER}/${USER:DATASET_LABEL}
 TIME_LIMIT=96:00:00

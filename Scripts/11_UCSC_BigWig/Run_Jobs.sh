@@ -18,6 +18,11 @@ rm -rf ./logs && mkdir -p ./logs
 # export all variables from Pipeline_Setup.conf
 eval "$(../00_Setup_Pipeline/01_Pipeline_Setup.py --export)"
 
+if [[ ${BIGWIG_ENABLE} == 0 ]]; then
+    echo "BIGWIG_ENABLE=0"
+    echo "BIGWIG files are not required. Exit. "
+    exit 0
+fi
 
 set +eu
 module load anaconda2
