@@ -24,11 +24,6 @@ if [[ ${BIGWIG_ENABLE} == 0 ]]; then
     exit 0
 fi
 
-set +eu
-module load anaconda2
-source activate RNAseq
-set -eu
-
 SCRIPT_DIR="$(pwd)"
 
 #Check that each variable prints a value to the terminal:

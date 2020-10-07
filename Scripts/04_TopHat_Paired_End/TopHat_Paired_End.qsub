@@ -22,6 +22,11 @@ set -o nounset
 #$ -l scratch_free=300G
 ##################################################################################
 
+set +eu
+module load anaconda2
+source activate RNAseq
+set -eu
+
 # export all variables from Pipeline_Setup.conf
 eval "$(../00_Setup_Pipeline/01_Pipeline_Setup.py --export)"
 
@@ -35,7 +40,6 @@ if [ $# -ne 2 ] ; then
       echo "qsub -N ${job_name}'_'${sample_id} -P wax-dk -l h_rt=${TIME_LIMIT} TopHat_Paired_End.qsub ${sample_id} ${tophat_strandedness} ${distance_bt_read_pair}"
       exit 0
 fi
-
 
 #process the command line arguments
 SAMPLE_ID=$1

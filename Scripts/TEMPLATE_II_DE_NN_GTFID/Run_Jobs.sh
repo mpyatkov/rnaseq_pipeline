@@ -7,11 +7,6 @@ set -o nounset
 # export all variables from Pipeline_Setup.conf
 eval "$(../00_Setup_Pipeline/01_Pipeline_Setup.py --export)"
 
-# set +eu
-# module load anaconda2
-# source activate RNAseq
-# set -eu
-
 #Remove *.o files from previous jobs
 rm -rf ./logs Output_* Summary_Differential_Expression SEGEX_Upload_Files
 mkdir -p ./logs
@@ -30,6 +25,8 @@ SCRIPT_DIR="$(pwd)"
 # DE_INDEX=$(pwd | xargs -n1 basename | grep -Po "\K([0-9a-zA-Z]*)(?=_)" | head -1) # 09a current
 # COMPAR_NUM=$(pwd | xargs -n1 basename | grep -Po "_\K([0-9][0-9]?)(?=_)" | head -1)
 
+
+# get all parameters from config files
 CONDITION_1_NAME=TEMPLATE
 CONDITION_2_NAME=TEMPLATE
 DE_INDEX=TEMPLATE

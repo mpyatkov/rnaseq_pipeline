@@ -26,12 +26,6 @@ set -o errexit
 ##################################################################################
 #---------------------------------------------------------------------------------
 
-# Activate anaconda environment
-# set +eu
-# module load anaconda2
-# source activate RNAseq
-# set -eu
-
 # Process system argument:
 if [[ $# -ne 1 ]]
 then

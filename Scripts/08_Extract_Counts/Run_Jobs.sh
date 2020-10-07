@@ -9,12 +9,6 @@ rm -rf ./logs && mkdir -p ./logs
 # export all variables from Pipeline_Setup.conf
 eval "$(../00_Setup_Pipeline/01_Pipeline_Setup.py --export)"
 
-# load anaconda module for case when we need independent run
-# set +eu
-# module load anaconda2
-# source activate RNAseq
-# set -eu
-
 # dir_name and job_name are required in the next steps
 dir_name=$(basename $(pwd))
 step_num=$(echo ${dir_name} | cut -d'_' -f 1)

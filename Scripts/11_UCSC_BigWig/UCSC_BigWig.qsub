@@ -19,10 +19,14 @@ set -o nounset
 #$ -o ./logs/
 #$ -l scratch_free=200G
 ##################################################################################
-#Initialize variables from UCSC_BigWig.sh
-##################################################################################
-#checking the command line arg
-#-ne : "is not equal to"
+
+# activate anaconda environment
+
+set +eu
+module load anaconda2
+source activate RNAseq
+set -eu
+
 if [ $# -ne 5 ] ; then
     echo "Need 7 arguments for the qsub command:"
     echo "qsub -N ${Job_Name}'_'${Sample_ID} -P wax-dk -l h_rt=${TIME_LIMIT} UCSC_BigWig.qsub ${Sample_ID} ${Dataset_DIR} ${STRAND_RULE} ${BU_User} ${VM_DIR_UCSC} ${SCRIPT_DIR}"
