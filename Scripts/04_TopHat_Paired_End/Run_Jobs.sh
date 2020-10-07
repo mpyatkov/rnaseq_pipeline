@@ -33,18 +33,6 @@ eval "$(../00_Setup_Pipeline/01_Pipeline_Setup.py --export)"
 fragment_len=$(echo "scale=4;${BIOANALYZER_LEN}-(2*${ADAPTOR_LEN})" | bc)
 distance_bt_read_pair=$(echo "scale=4;${fragment_len}-(2*${READ_LEN})" | bc)
 
-# calculate STRANDEDNESS for TOPHAT
-if [ ${STRANDEDNESS} -eq 0 ]
-then
-    tophat_strandedness="fr-unstranded"
-elif [ ${STRANDEDNESS} -eq 1 ]
-then
-    tophat_strandedness="fr-firststrand"
-elif [ ${STRANDEDNESS} -eq 2 ]
-then
-    tophat_strandedness="fr-secondstrand"
-fi
-
 # dir_name and job_name are required in the next steps
 dir_name=$(basename $(pwd))
 step_num=$(echo ${dir_name} | cut -d'_' -f 1)
@@ -60,7 +48,7 @@ do
     sample_id=${samples[i+1]}
     # description=${samples[i+2]}
     
-    (set -x; qsub -N "${job_name}_${sample_id}" -P "${PROJECT}" -l h_rt="${TIME_LIMIT}" TopHat_Paired_End.qsub "${sample_id}" "${tophat_strandedness}" "${distance_bt_read_pair}")
+    (set -x; qsub -N "${job_name}_${sample_id}" -P "${PROJECT}" -l h_rt="${TIME_LIMIT}" TopHat_Paired_End.qsub "${sample_id}" "${distance_bt_read_pair}")
 done
 
 echo "End of TOPHAT commands"

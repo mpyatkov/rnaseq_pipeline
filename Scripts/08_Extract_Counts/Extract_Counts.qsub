@@ -34,6 +34,11 @@ module load anaconda2
 source activate RNAseq
 set -eu
 
+# get 3 parameters (sample_id, gtf_file, counter)
+SAMPLE_ID=$1
+EXT_GTF_FILE=$2
+EXT_COUNTER=$3
+
 # We always count by gene_id when using HTSeq and featureCounts
 FEATURE_ID=gene_id
 
@@ -49,7 +54,21 @@ then
     intersection_mode="intersection-nonempty"
 fi
 
-# calculate strandedness_htseq from STRANDEDNESS
+# automated strand detection
+if [ ${STRANDEDNESS} -eq 3 ]; then
+    export_file="${DATASET_DIR}/${SAMPLE_ID}/tophat2/Read_Strandness/${SAMPLE_ID}_export.sh"
+    if [[ -f "${export_file}" ]]; then
+	# re-export STRANDEDNESS
+	source ${export_file}
+	echo "Auto: $STRANDEDNESS"
+    else
+	echo "Error: cannot find file: ${export_file}"
+	echo "To use automatic strand detection, you must complete step 01_Read_Strandness"
+	exit 1
+    fi
+fi
+
+# calculate strandedness_htseq
 if [ ${STRANDEDNESS} -eq 0 ]
 then
     strandedness_htseq="no"
@@ -72,11 +91,6 @@ elif [ ${STRANDEDNESS} -eq 1 ]
 then
     strandedness_featurecount="2"
 fi
-
-# get 3 parameters (sample_id, gtf_file, counter)
-SAMPLE_ID=$1
-EXT_GTF_FILE=$2
-EXT_COUNTER=$3
 
 ## export GTF files variables
 ## should export for (genes.gtf, featureCounts) something like that (in future should contain more variables)

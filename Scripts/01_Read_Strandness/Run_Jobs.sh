@@ -35,7 +35,8 @@ do
     sample_id=${samples[i+1]}
     # description=${samples[i+2]}
 
-    (set -x; qsub -N "${job_name}_${sample_id}" -P "${PROJECT}" -l h_rt="${TIME_LIMIT}" Read_Strandness.qsub "${sample_id}")
+    # (set -x; qsub -N "${job_name}_${sample_id}" -P "${PROJECT}" -l h_rt="${TIME_LIMIT}" Read_Strandness.qsub "${sample_id}")
+    (set -x; qsub -N "${job_name}_${sample_id}" -P "${PROJECT}" -l h_rt="00:15:00" Read_Strandness.qsub "${sample_id}")
     
 done
 

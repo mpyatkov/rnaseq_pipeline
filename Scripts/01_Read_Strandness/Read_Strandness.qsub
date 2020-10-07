@@ -5,16 +5,9 @@ set -o pipefail
 set -o nounset
 
 ##################################################################################
-#Andy Rampersaud, 02.23.16
-#This script is called by setup_UCSC_BigWig.sh
-##################################################################################
-# Specify which shell to use
 #$ -S /bin/bash
-# Run on the current working directory
 #$ -cwd
-# Join standard output and error to a single file  
 #$ -j y
-# change to y if you want a single qlog file
 #$ -e ./logs/
 #$ -o ./logs/
 ##################################################################################
@@ -43,26 +36,56 @@ echo "Task index number : $SGE_TASK_ID"
 echo "Parameter for multiple cores : $NSLOTS"
 echo "=========================================================="
 
+# for debug only
+# TMPDIR=TMP
+# rm -rf ${TMPDIR} && mkdir -p ${TMPDIR}
+
 # Go to local scratch directory
-
-echo 'Change dir to scratch directory'
-
 cd "${TMPDIR}"
 
-echo 'Print scratch directory location:'
-echo "$TMPDIR"
-#--------------------------------------
-
 echo 'Loading required modules...'
-
-#Make sure the shebang line = #!/bin/bash -l
-#Need the -l option to load modules
+# TODO: need to use anaconda environment here
 module load samtools
 module load python3
 module load rseqc
+module load hisat2
 
-# copy user input data files to scratch
-cp "${DATASET_DIR}/${SAMPLE_ID}/tophat2/${SAMPLE_ID}_primary_unique.bam" .
+# get first and second read files
+echo "Get R1 and R2"
+R1=${DATASET_DIR}/${SAMPLE_ID}/*_1.f*q.gz
+R2=${DATASET_DIR}/${SAMPLE_ID}/*_2.f*q.gz
+
+echo "Make a subset of R1,R2"
+# get only 100000 lines from each fastq file
+# TODO: to figure out why we need to switch off the control under pipes here
+set +o pipefail
+zcat $R1 | head -n100000 > R1.fq
+zcat $R2 | head -n100000 > R2.fq
+set -o pipefail
+
+# create small bam file using R1 and R2
+hisat2 -x ${HISAT2INDEX_DIR}/mm9.primary_assembly -1 R1.fq -2 R2.fq | samtools view -Sb - > "${SAMPLE_ID}_primary_unique.bam"
+ls -l
+
+# return: 0/1/2 - strandedness as it described in config file
+# input: file obtained from infer_experiment.py
+get_strandedness() {
+    # output of infer_experiment
+    local fname=$1
+    second=$(cat ${fname} | grep expl | cut -d ":" -f2 | tr -d ' ' | head -n1)
+    first=$(cat ${fname} | grep expl | cut -d ":" -f2 | tr -d ' ' | tail -n1)
+
+    if [[ $(echo "${first} > 0.7" | bc -l) ]]; then
+	# fr-firststrand
+        echo "1"
+    elif [[ $(echo "${second} > 0.7" | bc -l) ]]; then
+	# fr-secondstrand
+        echo "2"
+    else
+	# unstranded
+        echo "0"
+    fi
+}
 
 #Initialize INPUT_BAM:
 input_bam=${SAMPLE_ID}'_primary_unique.bam'
@@ -79,38 +102,34 @@ mkdir -p ${output_dir}
 #Create output file to store the result:
 output_file="${output_dir}/${SAMPLE_ID}_Read_Strandness.txt"
 
-rm -rf  "${output_file}" && touch "${output_file}"
+# file with export command which we will use to reexport default 
+# value of strandedness
+export_file="${output_dir}/${SAMPLE_ID}_export.sh"
 
 echo 'Unzip files:'
 time gzip -d *.gz
-
-echo 'Finished unzipping'
-echo 'List files in scratch directory:'
-ls -alh
-echo 'Starting to run my commands'
-echo 'Starting infer_experiment.py command'
 
 # all documentation about infer_experiment.py here:
 # http://rseqc.sourceforge.net/#infer-experiment-py
 
 # print command
 (set -x; infer_experiment.py --input-file=${input_bam} --refgene=mm9.refseq.bed > $output_file)
+cat ${output_file}
 
-echo 'Finished infer_experiment.py command'
+# get strandedness 0/1/2
+strandedness=$(get_strandedness $output_file)
+
+echo "export STRANDEDNESS=${strandedness}" > ${export_file}
 
 #Need to remove first 2 blank lines:
 awk 'NR > 2 { print $0 }' "$output_file" > temp1.txt
 mv temp1.txt "$output_file"
 
 echo 'Output file from infer_experiment.py:'
-
 head "$output_file"
 
 echo 'Copy output to storage dir'
 cp -r "$output_dir" "$storage_dir"
-
-echo "List files in scratch"
-ls -alh
 
 echo "Finished on : $(date)"
 

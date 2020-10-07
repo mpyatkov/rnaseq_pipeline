@@ -30,16 +30,43 @@ eval "$(../00_Setup_Pipeline/01_Pipeline_Setup.py --export)"
 #checking the command line arg
 #-ne : "is not equal to"
 
-if [ $# -ne 3 ] ; then
+if [ $# -ne 2 ] ; then
       echo "Need 3 arguments for the qsub command:"
       echo "qsub -N ${job_name}'_'${sample_id} -P wax-dk -l h_rt=${TIME_LIMIT} TopHat_Paired_End.qsub ${sample_id} ${tophat_strandedness} ${distance_bt_read_pair}"
       exit 0
 fi
 
+
 #process the command line arguments
 SAMPLE_ID=$1
-TOPHAT_STRANDEDNESS=$2
-DISTANCE_BT_READ_PAIR=$3
+DISTANCE_BT_READ_PAIR=$2
+
+# automated strand detection
+if [ ${STRANDEDNESS} -eq 3 ]; then
+    export_file="${DATASET_DIR}/${SAMPLE_ID}/tophat2/Read_Strandness/${SAMPLE_ID}_export.sh"
+    if [[ -f "${export_file}" ]]; then
+	# re-export STRANDEDNESS
+	source ${export_file}
+	echo "Auto: $STRANDEDNESS"
+    else
+	echo "Error: cannot find file: ${export_file}"
+	echo "To use automatic strand detection, you must complete step 01_Read_Strandness first"
+	exit 1
+    fi
+fi
+
+# calculate STRANDEDNESS for TOPHAT
+if [ ${STRANDEDNESS} -eq 0 ]
+then
+    tophat_strandedness="fr-unstranded"
+elif [ ${STRANDEDNESS} -eq 1 ]
+then
+    tophat_strandedness="fr-firststrand"
+elif [ ${STRANDEDNESS} -eq 2 ]
+then
+    tophat_strandedness="fr-secondstrand"
+fi
+
 
 # Default TopHat annotation file
 TOPHAT_ANNOTATION_FILE=01_RefSeq24k_ExonCollapsed.gtf

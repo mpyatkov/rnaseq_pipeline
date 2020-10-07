@@ -23,26 +23,53 @@ set -o nounset
 ##################################################################################
 #checking the command line arg
 #-ne : "is not equal to"
-if [ $# -ne 6 ] ; then
+if [ $# -ne 5 ] ; then
     echo "Need 7 arguments for the qsub command:"
     echo "qsub -N ${Job_Name}'_'${Sample_ID} -P wax-dk -l h_rt=${TIME_LIMIT} UCSC_BigWig.qsub ${Sample_ID} ${Dataset_DIR} ${STRAND_RULE} ${BU_User} ${VM_DIR_UCSC} ${SCRIPT_DIR}"
     exit 0
 fi
 
 #process the command line arguments
-Sample_ID=$1
+SAMPLE_ID=$1
 Dataset_DIR=$2
-STRAND_RULE=$3
-BU_User=$4
-VM_DIR_UCSC=$5
-SCRIPT_DIR=$6
+BU_User=$3
+VM_DIR_UCSC=$4
+SCRIPT_DIR=$5
+
+# automated strand detection
+if [ ${STRANDEDNESS} -eq 3 ]; then
+    export_file="${DATASET_DIR}/${SAMPLE_ID}/tophat2/Read_Strandness/${SAMPLE_ID}_export.sh"
+    if [[ -f "${export_file}" ]]; then
+	# re-export STRANDEDNESS
+	source ${export_file}
+	echo "Auto: $STRANDEDNESS"
+    else
+	echo "Error: cannot find file: ${export_file}"
+	echo "To use automatic strand detection, you must complete step 01_Read_Strandness"
+	exit 1
+    fi
+fi
+
+# calculate STRAND_RULE from STRANDEDNESS
+if [ ${STRANDEDNESS} -eq 0 ]
+then
+STRAND_RULE="none"
+elif [ ${STRANDEDNESS} -eq 2 ]
+then
+STRAND_RULE="1++,1--,2+-,2-+"
+elif [ ${STRANDEDNESS} -eq 1 ]
+then
+STRAND_RULE="1+-,1-+,2++,2--"
+fi
+
+
 
 #Print variables (make sure they appear correctly):
 echo "-----------------------"
 echo "Start of variable list:"
 echo "-----------------------"
-echo "Sample_ID:"
-echo ${Sample_ID}
+echo "SAMPLE_ID:"
+echo ${SAMPLE_ID}
 echo "Dataset_DIR:"
 echo ${Dataset_DIR}
 echo "STRAND_RULE:"
@@ -81,9 +108,9 @@ echo 'Loading required modules...'
 
 module load samtools/0.1.19
 
-cp ${Dataset_DIR}/${Sample_ID}/tophat2/${Sample_ID}'_primary_unique.bam' .
+cp ${Dataset_DIR}/${SAMPLE_ID}/tophat2/${SAMPLE_ID}'_primary_unique.bam' .
 #Initialize INPUT_BAM:
-INPUT_BAM=${Sample_ID}'_primary_unique.bam'
+INPUT_BAM=${SAMPLE_ID}'_primary_unique.bam'
 
 echo
 echo 'INPUT_BAM:'
@@ -97,7 +124,7 @@ CHROMSIZE_FILE=mm9.chrom.sizes
 #cp ${SCRIPT_DIR}/UCSC_Tools/wigToBigWig .
 cp -r ${SCRIPT_DIR}/UCSC_Tools .
 
-STORAGE_DIR=${Dataset_DIR}/${Sample_ID}/tophat2
+STORAGE_DIR=${Dataset_DIR}/${SAMPLE_ID}/tophat2
 #Create UCSC_BigWig output folder to store files:
 OUTPUT_DIR=${TMPDIR}/'UCSC_BigWig'
 
@@ -117,11 +144,11 @@ echo 'Starting samtools sort and index'
 echo
 
 #samtools sort only takes file name without extension
-samtools sort ${INPUT_BAM} ${Sample_ID}'_sorted'
+samtools sort ${INPUT_BAM} ${SAMPLE_ID}'_sorted'
 #samtools sort only takes file name with extension
-samtools index ${Sample_ID}'_sorted'.bam
+samtools index ${SAMPLE_ID}'_sorted'.bam
 #Initilize variable:
-INPUT_FILE=${Sample_ID}'_sorted.bam'
+INPUT_FILE=${SAMPLE_ID}'_sorted.bam'
 
 echo
 echo 'Finished samtools sort and index'
@@ -155,9 +182,9 @@ TOTAL_WIGSUM=1000000000
 if [ "${STRAND_RULE}" == "none" ];
 then
     #If the data is unstranded, then don't specify --strand option (default=none)
-    bam2wig_options="--input-file=$INPUT_FILE --chromSize=$CHROMSIZE_FILE --out-prefix=${Sample_ID} --wigsum=${TOTAL_WIGSUM}"
+    bam2wig_options="--input-file=$INPUT_FILE --chromSize=$CHROMSIZE_FILE --out-prefix=${SAMPLE_ID} --wigsum=${TOTAL_WIGSUM}"
 else
-    bam2wig_options="--input-file=$INPUT_FILE --chromSize=$CHROMSIZE_FILE --out-prefix=${Sample_ID} --wigsum=${TOTAL_WIGSUM} --strand=${STRAND_RULE}"
+    bam2wig_options="--input-file=$INPUT_FILE --chromSize=$CHROMSIZE_FILE --out-prefix=${SAMPLE_ID} --wigsum=${TOTAL_WIGSUM} --strand=${STRAND_RULE}"
 fi
 
 #------------------------------------------
@@ -219,8 +246,8 @@ ls -al ./UCSC_Tools/*
 #Better to call the wigToBigWig tool directly (as I do above)
 
 #Copy bigWig files to $OUTPUT_DIR
-#cp ${Sample_ID}.Forward.bw $OUTPUT_DIR
-#cp ${Sample_ID}.Reverse.bw $OUTPUT_DIR
+#cp ${SAMPLE_ID}.Forward.bw $OUTPUT_DIR
+#cp ${SAMPLE_ID}.Reverse.bw $OUTPUT_DIR
 
 echo
 echo 'Copy output to storage dir'

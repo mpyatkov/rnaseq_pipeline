@@ -28,6 +28,29 @@ set -eu
 # export all variables from Pipeline_Setup.conf
 eval "$(../00_Setup_Pipeline/01_Pipeline_Setup.py --export)"
 
+#checking the command line arg
+#-ne : "is not equal to"
+if [ $# -ne 1 ] ; then
+      echo "Need 1 argument for the qsub command: SAMPLE_ID: {$1}"
+      exit 0
+fi
+
+SAMPLE_ID=$1
+
+# automated strand detection
+if [ ${STRANDEDNESS} -eq 3 ]; then
+    export_file="${DATASET_DIR}/${SAMPLE_ID}/tophat2/Read_Strandness/${SAMPLE_ID}_export.sh"
+    if [[ -f "${export_file}" ]]; then
+	# re-export STRANDEDNESS
+	source ${export_file}
+	echo "Auto: $STRANDEDNESS"
+    else
+	echo "Error: cannot find file: ${export_file}"
+	echo "To use automatic strand detection, you must complete step 01_Read_Strandness"
+	exit 1
+    fi
+fi
+
 # Calculate strand_specificity from STRANDEDNESS
 #CollectRnaSeqMetrics: strand_specificity
 if [ ${STRANDEDNESS} -eq 0 ]
@@ -43,14 +66,6 @@ then
 strand_specificity="SECOND_READ_TRANSCRIPTION_STRAND"
 fi
 
-#checking the command line arg
-#-ne : "is not equal to"
-if [ $# -ne 1 ] ; then
-      echo "Need 1 argument for the qsub command: SAMPLE_ID: {$1}"
-      exit 0
-fi
-
-SAMPLE_ID=$1
 
 script_dir="$(pwd)"
 
