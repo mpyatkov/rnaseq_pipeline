@@ -75,10 +75,10 @@ get_strandedness() {
     second=$(cat ${fname} | grep expl | cut -d ":" -f2 | tr -d ' ' | head -n1)
     first=$(cat ${fname} | grep expl | cut -d ":" -f2 | tr -d ' ' | tail -n1)
 
-    if [[ $(echo "${first} > 0.7" | bc -l) ]]; then
+    if (( $(echo "${first} > 0.7" | bc -l) )); then
 	# fr-firststrand
         echo "1"
-    elif [[ $(echo "${second} > 0.7" | bc -l) ]]; then
+    elif (( $(echo "${second} > 0.7" | bc -l) )); then
 	# fr-secondstrand
         echo "2"
     else
