@@ -7,7 +7,7 @@
 #$ -e ./logs/
 #$ -o ./logs/
 #$ -l scratch_free=200G
-#$ -pe omp 16
+#$ -pe omp 2
 
 set -o errexit
 set -o pipefail
