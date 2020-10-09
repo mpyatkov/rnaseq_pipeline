@@ -7,6 +7,7 @@
 #$ -e ./logs/
 #$ -o ./logs/
 #$ -l scratch_free=200G
+#$ -pe omp 16
 
 set -o errexit
 set -o pipefail
@@ -111,7 +112,8 @@ SCRIPT_DIR="$(pwd)"
 echo 'Loading required modules...'
 module load R/3.6.0
 module load gcc/8.1.0
-module load samtools/0.1.19
+# module load samtools/0.1.19
+module load samtools
 
 cd "${TMPDIR}"
 
@@ -162,36 +164,35 @@ then
     # https://www.biostars.org/p/9247/
     # /^@[A-Za-z][A-Za-z](\t[A-Za-z][A-Za-z0-9]:[ -~]+)+$/
     # @ then two letters, a tab, then letters, then letter and/or number, then a colon, some characters after then the end of the string
-    samtools view -h ${input_bam} | awk '($0 ~ /^@[A-Za-z][A-Za-z](\t[A-Za-z][A-Za-z0-9]:[ -~]+)+$/)' > Header.txt
+    samtools view -@ ${NSLOTS} -h ${input_bam} | awk '($0 ~ /^@[A-Za-z][A-Za-z](\t[A-Za-z][A-Za-z0-9]:[ -~]+)+$/)' > Header.txt
 
     # Need everything after the header information (do NOT match regex):
-    samtools view -h ${input_bam} | awk '($0 !~ /^@[A-Za-z][A-Za-z](\t[A-Za-z][A-Za-z0-9]:[ -~]+)+$/)' > temp1.sam
-
-    # run awk command to filter out spliced reads:
-    awk '($6 !~ /[0-9]+[M][0-9]+[N][0-9]+[M]/)' temp1.sam > temp2.sam
-
-    # add header:
-    cat Header.txt temp2.sam > temp3.sam
-
-    # convert SAM to BAM:
-    samtools view -bS temp3.sam > "${SAMPLE_ID}_primary_no_splice.bam"
+    samtools view -@ ${NSLOTS} -h ${input_bam} | \
+	awk '($0 !~ /^@[A-Za-z][A-Za-z](\t[A-Za-z][A-Za-z0-9]:[ -~]+)+$/)' | \
+	awk '($6 !~ /[0-9]+[M][0-9]+[N][0-9]+[M]/)' | \
+	cat Header.txt - | \
+	samtools view -@ ${NSLOTS} -Sb - > "${SAMPLE_ID}_primary_no_splice.bam"
 
     # redefine the ${input_bam}:
     input_bam="${SAMPLE_ID}_primary_no_splice.bam"
-
     # remove temp files:
     rm -rf temp*.sam Header.txt 
 fi
 
+echo "input_bam: ${input_bam}"
 # sort the input BAM file:
 # usage:   samtools sort [options] <in.bam> <out.prefix>
 # options: -n        sort by read name
-samtools sort -n ${input_bam} "${SAMPLE_ID}_sorted"
+samtools sort -@ ${NSLOTS} -n -o "${SAMPLE_ID}_sorted.bam" ${input_bam}
 
 ## Start counting
 if [[ "$COUNTER" == "htseq" ]]
 then
-    (set -x; samtools view "${SAMPLE_ID}_sorted.bam" | htseq-count --stranded=${strandedness_htseq} --type=${FEATURE_TYPE} --idattr=${FEATURE_ID} --order=name --mode=${intersection_mode} - ${ANNOTATION_FILE}  > ${output_file})
+    echo "HTSeq activated"
+    
+    (set -x; htseq-count --stranded=${strandedness_htseq} --type=${FEATURE_TYPE} --idattr=${FEATURE_ID} --order=name --mode=${intersection_mode} "${SAMPLE_ID}_sorted.bam" ${ANNOTATION_FILE} > ${output_file})
+
+    # (set -x; samtools view "${SAMPLE_ID}_sorted.bam" | htseq-count --stranded=${strandedness_htseq} --type=${FEATURE_TYPE} --idattr=${FEATURE_ID} --order=name --mode=${intersection_mode} - ${ANNOTATION_FILE}  > ${output_file})
 
 else
     # featureCounts 
