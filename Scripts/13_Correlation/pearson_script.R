@@ -29,6 +29,7 @@ library(caret)
 library(Rtsne)
 library(ggrepel)
 library(tidyr)
+library(RColorBrewer)
 ############################## FUNCTIONS ######################################
 
 # save correlation plot and table
@@ -89,10 +90,15 @@ plot_cor <- function(df, title, method, out_name)
 plot_pca <- function(df_pca, df, title, out_names) {
    # PCA plot
    pca <- autoplot(prcomp(df_pca), data= df, colour= "label", label = F, label.size = 6)
+
+   nb.cols <- length(unique(df$label))
+   mycolors <- colorRampPalette(brewer.pal(8, "Dark2"))(nb.cols)
+
    pca <- pca + 
       ggtitle(title)+
       geom_label_repel(aes(label = rownames(df_pca), color = label), size = 6)+
-      scale_colour_brewer(type="qual", palette = 2)+
+      # scale_colour_brewer(type="qual", palette = 2)+
+      scale_fill_manual(values = mycolors) +
       theme_bw()+
       theme(text = element_text(size=14),
             legend.title = element_text(size=15),
