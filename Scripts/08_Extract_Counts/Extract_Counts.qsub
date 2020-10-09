@@ -190,9 +190,9 @@ if [[ "$COUNTER" == "htseq" ]]
 then
     echo "HTSeq activated"
     
-    (set -x; htseq-count --stranded=${strandedness_htseq} --type=${FEATURE_TYPE} --idattr=${FEATURE_ID} --order=name --mode=${intersection_mode} "${SAMPLE_ID}_sorted.bam" ${ANNOTATION_FILE} > ${output_file})
+    # (set -x; htseq-count --stranded=${strandedness_htseq} --type=${FEATURE_TYPE} --idattr=${FEATURE_ID} --order=name --mode=${intersection_mode} "${SAMPLE_ID}_sorted.bam" ${ANNOTATION_FILE} > ${output_file})
 
-    # (set -x; samtools view "${SAMPLE_ID}_sorted.bam" | htseq-count --stranded=${strandedness_htseq} --type=${FEATURE_TYPE} --idattr=${FEATURE_ID} --order=name --mode=${intersection_mode} - ${ANNOTATION_FILE}  > ${output_file})
+    (set -x; samtools view "${SAMPLE_ID}_sorted.bam" | htseq-count --stranded=${strandedness_htseq} --type=${FEATURE_TYPE} --idattr=${FEATURE_ID} --order=name --mode=${intersection_mode} - ${ANNOTATION_FILE}  > ${output_file})
 
 else
     # featureCounts 
