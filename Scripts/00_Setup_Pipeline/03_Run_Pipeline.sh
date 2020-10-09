@@ -54,6 +54,7 @@ fi
 
 
 # The Scripts folder is 1 level up from 00_Setup_Pipeline:
+SETUP_DIR=$(pwd)
 cd ..
 STEPS_DIR=$(pwd)
 
@@ -65,7 +66,9 @@ then
     PIPELINE_STEPS=${ALL_PIPELINE_STEPS}
 elif [[ "${START_STEP}" == "DEONLY" ]]
 then
+    pushd ${SETUP_DIR}
     ./01_Pipeline_Setup.py --generate
+    popd
     PIPELINE_STEPS=$(printf "%s\n" "${ALL_PIPELINE_STEPS}" | grep "09\|13\|14")
 else
     # discard lines before START_STEPS
