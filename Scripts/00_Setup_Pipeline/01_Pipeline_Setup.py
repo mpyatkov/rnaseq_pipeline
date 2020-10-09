@@ -68,7 +68,7 @@ READ_LEN=150
 # 1="firststrand"
 # 2="secondstrand"
 # 3="auto"
-STRANDEDNESS=1
+STRANDEDNESS=3
 
 # Refer to the Parameter_Descriptions.txt in the Extract_Counts folder for more
 # detailed information
