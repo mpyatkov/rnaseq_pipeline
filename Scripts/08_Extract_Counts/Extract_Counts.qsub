@@ -7,7 +7,7 @@
 #$ -e ./logs/
 #$ -o ./logs/
 #$ -l scratch_free=200G
-#$ -pe omp 2
+#$ -pe omp 4
 
 set -o errexit
 set -o pipefail
@@ -164,14 +164,14 @@ then
     # https://www.biostars.org/p/9247/
     # /^@[A-Za-z][A-Za-z](\t[A-Za-z][A-Za-z0-9]:[ -~]+)+$/
     # @ then two letters, a tab, then letters, then letter and/or number, then a colon, some characters after then the end of the string
-    samtools view -@ ${NSLOTS} -h ${input_bam} | awk '($0 ~ /^@[A-Za-z][A-Za-z](\t[A-Za-z][A-Za-z0-9]:[ -~]+)+$/)' > Header.txt
+    samtools view -h ${input_bam} | awk '($0 ~ /^@[A-Za-z][A-Za-z](\t[A-Za-z][A-Za-z0-9]:[ -~]+)+$/)' > Header.txt
 
     # Need everything after the header information (do NOT match regex):
-    samtools view -@ ${NSLOTS} -h ${input_bam} | \
+    samtools view -h ${input_bam} | \
 	awk '($0 !~ /^@[A-Za-z][A-Za-z](\t[A-Za-z][A-Za-z0-9]:[ -~]+)+$/)' | \
 	awk '($6 !~ /[0-9]+[M][0-9]+[N][0-9]+[M]/)' | \
 	cat Header.txt - | \
-	samtools view -@ ${NSLOTS} -Sb - > "${SAMPLE_ID}_primary_no_splice.bam"
+	samtools view -Sb - > "${SAMPLE_ID}_primary_no_splice.bam"
 
     # redefine the ${input_bam}:
     input_bam="${SAMPLE_ID}_primary_no_splice.bam"
@@ -183,7 +183,7 @@ echo "input_bam: ${input_bam}"
 # sort the input BAM file:
 # usage:   samtools sort [options] <in.bam> <out.prefix>
 # options: -n        sort by read name
-samtools sort -@ ${NSLOTS} -n -o "${SAMPLE_ID}_sorted.bam" ${input_bam}
+samtools sort -n -o "${SAMPLE_ID}_sorted.bam" ${input_bam}
 
 ## Start counting
 if [[ "$COUNTER" == "htseq" ]]
