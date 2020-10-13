@@ -50,7 +50,7 @@ do
         pushd "${DATASET_DIR}/${sample_id}/tophat2"
 
         Aligned_Pairs=$(grep "Aligned pairs:"  "${sample_id}_align_summary.txt"  | awk '{print $3}')
-        counter_DIR="${DATASET_DIR}/${sample_id}/tophat2/${COUNTER}"
+        counter_DIR="${DATASET_DIR}/${sample_id}/${COUNTER}"
             
         pushd "${counter_DIR}/${OUTPUT_DIR}"
 	
@@ -85,7 +85,7 @@ do
         pushd "${DATASET_DIR}/${sample_id}/tophat2"
 
         Aligned_Pairs=$(grep "Aligned pairs:"  "${sample_id}_align_summary.txt"  | awk '{print $3}')
-        counter_DIR="${DATASET_DIR}/${sample_id}/tophat2/${COUNTER}"
+        counter_DIR="${DATASET_DIR}/${sample_id}/${COUNTER}"
 	pushd "${counter_DIR}/${OUTPUT_DIR}"
 
 	if [[ $COUNTER == "htseq" ]]

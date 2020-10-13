@@ -42,7 +42,7 @@ SCRIPT_DIR=$5
 
 # automated strand detection
 if [ ${STRANDEDNESS} -eq 3 ]; then
-    export_file="${DATASET_DIR}/${SAMPLE_ID}/tophat2/Read_Strandness/${SAMPLE_ID}_export.sh"
+    export_file="${DATASET_DIR}/${SAMPLE_ID}/Read_Strandness/${SAMPLE_ID}_export.sh"
     if [[ -f "${export_file}" ]]; then
 	# re-export STRANDEDNESS
 	source ${export_file}
@@ -128,7 +128,7 @@ CHROMSIZE_FILE=mm9.chrom.sizes
 #cp ${SCRIPT_DIR}/UCSC_Tools/wigToBigWig .
 cp -r ${SCRIPT_DIR}/UCSC_Tools .
 
-STORAGE_DIR=${Dataset_DIR}/${SAMPLE_ID}/tophat2
+STORAGE_DIR=${Dataset_DIR}/${SAMPLE_ID}
 #Create UCSC_BigWig output folder to store files:
 OUTPUT_DIR=${TMPDIR}/'UCSC_BigWig'
 

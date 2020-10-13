@@ -15,6 +15,12 @@ set -o nounset
 # export all variables from Pipeline_Setup.conf
 eval "$(../00_Setup_Pipeline/01_Pipeline_Setup.py --export)"
 
+if [[ ${BIGWIG_ENABLE} == 0 ]]; then
+    echo "BIGWIG_ENABLE=0"
+    echo "BIGWIG files are not required. Exit. "
+    exit 0
+fi
+
 #---------------------------------------------------------------------------------
 #Check that each variable prints a value to the terminal:
 echo "-----------------------"
@@ -44,7 +50,7 @@ do
     set +eu
     cp ${DATASET_DIR}/${Sample_ID}/tophat2/$Sample_ID'_primary_unique.bam' ${VM_DIR_UCSC}
     cp ${DATASET_DIR}/${Sample_ID}/tophat2/$Sample_ID'_primary_unique.bam.bai' ${VM_DIR_UCSC}
-    cp ${DATASET_DIR}/${Sample_ID}/tophat2/UCSC_BigWig/*'.bw' ${VM_DIR_UCSC}
+    cp ${DATASET_DIR}/${Sample_ID}/UCSC_BigWig/*'.bw' ${VM_DIR_UCSC}
     set -eu
 done 
 # cd $INPUT_DIR

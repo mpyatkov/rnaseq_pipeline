@@ -57,7 +57,7 @@ fi
 
 # automated strand detection
 if [ ${STRANDEDNESS} -eq 3 ]; then
-    export_file="${DATASET_DIR}/${SAMPLE_ID}/tophat2/Read_Strandness/${SAMPLE_ID}_export.sh"
+    export_file="${DATASET_DIR}/${SAMPLE_ID}/Read_Strandness/${SAMPLE_ID}_export.sh"
     if [[ -f "${export_file}" ]]; then
 	# re-export STRANDEDNESS
 	source ${export_file}
@@ -127,7 +127,7 @@ cp "${GTF_FILES_DIR}/${ANNOTATION_FILE}" .
 input_bam="${SAMPLE_ID}_primary_unique.bam"
 
 # make output dir:
-storage_dir="${DATASET_DIR}/${SAMPLE_ID}/tophat2/${COUNTER}"
+storage_dir="${DATASET_DIR}/${SAMPLE_ID}/${COUNTER}"
 
 # output_dir depending on the ANNOTATION_FILE used:
 output_dir="${storage_dir}/${OUTPUT_DIR}"

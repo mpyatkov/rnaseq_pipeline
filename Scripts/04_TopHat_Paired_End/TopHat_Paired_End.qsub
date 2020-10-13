@@ -47,7 +47,7 @@ DISTANCE_BT_READ_PAIR=$2
 
 # automated strand detection
 if [ ${STRANDEDNESS} -eq 3 ]; then
-    export_file="${DATASET_DIR}/${SAMPLE_ID}/tophat2/Read_Strandness/${SAMPLE_ID}_export.sh"
+    export_file="${DATASET_DIR}/${SAMPLE_ID}/Read_Strandness/${SAMPLE_ID}_export.sh"
     if [[ -f "${export_file}" ]]; then
 	# re-export STRANDEDNESS
 	source ${export_file}
@@ -83,7 +83,7 @@ echo "SAMPLE_ID: ${SAMPLE_ID}"
 echo "Dataset_DIR: ${DATASET_DIR}"
 echo "Bowtie2Index_DIR: ${BOWTIE2INDEX_DIR}"
 echo "GTF_Files_DIR: ${GTF_FILES_DIR}"
-echo "STRANDEDNESS: ${TOPHAT_STRANDEDNESS}"
+echo "STRANDEDNESS: ${tophat_strandedness}"
 echo "DISTANCE_BT_READ_PAIR: ${DISTANCE_BT_READ_PAIR}"
 echo "-----------------------"
 echo "End of variable list"
@@ -160,7 +160,7 @@ echo 'Starting tophat'
 #Need the option: --no-coverage-search
 #------------------------------------------------------------------------------
 
-(set -x; tophat --no-coverage-search -o ${output_dir} -G ${TOPHAT_ANNOTATION_FILE} -p $NSLOTS --library-type ${TOPHAT_STRANDEDNESS} -r ${DISTANCE_BT_READ_PAIR} --mate-std-dev ${param_std} Bowtie2Index/genome ${left_list} ${right_list})
+(set -x; tophat --no-coverage-search -o ${output_dir} -G ${TOPHAT_ANNOTATION_FILE} -p $NSLOTS --library-type ${tophat_strandedness} -r ${DISTANCE_BT_READ_PAIR} --mate-std-dev ${param_std} Bowtie2Index/genome ${left_list} ${right_list})
 
 echo 'Ending tophat'
 
@@ -207,19 +207,8 @@ pushd "${output_dir}"
 samtools view -H 'primary.bam' > Header.txt
 
 # samtools view (without option) will print alignments (no header) :
-samtools view 'primary.bam' > temp1.sam
 
-# Run grep command to extract the uniquely mapped reads:
-# http://onetipperday.blogspot.com/2012/07/deeply-understanding-sam-tags.html
-# NH is "Number of reported alignments that contains the query in the current
-# record", which should be >1 for multiple-mapped reads.
-grep -w "NH:i:1" temp1.sam > temp2.sam
-
-#Add header:
-cat Header.txt temp2.sam > temp3.sam
-
-#Convert SAM to BAM:
-samtools view -bS temp3.sam > temp4.bam
+samtools view 'primary.bam' | grep -w "NH:i:1" | cat Header.txt - | samtools view -bS - > temp4.bam
 
 #Sort the BAM file:
 #Usage:   samtools sort [options] <in.bam> <out.prefix>

@@ -15,6 +15,20 @@ set -o nounset
 # export all variables from Pipeline_Setup.conf
 eval "$(../00_Setup_Pipeline/01_Pipeline_Setup.py --export)"
 
+# automated strand detection
+if [ ${STRANDEDNESS} -eq 3 ]; then
+    export_file="${DATASET_DIR}/${SAMPLE_ID}/Read_Strandness/${SAMPLE_ID}_export.sh"
+    if [[ -f "${export_file}" ]]; then
+	# re-export STRANDEDNESS
+	source ${export_file}
+	echo "Auto: $STRANDEDNESS"
+    else
+	echo "Error: cannot find file: ${export_file}"
+	echo "To use automatic strand detection, you must complete step 01_Read_Strandness"
+	exit 1
+    fi
+fi
+
 # calculate STRAND_RULE from STRANDEDNESS
 if [ ${STRANDEDNESS} -eq 0 ]
 then

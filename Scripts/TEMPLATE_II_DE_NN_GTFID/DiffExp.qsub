@@ -148,7 +148,7 @@ copy_files() {
 	Description=${myArray[2]}
 
 	echo 'Copy ${condfile} sample count files to Condition_1 folder'
-	(set +x; cp "${Dataset_DIR}/${Sample_ID}/tophat2/${COUNT_PROGRAM}/${COUNT_DIR}/${Sample_ID}_${COUNT_PROGRAM}.out" ./Input/${condfile}/${condname}_${Sample_ID})
+	(set +x; cp "${Dataset_DIR}/${Sample_ID}/${COUNT_PROGRAM}/${COUNT_DIR}/${Sample_ID}_${COUNT_PROGRAM}.out" ./Input/${condfile}/${condname}_${Sample_ID})
 	
 	pushd ./Input/${condfile}/
 
@@ -169,14 +169,14 @@ copy_files() {
 	    # line numbers are the only difference between RefSeq summary and LncRna (hehe. legacy!)
 	    # 12 for lncrna and 26 for RefSeq
 
-	    num_lines=$(wc -l "${Dataset_DIR}/${Sample_ID}/tophat2/${COUNT_PROGRAM}/${COUNT_DIR}/${Sample_ID}_${COUNT_PROGRAM}.out.summary")
+	    num_lines=$(wc -l "${Dataset_DIR}/${Sample_ID}/${COUNT_PROGRAM}/${COUNT_DIR}/${Sample_ID}_${COUNT_PROGRAM}.out.summary")
 	    echo "num_lines: ${num_lines}"
 
 	    if [[ "${num_lines}" < "20" ]]
 	    then
 	    # copy new summary file (copy summary file)
 
-		cat "${Dataset_DIR}/${Sample_ID}/tophat2/${COUNT_PROGRAM}/${COUNT_DIR}/${Sample_ID}_${COUNT_PROGRAM}.out.summary" | \
+		cat "${Dataset_DIR}/${Sample_ID}/${COUNT_PROGRAM}/${COUNT_DIR}/${Sample_ID}_${COUNT_PROGRAM}.out.summary" | \
 		    grep "Assigned\|Unassigned_NoFeatures" | \
 		    awk '{sum+=$2} END {print sum}' > "${condname}_${Sample_ID}_summary"
 	    fi

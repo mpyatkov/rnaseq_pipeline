@@ -93,7 +93,7 @@ input_bam=${SAMPLE_ID}'_primary_unique.bam'
 #Copy Read_Strandness required files:
 cp "${SCRIPT_DIR}/Input_Regions/mm9.refseq.bed.gz" .
 
-storage_dir="${DATASET_DIR}/${SAMPLE_ID}/tophat2"
+storage_dir="${DATASET_DIR}/${SAMPLE_ID}/"
 
 #Create Read_Strandness output folder to store files:
 output_dir='Read_Strandness'

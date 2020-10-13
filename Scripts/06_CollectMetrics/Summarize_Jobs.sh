@@ -124,12 +124,12 @@ do
     description=${samples[i+2]}
 
     # Need to cd to sample specific CollectInsertSizeMetrics folder
-    pushd "${DATASET_DIR}/${sample_id}/tophat2/CollectInsertSizeMetrics"
+    pushd "${DATASET_DIR}/${sample_id}/CollectInsertSizeMetrics"
     collect_size_metrics ${sample_id} ${output_dir} ${size_metrics}
     popd
 
     # Need to cd to sample specific CollectRnaSeqMetrics folder
-    pushd "${DATASET_DIR}/${sample_id}/tophat2/CollectRnaSeqMetrics"
+    pushd "${DATASET_DIR}/${sample_id}/CollectRnaSeqMetrics"
     echo "---> $(pwd)"
     ls -l
     collect_rnaseq_metrics ${sample_id} ${rna_metrics}
