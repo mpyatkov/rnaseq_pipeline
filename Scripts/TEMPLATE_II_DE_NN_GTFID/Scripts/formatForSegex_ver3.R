@@ -59,7 +59,7 @@ if(length(args) < 4){
 	edger_foldChange[is.na(edger_foldChange)] <- 1 #genes that are not counted would have fold change as na
 	flip.idx <- edger_foldChange < 1 
 	edger_foldChange[flip.idx] <- (1/edger_foldChange[flip.idx]) * -1
-	output <- cbind("id"=gsub("chr", "c", gsub("ncRNA", "nc", data$id)), #had to shorten the gene name b/c segex limits gene name to 18 chrs
+	output <- cbind("id"=gsub("_chr", "_c", gsub("^ncRNA", "nc", data$id)), #had to shorten the gene name b/c segex limits gene name to 18 chrs
 		  "deseq_ratio"=deseq_ratio,
 		  "edger_ratio"=edger_ratio,
 		  "deseq_foldChange"=deseq_foldChange,
