@@ -30,6 +30,7 @@ library(Rtsne)
 library(ggrepel)
 library(tidyr)
 library(RColorBrewer)
+library(tictoc)
 ############################## FUNCTIONS ######################################
 
 # save correlation plot and table
@@ -310,20 +311,32 @@ if(!is.na(list.filenames.HT[1])){
       theme_classic()
    ggsave("tSNE_All_Merge.pdf",plot= tsneplot, device = "pdf",path= wd, width = 80, height =40, units = "cm")   
    
+   tic("total")
+
+   tic("create 3 pca plot for all genes")
    # create 3 pca plot for all genes
    pca_3plot(list.filenames.HT, EXTARGS, 0)
-   
+   toc()
+
+   tic("create 3 Pearson correlation plot for all genes")
    # create 3 Pearson correlation plot for all genes
    cor_3plot(list.filenames.HT, "pearson", EXTARGS, 0)
-
+   toc()
+   
+   tic("create 3 Spearman correlation plot for all genes")
    # create 3 Spearman correlation plot for all genes
    cor_3plot(list.filenames.HT, "spearman", EXTARGS, 0)
-
+   toc()
+   
+   tic("create 3 Pearson correlation plot for all genes (meanonly)")
    # create 3 Pearson correlation plot for all genes (meanonly)
    cor_3plot(list.filenames.HT, "pearson", EXTARGS, 0, meanonly = T)
+   toc()
    
+   tic("create 3 Spearman correlation plot for all genes (meanonly)")
    # create 3 Spearman correlation plot for all genes (meanonly)
    cor_3plot(list.filenames.HT, "spearman", EXTARGS, 0, meanonly = T)
+   toc()
 
    for(i in 1:length(list.filenames.HT)){
       print(paste0("-->",list.filenames.HT[i]))
@@ -336,7 +349,7 @@ if(!is.na(list.filenames.HT[1])){
       cor_3plot(list.filenames.HT[i], "pearson", EXTARGS, number)
       cor_3plot(list.filenames.HT[i], "spearman", EXTARGS, number)
    }
-   
+   toc()   
 } else{
    print("No  files in the folder !!")
    

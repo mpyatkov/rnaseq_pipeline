@@ -72,10 +72,13 @@ function calc_correlation()
     mv PCA ./${OUTDIR}/
     mv tSNE_All_Merge.pdf ./${OUTDIR}/
 }
-
+echo "Start 13a_RefSeq24_HTSeq_ExonCollapsed: $(date)"
 calc_correlation "../09a_DE_* -name 'DiffEx*ExonCollapsed*txt'" 13a_RefSeq24_HTSeq_ExonCollapsed RefSeq24k
+echo "Start 13b_RefSeq24k_featureCounts_ExonCollapsed: $(date)"
 calc_correlation "../09b_DE_* -name 'DiffEx*ExonCollapsed*txt'" 13b_RefSeq24k_featureCounts_ExonCollapsed RefSeq24k
+echo "Start 13c_LncRNA15k_ExonCollapsed: $(date)"
 calc_correlation "../09c_DE_* -name 'DiffEx*ExonCollapsed*txt'" 13c_LncRNA15k_ExonCollapsed LncRNA15k
+echo "Start 13d_RefSeqLncRNA76k_ExonCollapsed: $(date)"
 calc_correlation "../09d_DE_* -name 'DiffEx*ExonCollapsed*txt'" 13d_RefSeqLncRNA76k_ExonCollapsed RefSeqLncRNA76k
 
 rm -rf Job_Summary && mkdir -p Job_Summary
