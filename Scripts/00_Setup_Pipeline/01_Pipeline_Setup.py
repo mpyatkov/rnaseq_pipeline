@@ -22,6 +22,12 @@ import shutil
 PIPELINE_CONFIG ="Pipeline_Setup.conf"
 SAMPLES_CONFIG = "Sample_Labels.txt"
 COMPARISON_CONFIG = "Comparisons.txt"
+VENN_CONFIG = "venn_comparisons.txt"
+
+DEFAULT_VENN_CONFIG="""
+venn_comparisons
+1;2
+"""
 
 DEFAULT_COMPARISON_CONFIG="""
 Comparison_Number; Condition_1; Condition_2
@@ -183,6 +189,41 @@ class ComparisonsConfig:
             groups = groups.union(set(comparison.Condition_2.split(",")))
         return groups
 
+class VennConfig:
+    # TODO: check if comparison not presented in comparisons.txt 
+    # TODO: check if format is not correct
+    separator=";"
+    def __init__(self, configpath):
+        generate_example(configpath, DEFAULT_VENN_CONFIG)
+        self.venn = self.__read_config(configpath, self.separator)
+    
+    def __read_config(self, configpath, separator):
+        with open(configpath, "r") as config:
+            header_and_data = map(lambda x: x.strip(), config.readlines())
+            # ignore empty lines
+            header_and_data = list(filter(lambda s: len(s) > 0, header_and_data))
+            header = header_and_data[0].replace(separator,",")
+            VennLine = namedtuple('VennLine', header)
+            result = []
+            for vennline in header_and_data[1:]:
+                vennline = vennline.split(separator)
+
+                # strip trailing spaces
+                vennline = list(map(lambda s: s.strip(), vennline))
+                result.append(VennLine(vennline))
+                
+            return result
+
+    def __str__(self):
+        return "\n".join(map(lambda x: str(x), self.venn))
+    
+    def get_number_of_venns(self):
+        return len(self.venn)
+
+    # return bash array by ix
+    def get_venn_by_index(self, ix):
+        return " ".join(self.venn[ix][0])
+        
 class GTFconfig():
     separator=";"
 
@@ -459,6 +500,15 @@ if __name__ == "__main__":
                         metavar=('DE_INDEX'),
                         help="return counter by DE_INDEX (9a,9b,...)")
 
+    parser.add_argument("--venn_number", 
+                        help=f"return the number of Venn comparisons ({VENN_CONFIG})", 
+                        action="store_true")
+    
+    parser.add_argument("--venn_comparisons_by_ix",
+                        nargs=1,
+                        metavar=('VENN_INDEX'),
+                        help=f"return bash array of comparison numbers by venn index ({VENN_CONFIG})")
+
     # gtf_by_annotation_and_counter
     args = parser.parse_args()
 
@@ -468,6 +518,9 @@ if __name__ == "__main__":
     system_config = SystemConfig(current_path+"/"+PIPELINE_CONFIG)
     sample_config = SampleConfig(current_path + "/" + SAMPLES_CONFIG)
     comparison_config = ComparisonsConfig(current_path + "/" + COMPARISON_CONFIG)
+    venn_config = VennConfig(current_path + "/" + VENN_CONFIG)
+    # print(venn_config.get_venn_by_index(0))
+    # print(venn_config.get_number_of_venns())
 
     # TODO: if config is not exist make error exit
     DEFAULT_GTF_CONFIG = system_config.config["SYSTEM"]["GTF_FILES_CONFIG"]
@@ -521,6 +574,12 @@ if __name__ == "__main__":
     elif args.counter_by_DE_INDEX:
         print(gtf_config.counter_by_de_index(args.counter_by_DE_INDEX[0]))
 
+    elif args.venn_number:
+        print(venn_config.get_number_of_venns())
+
+    elif args.venn_comparisons_by_ix:
+        a = args.venn_comparisons_by_ix
+        print(venn_config.get_venn_by_index(int(a[0])))
     else:
         parser.print_help()
 
