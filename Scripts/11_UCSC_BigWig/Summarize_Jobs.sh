@@ -39,6 +39,22 @@ echo "-----------------------"
 # samples contains array of (sample_dir, sample_id, description) for each sample
 samples=($("${SETUP_PIPELINE_DIR}"/01_Pipeline_Setup.py --samples))
 
+set +eu
+# checking existing VM_DIR_UCSC
+if [[ -d ${VM_DIR_UCSC} ]]
+then
+    echo "VM_DIR_UCSC_FASTQC exists..."
+else
+    echo "Need to create VM_DIR_UCSC!"
+    mkdir -p ${VM_DIR_UCSC}
+    if [[ $? -ne 0 ]] ; then
+        printf "\nWARNING: Ask somebody with rights to give you write access to $VM_DIR_UCSC directory\n\n"
+    else
+        echo "Directory ${VM_DIR_UCSC} created."
+    fi
+fi
+set -eu
+
 # loop over all samples
 for ((i=0;i< ${#samples[@]} ;i+=3));
 do

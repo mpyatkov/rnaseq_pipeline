@@ -25,11 +25,28 @@ output_file="${output_dir}/Read_Length_Stats.txt"
 # header for 03_Read_length
 printf "SAMPLE_ID\tFASTQ_File_Name\tRead_Length(bp)\tRead_Count\n" >> "${output_file}"
 
-
 # samples contains array of (sample_dir, sample_id, description) for each sample
 samples=($("${SETUP_PIPELINE_DIR}"/01_Pipeline_Setup.py --samples))
 
 # rename directories from sample_dir to sample_id
+
+# checking existing VM_DIR_FASTQC
+# do not exit if an error occurs
+set +eu
+if [[ -d ${VM_DIR_FASTQC} ]]
+then
+    echo "VM_DIR_FASTQC exists!"
+else
+    echo "Attempt to create ${VM_DIR_FASTQC} directory..."
+    mkdir -p "${VM_DIR_FASTQC}"
+    if [ $? -ne 0 ]; then
+        printf "\nWARNING: Ask somebody with rights to give you write access to $VM_DIR_FASTQC directory\n"
+    else
+        printf "\nDirectory ${VM_DIR_FASTQC} created\n"
+    fi
+fi
+set -eu
+
 for ((i=0;i< ${#samples[@]} ;i+=3));
 do
     # sample_dir=${samples[i]}
