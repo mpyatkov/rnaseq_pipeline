@@ -65,34 +65,62 @@ PROJECT=wax-dk
 [STEPS]
 # Bioanalyzer length (from Bioanalyzer tracings)
 BIOANALYZER_LEN=330
-# Usually the adaptor length is 60bp (60bp on each end: 120bp total
+# Usually the adaptor length is 60bp (60bp on each end: 120bp total)
 ADAPTOR_LEN=60
 # Input the adaptor length (bp) for one end
 READ_LEN=150	
 
-# 0="unstranded"
-# 1="firststrand"
-# 2="secondstrand"
-# 3="auto"
+# Depending on the library type, we can take into account information about
+# specific strands. At the moment, the laboratory uses the dUTP preparation
+# method, which corresponds to "fr-firststrand". Previous researchs could use
+# other types of libraries, thus if you are unsure about library type just select
+# STRANDEDNESS = 3. It will perform step 01 _..., which uses RSEQC
+# (infer_experiment.py) and HISAT to detect a read strandedness from the small
+# subset of reads for each sample.
+# possible values:
+# 0 - "unstranded"
+# 1 - "firststrand"
+# 2 - "secondstrand"
+# 3 - "auto" (default)
 STRANDEDNESS=3
 
-# Refer to the Parameter_Descriptions.txt in the Extract_Counts folder for more
-# detailed information
+# htseq only feature which allows to count different intersections for reads
+# https://htseq.readthedocs.io/en/master/count.html
 # 0="union"
 # 1="intersection-strict"
 # 2="intersection-nonempty"
 MODE=2
 
-# if you need tracks for samples and BigWig files put 1 in the option below
+# if you need tracks for samples and BigWig files use BIGWIG_ENABLE=1 in the
+# option below
 BIGWIG_ENABLE=0
 
 [SYSTEM]
+
+# location of GTF files (by default you should have access to wax-es)
 GTF_FILES_DIR=/projectnb/wax-es/routines/GTF_Files_default
+
+# GTF configuration file which contains all information and options for GTF
+# files used in this pipeline. If you would like to use custom configuration
+# file just copy the default file in the current directory and assign the path
+# to this file. Example: GTF_FILES_CONFIG=custom.csv
 GTF_FILES_CONFIG=${SYSTEM:GTF_FILES_DIR}/default.csv
+
+# location for Bowtie2 indexes, at the moment it is only indexes for mouse mm9
+# assembly
 BOWTIE2INDEX_DIR=/projectnb/wax-es/routines/BowtieIndex
+
+# location for HISAT indexes, at the moment it is only indexes for mouse mm9
+# assembly
 HISAT2INDEX_DIR=/projectnb/wax-es/routines/hisat2index
+
+# special directory which will contain FASTQC reports 
 VM_DIR_FASTQC=/net/waxman-server/mnt/data/waxmanlabvm_home/FASTQC/${USER:DATASET_LABEL}
+
+# special directory which will contain BIGWIG files 
 VM_DIR_UCSC=/net/waxman-server/mnt/data/waxmanlabvm_home/${USER:BU_USER}/${USER:DATASET_LABEL}
+
+# default time limit
 TIME_LIMIT=96:00:00
 """.strip()
 
@@ -227,8 +255,18 @@ class VennConfig:
 class GTFconfig():
     separator=";"
 
-    def __init__(self, configpath):
-        self.gtf_files = self.__read_config(configpath, self.separator)
+    def __init__(self, config_path, current_path):
+        # if configpath is not created use current_path+configpath
+        path = config_path
+        if os.path.exists(config_path):
+            path = config_path
+        elif os.path.basename(config_path) == config_path and os.path.exists(current_path+"/"+config_path):
+            path = current_path+"/"+config_path
+        else:
+            print(f"Can not find GTF config file: {config_path}")
+            exit(1)
+
+        self.gtf_files = self.__read_config(path, self.separator)
         
     def __read_config(self, configpath, separator):
         with open(configpath, "r") as config:
@@ -457,7 +495,7 @@ class DiffExpression():
 
 def generate_example(config_path, default_config):
     if not os.path.exists(config_path):
-        print(f"Generating example config file {os.path.basename(config_path)}")
+        print(f"Generating example config file: {os.path.basename(config_path)}")
         with open(config_path, "w") as conf:
             conf.write(default_config)
                 
@@ -525,7 +563,8 @@ if __name__ == "__main__":
     # TODO: if config is not exist make error exit
     DEFAULT_GTF_CONFIG = system_config.config["SYSTEM"]["GTF_FILES_CONFIG"]
     # DEFAULT_GTF_CONFIG = current_path + "/GTFconfig.csv"
-    gtf_config = GTFconfig(DEFAULT_GTF_CONFIG)
+    
+    gtf_config = GTFconfig(DEFAULT_GTF_CONFIG, current_path)
 
     if args.export:
         print(system_config.setup_env_variables())
@@ -581,6 +620,7 @@ if __name__ == "__main__":
         a = args.venn_comparisons_by_ix
         print(venn_config.get_venn_by_index(int(a[0])))
     else:
+        # TODO: print only information that configuration files were generated
         parser.print_help()
 
 
