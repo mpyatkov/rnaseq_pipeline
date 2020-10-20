@@ -429,6 +429,10 @@ class DiffExpression():
                 if not found:
                     print(line,  end='')
 
+    # checking that the groups in the comparisons are a subset of sample_labels.txt
+    def check_consistency(self):
+        return self.comp_config.groups().issubset(self.sample_config.groups())
+                    
     def generate(self, output_location = "./"):
         # output_location start from SETUP_PIPELINE_DIR
         # set(map(lambda x: x.DE_INDEX,self.gtf_config.gtf_files()))
@@ -582,6 +586,11 @@ if __name__ == "__main__":
         
         DE_DIR_PATH=os.path.dirname(TEMPLATE_PATHS[0])
 
+        # checking groups consistency, exit if not
+        if not diffex.check_consistency():
+            print(f"Groups in config files ({DEFAULT_SAMPLES_CONFIG} and {DEFAULT_COMPARISON_CONFIG}) are not consistent")
+            exit(1)
+        
         # Remove DE directories before generation
         diffex.clean(DE_DIR_PATH)
 
