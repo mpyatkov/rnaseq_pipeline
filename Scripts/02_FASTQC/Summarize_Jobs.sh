@@ -20,15 +20,26 @@ dir_name=$(pwd)
 
 output_dir=${dir_name}/Job_Summary
 
+# output file for 03_Read_length
+output_file="${output_dir}/Read_Length_Stats.txt"
+# header for 03_Read_length
+printf "SAMPLE_ID\tFASTQ_File_Name\tRead_Length(bp)\tRead_Count\n" >> "${output_file}"
+
+
 # samples contains array of (sample_dir, sample_id, description) for each sample
 samples=($("${SETUP_PIPELINE_DIR}"/01_Pipeline_Setup.py --samples))
 
 # rename directories from sample_dir to sample_id
 for ((i=0;i< ${#samples[@]} ;i+=3));
 do
-    sample_dir=${samples[i]}
+    # sample_dir=${samples[i]}
     sample_id=${samples[i+1]}
     # description=${samples[i+2]}
+
+    # combine all sample in one file (from step 03_Read_Length)
+    cat "${output_dir}/${sample_id}_read_length.txt" >> $output_file
+
+    # copy all fastqc files to VM_DIR_FASTQC webserver directory 
     # do not exit if can't copy files
     set +x
     cp "${output_dir}/${sample_id}_FASTQC/"*_fastqc.html "${VM_DIR_FASTQC}"
