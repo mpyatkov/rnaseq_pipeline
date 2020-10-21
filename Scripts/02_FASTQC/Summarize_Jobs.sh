@@ -58,13 +58,13 @@ do
 
     # copy all fastqc files to VM_DIR_FASTQC webserver directory 
     # do not exit if can't copy files
-    set +x
+    set +eu
     cp "${output_dir}/${sample_id}_FASTQC/"*_fastqc.html "${VM_DIR_FASTQC}"
     if [ $? -ne 0 ]
     then
         printf "ERROR: can't copy ${output_dir}/${sample_id}_FASTQC/ to ${VM_DIR_FASTQC}\n\n"
     fi
-    set -x
+    set -eu
 done
 
 echo '#--------------------------------------------------------------------------'

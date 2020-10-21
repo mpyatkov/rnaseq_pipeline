@@ -113,7 +113,7 @@ BOWTIE2INDEX_DIR=/projectnb/wax-es/routines/BowtieIndex
 HISAT2INDEX_DIR=/projectnb/wax-es/routines/hisat2index
 
 # special directory which will contain FASTQC reports
-VM_DIR_FASTQC=/net/waxman-server/mnt/data/waxmanlabvm_home/FASTQC/${USER:DATASET_LABEL}
+VM_DIR_FASTQC=/net/waxman-server/mnt/data/waxmanlabvm_home/${USER:BU_USER}/FASTQC/${USER:DATASET_LABEL}
 
 # special directory which will contain BIGWIG files
 VM_DIR_UCSC=/net/waxman-server/mnt/data/waxmanlabvm_home/${USER:BU_USER}/${USER:DATASET_LABEL}
