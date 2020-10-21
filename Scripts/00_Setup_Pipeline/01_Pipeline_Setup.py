@@ -8,10 +8,8 @@
 #          from SAMPLES_CONFIG
 # option3: generate Diff.Ex directories from SAMPLES and COMPARISONS
 
-
 from collections import namedtuple
 import os
-import sys
 import configparser
 from distutils.dir_util import copy_tree
 import fileinput
@@ -19,23 +17,23 @@ import argparse
 import glob
 import shutil
 
-PIPELINE_CONFIG ="Pipeline_Setup.conf"
+PIPELINE_CONFIG = "Pipeline_Setup.conf"
 SAMPLES_CONFIG = "Sample_Labels.txt"
 COMPARISON_CONFIG = "Comparisons.txt"
 VENN_CONFIG = "venn_comparisons.txt"
 
-DEFAULT_VENN_CONFIG="""
+DEFAULT_VENN_CONFIG = """
 venn_comparisons
 1;2
 """
 
-DEFAULT_COMPARISON_CONFIG="""
+DEFAULT_COMPARISON_CONFIG = """
 Comparison_Number; Condition_1; Condition_2
 1;                 A;           B
 2;                 A;           C
 """.strip()
 
-DEFAULT_SAMPLES_CONFIG="""
+DEFAULT_SAMPLES_CONFIG = """
 Group;  Condition_Name;      Sample_DIR;  Sample_ID;  Description;                 Color
 A;      E0771_Untreated_T72; G180_M1;     G180_M1;    E0771_Untreated_72h;         255,0,0
 A;      E0771_Untreated_T72; G180_M2;     G180_M2;    E0771_Untreated_72h;         255,0,0
@@ -48,7 +46,7 @@ C;      E0771_4HC_Ab_T72;    G180_M8;     G180_M8;    E0771_5uM_4HC_AntiIFNAR_72
 C;      E0771_4HC_Ab_T72;    G180_M9;     G180_M9;    E0771_5uM_4HC_AntiIFNAR_72h; 0,0,255
 """.strip()
 
-DEFAULT_PIPELINE_CONFIG="""
+DEFAULT_PIPELINE_CONFIG = """
 [USER]
 # Setup dataset directory
 DATASET_DIR=/restricted/projectnb/waxmanlab/Cam/G180
@@ -60,7 +58,7 @@ DATASET_LABEL=G180
 BU_USER=CHANGE_USER_NAME
 
 # Setup project name. Choices: (wax-dk,waxmanlab,wax-es)
-PROJECT=wax-dk 
+PROJECT=wax-dk
 
 [STEPS]
 # Bioanalyzer length (from Bioanalyzer tracings)
@@ -68,7 +66,7 @@ BIOANALYZER_LEN=330
 # Usually the adaptor length is 60bp (60bp on each end: 120bp total)
 ADAPTOR_LEN=60
 # Input the adaptor length (bp) for one end
-READ_LEN=150	
+READ_LEN=150
 
 # Depending on the library type, we can take into account information about
 # specific strands. At the moment, the laboratory uses the dUTP preparation
@@ -114,29 +112,31 @@ BOWTIE2INDEX_DIR=/projectnb/wax-es/routines/BowtieIndex
 # assembly
 HISAT2INDEX_DIR=/projectnb/wax-es/routines/hisat2index
 
-# special directory which will contain FASTQC reports 
+# special directory which will contain FASTQC reports
 VM_DIR_FASTQC=/net/waxman-server/mnt/data/waxmanlabvm_home/FASTQC/${USER:DATASET_LABEL}
 
-# special directory which will contain BIGWIG files 
+# special directory which will contain BIGWIG files
 VM_DIR_UCSC=/net/waxman-server/mnt/data/waxmanlabvm_home/${USER:BU_USER}/${USER:DATASET_LABEL}
 
 # default time limit
 TIME_LIMIT=96:00:00
 """.strip()
 
+
 class SampleConfig:
     separator = ";"
+   
     def __init__(self, configpath):
         generate_example(configpath, DEFAULT_SAMPLES_CONFIG)
         self.samples = self.__read_config(configpath, self.separator)
-        
+       
     def __read_config(self, configpath, separator):
 
         with open(configpath, "r") as config:
             header_and_data = map(lambda x: x.strip(), config.readlines())
-            header_and_data = list(filter(lambda x: len(x)!=0, header_and_data))
+            header_and_data = list(filter(lambda x: len(x) != 0, header_and_data))
             # print(header_and_data)
-            header = header_and_data[0].replace(separator,",")
+            header = header_and_data[0].replace(separator, ",")
             Sample = namedtuple('Sample', header)
             result = []
             for sample in header_and_data[1:]:
@@ -151,13 +151,12 @@ class SampleConfig:
             if sample.Group == group:
                 result.append(sample)
         return result
-                
 
     def groups(self):
         return set(map(lambda s: s.Group, self.samples))
 
     def samplesToBash(self):
-        #only Sample_DIR, Sample_ID, Description
+        # only Sample_DIR, Sample_ID, Description
         result = []
         for sample in self.samples:
             result.append(sample.Sample_DIR)
@@ -178,8 +177,10 @@ class SampleConfig:
     def __str__(self):
         return "\n".join(map(lambda x: str(x), self.samples))
 
+
 class ComparisonsConfig:
     separator = ";"
+
     def __init__(self, configpath):
         generate_example(configpath, DEFAULT_COMPARISON_CONFIG)
         self.comparisons = self.__read_config(configpath, self.separator)
@@ -190,8 +191,8 @@ class ComparisonsConfig:
 
             # ignore empty lines
             header_and_data = list(filter(lambda s: len(s) > 0, header_and_data))
-            
-            header = header_and_data[0].replace(separator,",")
+
+            header = header_and_data[0].replace(separator, ",")
             Comparison = namedtuple('Comparison', header)
             result = []
             for comparison in header_and_data[1:]:
@@ -200,16 +201,16 @@ class ComparisonsConfig:
                 # TODO: too hart 
                 # if len(comparison) != 3:
                 #     continue
-                
+
                 # strip trailing spaces
                 comparison = list(map(lambda s: s.strip(), comparison))
                 result.append(Comparison(*comparison))
-                
+
             return result
 
     def __str__(self):
         return "\n".join(map(lambda x: str(x), self.comparisons))
-    
+
     def groups(self):
         groups = set()
         for comparison in self.comparisons:
@@ -217,20 +218,22 @@ class ComparisonsConfig:
             groups = groups.union(set(comparison.Condition_2.split(",")))
         return groups
 
+
 class VennConfig:
     # TODO: check if comparison not presented in comparisons.txt 
     # TODO: check if format is not correct
-    separator=";"
+    separator = ";"
+
     def __init__(self, configpath):
         generate_example(configpath, DEFAULT_VENN_CONFIG)
         self.venn = self.__read_config(configpath, self.separator)
-    
+
     def __read_config(self, configpath, separator):
         with open(configpath, "r") as config:
             header_and_data = map(lambda x: x.strip(), config.readlines())
             # ignore empty lines
             header_and_data = list(filter(lambda s: len(s) > 0, header_and_data))
-            header = header_and_data[0].replace(separator,",")
+            header = header_and_data[0].replace(separator, ",")
             VennLine = namedtuple('VennLine', header)
             result = []
             for vennline in header_and_data[1:]:
@@ -239,21 +242,22 @@ class VennConfig:
                 # strip trailing spaces
                 vennline = list(map(lambda s: s.strip(), vennline))
                 result.append(VennLine(vennline))
-                
+
             return result
 
     def __str__(self):
         return "\n".join(map(lambda x: str(x), self.venn))
-    
+
     def get_number_of_venns(self):
         return len(self.venn)
 
     # return bash array by ix
     def get_venn_by_index(self, ix):
         return " ".join(self.venn[ix][0])
-        
+
+    
 class GTFconfig():
-    separator=";"
+    separator = ";"
 
     def __init__(self, config_path, current_path):
         # if configpath is not created use current_path+configpath
@@ -267,7 +271,7 @@ class GTFconfig():
             exit(1)
 
         self.gtf_files = self.__read_config(path, self.separator)
-        
+
     def __read_config(self, configpath, separator):
         with open(configpath, "r") as config:
             header_and_data = map(lambda x: x.strip(), config.readlines())
@@ -284,7 +288,7 @@ class GTFconfig():
                 # strip trailing spaces
                 gtf_line = list(map(lambda s: s.strip(), gtf_line))
                 result.append(GTFLine(*gtf_line))
-                
+
             return result
 
     def __str__(self):
@@ -307,7 +311,7 @@ class GTFconfig():
         # create list of exports
         exports = "\n".join([f"export {e}={getattr(gtfline, e)}" for e in gtfline._fields])
         return exports
-    
+
     def gtfNameCounterToBash(self):
         result = []
         for gtf in self.gtf_files:
@@ -328,13 +332,15 @@ class GTFconfig():
         # TODO: if list contains more than 1 value --> error
         return list_of_counters[0]
 
+
 class EnvInterpolation(configparser.ExtendedInterpolation):
     """Interpolation which expands environment variables in values."""
 
     def before_get(self, parser, section, option, value, defaults):
         value = super().before_get(parser, section, option, value, defaults)
         return os.path.expandvars(value)
-    
+
+
 class SystemConfig:
 
     def __init__(self, config_path):
@@ -359,6 +365,7 @@ class SystemConfig:
         exports = [f"export {e[0]}={e[1]}" for e in exports]
         return "\n".join(exports)
 
+
 class DiffExpression():
     """
     Generate folders for step 9a,9b,9c according to configuration and
@@ -374,23 +381,23 @@ class DiffExpression():
 
     def create_dir(self, dirpath):
         try:
-            os.mkdir(path)
+            os.mkdir(dirpath)
         except OSError:
-            print (f"Creation of the directory {dirpath} failed ")
+            print(f"Creation of the directory {dirpath} failed ")
             exit(1)
 
     def remove_dir(self, dirpath):
         try:
             shutil.rmtree(dirpath)
         except OSError:
-            print (f"Removing of the directory {dirpath} failed. Try to remove it manually.")
+            print(f"Removing of the directory {dirpath} failed. Try to remove it manually.")
             exit(1)
 
     def copy_dir(self, src, dest):
         try:
-            destination = copy_tree(src, dest)  
+            copy_tree(src, dest)
         except OSError:
-            print (f"Copying of the directory {src} failed ")
+            print(f"Copying of the directory {src} failed ")
             exit(1)
 
     def write_condition(self, path, sample_config, compar_config, condition_num):
@@ -411,7 +418,7 @@ class DiffExpression():
             Condition.write(samples)
         return condition_name
 
-    def clean(self, de_path = "./"):
+    def clean(self, de_path="./"):
         de_dirs = glob.glob(de_path+"/09*")
         for d in de_dirs:
             print(f"Removing {d}")
@@ -423,7 +430,7 @@ class DiffExpression():
                 found = False
                 for rp in list_of_replacements:
                     if rp[0] in line:
-                        found=True
+                        found = True
                         newline = line.replace("TEMPLATE", rp[1])
                         print(newline, end='')
                 if not found:
@@ -433,18 +440,18 @@ class DiffExpression():
     def check_consistency(self):
         return self.comp_config.groups().issubset(self.sample_config.groups())
                     
-    def generate(self, output_location = "./"):
+    def generate(self, output_location="./"):
         # output_location start from SETUP_PIPELINE_DIR
         # set(map(lambda x: x.DE_INDEX,self.gtf_config.gtf_files()))
         for CMP in self.comp_config.comparisons:
             for TMPL in self.templates:
-                for DEIX,GTFID,COUNTER in set(map(lambda x: (x.DE_INDEX, x.OUTPUT_DIR.split("_")[0], x.COUNTER), self.gtf_config.gtf_files)):
-                    DIR_NAME = os.path.basename(TMPL).replace('TEMPLATE_','')
+                for DEIX, GTFID, COUNTER in set(map(lambda x: (x.DE_INDEX, x.OUTPUT_DIR.split("_")[0], x.COUNTER), self.gtf_config.gtf_files)):
+                    DIR_NAME = os.path.basename(TMPL).replace('TEMPLATE_', '')
                     DIR_NAME = DIR_NAME.replace('NN', CMP.Comparison_Number)
                     DIR_NAME = DIR_NAME.replace('II', DEIX)
                     DIR_NAME = DIR_NAME.replace('GTFID', GTFID)
 
-                    #SCRIPT_PATH = os.getenv('SETUP_PIPELINE_DIR')
+                    # SCRIPT_PATH = os.getenv('SETUP_PIPELINE_DIR')
 
                     SCRIPT_PATH = os.getcwd()
 
@@ -463,10 +470,7 @@ class DiffExpression():
                     cond_name_1 = self.write_condition(DIR_PATH, sample_config, CMP, "Condition_1")
                     cond_name_2 = self.write_condition(DIR_PATH, sample_config, CMP, "Condition_2")
 
-                    # inplace changing Run_Jobs.sh
-                    cond_1_tmpl="CONDITION_1_NAME=TEMPLATE"
-                    cond_2_tmpl="CONDITION_2_NAME=TEMPLATE"
-                    compar_num="COMPAR_NUM=TEMPLATE"
+                    # inplace changing TEMPLATE files
 
                     replacement_list = [
                         ("CONDITION_1_NAME=TEMPLATE", cond_name_1),
@@ -497,13 +501,14 @@ class DiffExpression():
                     # go back to script directory
                     os.chdir(SCRIPT_PATH)
 
+
 def generate_example(config_path, default_config):
     if not os.path.exists(config_path):
         print(f"Generating example config file: {os.path.basename(config_path)}")
         with open(config_path, "w") as conf:
             conf.write(default_config)
-                
-                
+
+
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
@@ -576,7 +581,7 @@ if __name__ == "__main__":
     elif args.generate:
         
         # by default all templates located in level up dir
-        TEMPLATE_PATHS=glob.glob("../TEMPLATE*")
+        TEMPLATE_PATHS = glob.glob("../TEMPLATE*")
 
         diffex = DiffExpression(TEMPLATE_PATHS,
                                 comparison_config,
@@ -584,7 +589,7 @@ if __name__ == "__main__":
                                 system_config,
                                 gtf_config)
         
-        DE_DIR_PATH=os.path.dirname(TEMPLATE_PATHS[0])
+        DE_DIR_PATH = os.path.dirname(TEMPLATE_PATHS[0])
 
         # checking groups consistency, exit if not
         if not diffex.check_consistency():
