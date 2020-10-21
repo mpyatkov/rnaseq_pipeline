@@ -10,7 +10,7 @@ set -o errexit
 set -o pipefail
 set -o nounset
 
-module load gcc/8.1.0
+# module load gcc/8.1.0
 module load R/3.6.0
 
 # export all variables from Pipeline_Setup.conf

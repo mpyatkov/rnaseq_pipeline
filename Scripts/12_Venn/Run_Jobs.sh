@@ -6,7 +6,7 @@ set -o nounset
 
 ## create venn diagrams for comparisons
 
-# module load R/3.6.0
+module load R/3.6.0
 
 #Remove *.o files from previous jobs
 # rm -rf ./logs && mkdir -p ./logs
