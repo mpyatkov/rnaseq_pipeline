@@ -135,23 +135,26 @@ draw_pair <- function(data, names, type, parameters) {
   if (type == "updown") {
     edger_data <- list(data[[1]]$up_edger, data[[2]]$down_edger)
     deseq_data <- list(data[[1]]$up_deseq, data[[2]]$down_deseq)
+    new_names <- paste0(names, c("_up","_down"))
   } else if (type == "downup") {
     edger_data <- list(data[[1]]$down_edger, data[[2]]$up_edger)
     deseq_data <- list(data[[1]]$down_deseq, data[[2]]$up_deseq)
+    new_names <- paste0(names, c("_down","_up"))
   } else {
     edger_data <- lapply(data, function(x) {x[[paste0(type,"_edger")]]})
     deseq_data <- lapply(data, function(x) {x[[paste0(type,"_deseq")]]})
+    new_names <- paste0(names, "_", type)
   }
   
   print(length(unlist(edger_data)))
-  edger <- drawVenn(edger_data, names, col, 
+  edger <- drawVenn(edger_data, new_names, col, 
                     parameters[[num]]$pos, parameters[[num]]$dist, parameters[[num]]$main_title_height,
                     paste0("edgeR_",type, " genes"), main_color)
   
-  deseq <- drawVenn(deseq_data, names, col, 
+  deseq <- drawVenn(deseq_data, new_names, col, 
                     parameters[[num]]$pos, parameters[[num]]$dist, parameters[[num]]$main_title_height,
                     paste0("DESeq_",type, " genes"), main_color)
-  
+
   grid.arrange(gTree(children=edger), gTree(children=deseq), ncol=2)
 }
 
