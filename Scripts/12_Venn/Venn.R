@@ -147,13 +147,16 @@ draw_pair <- function(data, names, type, parameters) {
   }
   
   print(length(unlist(edger_data)))
+
+  label<-ifelse(type=="all", "all_DE", type)
+
   edger <- drawVenn(edger_data, new_names, col, 
                     parameters[[num]]$pos, parameters[[num]]$dist, parameters[[num]]$main_title_height,
-                    paste0("edgeR_",type, " genes"), main_color)
+                    paste0("edgeR_", label, " genes"), main_color)
   
   deseq <- drawVenn(deseq_data, new_names, col, 
                     parameters[[num]]$pos, parameters[[num]]$dist, parameters[[num]]$main_title_height,
-                    paste0("DESeq_",type, " genes"), main_color)
+                    paste0("DESeq_", label, " genes"), main_color)
 
   grid.arrange(gTree(children=edger), gTree(children=deseq), ncol=2)
 }
