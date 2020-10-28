@@ -1,3 +1,18 @@
+# creating 3 types of Venn diagrams
+
+# if VENN_INDIVIDUAL = 0 then
+# create 1 venn diagramm
+# draw_all: pairwise comparison of DiffExp_v2 files (ExonCollapsed only) 
+# from different samples
+# ex. G186_M2/G186_M1 vs G186_M3/G186_M1 
+# ex. or 09a_1 vs 09a_2
+
+# if VENN_INDIVIDUAL = 1 then
+# create 2 venn diagrams for each individual folder (ex.09a_1)
+# ex. venn diagram will be created for each feature (ExonCollapsed/IntronOnly...) set
+# 1 type of venn - deseq/edger for each feature separately
+# 2 type of venn - all feature together
+
 library(readr)
 library(dplyr)
 library(RColorBrewer)
@@ -28,6 +43,7 @@ read_dataset <- function(dn, fc, padj) {
        all_edger = all_edger)
 }
 
+# ex. we can use the same
 # log2fc > 1 -- up genes EdgeR_padj_FDR < 0.05
 # log2fc < -1 -- down genes EdgeR_padj_FDR < 0.05
 # fc > 2 -- up genes EdgeR_padj_FDR < 0.05
@@ -75,7 +91,7 @@ drawVenn <- function(data, names, col, pos, dist, main_title_height, main_title,
     width = 1024 ,
     resolution = 600,
     compression = "lzw",
-    scale = F,
+    scaled = F,
     # inverted = T,
     # margin = 0.07,
 
@@ -147,9 +163,9 @@ draw_pair <- function(data, names, type, parameters) {
   }
   
   print(length(unlist(edger_data)))
-
+  
   label<-ifelse(type=="all", "all_DE", type)
-
+  
   edger <- drawVenn(edger_data, new_names, col, 
                     parameters[[num]]$pos, parameters[[num]]$dist, parameters[[num]]$main_title_height,
                     paste0("edgeR_", label, " genes"), main_color)
@@ -157,7 +173,7 @@ draw_pair <- function(data, names, type, parameters) {
   deseq <- drawVenn(deseq_data, new_names, col, 
                     parameters[[num]]$pos, parameters[[num]]$dist, parameters[[num]]$main_title_height,
                     paste0("DESeq_", label, " genes"), main_color)
-
+  
   grid.arrange(gTree(children=edger), gTree(children=deseq), ncol=2)
 }
 
@@ -200,17 +216,119 @@ draw_all <- function(data, names, dataset_label, num_comparisons, parameters, ou
   height <- ifelse(num != 2,18,30) 
   width <- 12
   
-  pdf(file=output_name, height = height, width = width)
+  pdf(file=paste0(output_name,".pdf"), height = height, width = width)
   grid.draw(plot)
   dev.off()
 }
+
+# short version of the draw_pair, only for methods comparison
+draw_pair_methods <- function(data, names, parameters, title) {
+  
+  num <- 2
+  col_up <- get_colors(num, "up")
+  col_down <- get_colors(num, "down")
+  
+  up_genes <- list( data[["up_edger"]], data[["up_deseq"]])
+  down_genes <- list( data[["down_edger"]], data[["down_deseq"]])
+  
+  up_plot <- drawVenn(up_genes, c("up_edgeR", "up_DESeq"), col_up, parameters[[num]]$pos, 
+                    parameters[[num]]$dist, parameters[[num]]$main_title_height,
+                    title, "red")
+  
+  down_plot <- drawVenn(down_genes, c("down_edgeR","down_DESeq"), col_down, parameters[[num]]$pos, 
+                      parameters[[num]]$dist, parameters[[num]]$main_title_height,
+                      title, "blue")
+  
+  grid.arrange(gTree(children=up_plot), gTree(children=down_plot), ncol=2)
+}
+
+# combined plot of all features together for up/down and deseq/edger
+draw_all_features_methods <- function(data, names, parameters) {
+  num <- length(data)
+  
+  col_up <- get_colors(num, "up")
+  col_down <- get_colors(num, "down")
+  
+  edger_data_up <- lapply(data, function(x) {x[[paste0("up","_edger")]]})
+  deseq_data_up <- lapply(data, function(x) {x[[paste0("up","_deseq")]]})
+  edger_data_down <- lapply(data, function(x) {x[[paste0("down","_edger")]]})
+  deseq_data_down <- lapply(data, function(x) {x[[paste0("down","_deseq")]]})
+  
+  title <- "DESeq"
+  up_deseq_plot <- drawVenn(deseq_data_up, paste0("up_", names), col_up, parameters[[num]]$pos, 
+                            parameters[[num]]$dist, parameters[[num]]$main_title_height,
+                            title, "red")
+  
+  title <- "edgeR"
+  up_edger_plot <- drawVenn(edger_data_up, paste0("up_", names), col_up, parameters[[num]]$pos, 
+                            parameters[[num]]$dist, parameters[[num]]$main_title_height,
+                            title, "red")
+
+  title <- "DESeq"
+  down_deseq_plot <- drawVenn(deseq_data_down, paste0("down_", names), col_down, parameters[[num]]$pos, 
+                        parameters[[num]]$dist, parameters[[num]]$main_title_height,
+                        title, "blue")
+  
+  title <- "edgeR"
+  down_edger_plot <- drawVenn(edger_data_down, paste0("down_", names), col_down, parameters[[num]]$pos, 
+                              parameters[[num]]$dist, parameters[[num]]$main_title_height,
+                              title, "blue")
+  
+  grid.arrange(gTree(children=up_edger_plot), gTree(children=down_edger_plot), 
+               gTree(children=up_deseq_plot), gTree(children=down_deseq_plot),
+               nrow = 2, ncol=2)
+  
+}
+
+# wrapper for function "draw_all_features_methods"
+# combined plot of all features together for up/down and deseq/edger
+all_features_methods <- function(files, data, params, title, out_name) {
+  features <- str_extract(files, "(?<=_)(ExonCollapsed|IntronicOnly|ExonOnly|IntronOnly|ExonicOnly|FullGeneBody)(?=_)")   
+  daf <- draw_all_features_methods(data, features, params)
+  
+  plot <- grid.arrange(gTree(children=gList(daf)), 
+                       top=textGrob(title,
+                                    gp=gpar(fontsize=18, fontfamily="sans", fontface="bold")))
+  
+  
+  pdf(file=paste0(out_name,".pdf"), height = 12, width = 12)
+  grid.draw(plot)
+  dev.off()
+}
+
+# wrapper for "draw_pair_methods"
+# separate plots for each future individually
+# edger/deseq and up/down for each future
+draw_pairwise_for_each_feature <- function(files, params, title, out_name) {
+
+  all_plots <- lapply(files, function(fname) {
+    tmp <- read_dataset(fname, 2, 0.05)
+    feature <- str_extract(fname, "(?<=_)(ExonCollapsed|IntronicOnly|ExonOnly|IntronOnly|ExonicOnly|FullGeneBody)(?=_)")
+    draw_pair_methods(tmp, c("edgeR","DESeq"), params, feature)
+  })
+  # grid.arrange(rectGrob(), rectGrob())
+  plot <- marrangeGrob(all_plots, 
+                       nrow=2, 
+                       ncol=2, 
+                       top=textGrob(title, gp=gpar(fontsize=18, fontfamily="sans", fontface="bold")))
+  
+  
+  pdf(file=paste0(out_name,".pdf"), height = 10, width = 20)
+  grid.draw(plot)
+  dev.off()
+}
+
 
 #------- script start point 
 args <- commandArgs(T)
 DATASET_LABEL <- args[1]
 OUTPUT_NAME <- args[2]
+# VENN_INDIVIDUAL=0/1
+VENN_INDIVIDUAL <- args[3]
+
 # DATASET_LABEL <- "TEST_DATASET"
-# OUTPUT_NAME <- "test.pdf"
+# OUTPUT_NAME <- "test"
+# VENN_INDIVIDUAL <- "0"
 
 # parameters for circles
 params <- c()
@@ -222,8 +340,8 @@ params[[2]] <- list(
 )
 # parameters for 3 circles
 params[[3]] <- list(
-  pos = c(-24, 24, 135),
-  dist = c(0.055, 0.055, 0.085),
+  pos = c(-24, 24, 180),
+  dist = c(0.055, 0.055, 0.055),
   main_title_height = 1.05
 )
 # parameters for 4 circles
@@ -236,14 +354,29 @@ params[[4]] <- list(
 # read files from the current directory
 files <- list.files(pattern = "DiffExp[[_]|[:alnum:]]+.txt", full.names = T)
 
-# extract group names (ex. *_ExonCollapsed_LONG..NAME_featureCounts)
-names <- str_extract(files, "(?<=(ExonCollapsed_))([[:alnum:]|[_]]+)(?=(_featureCounts|_htseq))")
-
-# extract comparison numbers: 1_Diff..., 3_Diff... -> 1,3,..
-numbers <- str_extract(basename(files), "^(\\d)+")
-
 # read data
 data <- lapply(files, function(x) {read_dataset(x, 2, 0.05)})
 
-# draw all
-draw_all(data,names, DATASET_LABEL, numbers, params, OUTPUT_NAME)
+# extract group names (ex. *_ExonCollapsed_LONG..NAME_featureCounts)
+names <- str_extract(files, "(?<=(ExonCollapsed_))([[:alnum:]|[_]]+)(?=(_featureCounts|_htseq))")
+
+if (VENN_INDIVIDUAL == "0") {
+  # extract comparison numbers: 1_Diff..., 3_Diff... -> 1,3,..
+  numbers <- str_extract(basename(files), "^(\\d)+")
+  
+  # draw all 
+  draw_all(data,names, DATASET_LABEL, numbers, params, OUTPUT_NAME)
+} else {
+  
+  # files <- list.files(pattern = "DiffExp[[_]|[:alnum:]]+.txt", full.names = T)
+  number = str_extract(files[1], "(?<=./)(\\d)+")
+  counter = str_extract(files[1], "(?<=_)(featureCounts|htseq)(?=\\.txt)")
+
+  title <- DATASET_LABEL
+
+  draw_pairwise_for_each_feature(files,params, title, paste0(OUTPUT_NAME,"_Individual"))
+  all_features_methods(files, data, params, title, paste0(OUTPUT_NAME,"_All"))  
+}
+
+
+
