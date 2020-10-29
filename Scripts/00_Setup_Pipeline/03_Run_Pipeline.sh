@@ -69,7 +69,7 @@ then
     pushd ${SETUP_DIR}
     ./01_Pipeline_Setup.py --generate
     popd
-    PIPELINE_STEPS=$(printf "%s\n" "${ALL_PIPELINE_STEPS}" | grep "09\|13\|14")
+    PIPELINE_STEPS=$(printf "%s\n" "${ALL_PIPELINE_STEPS}" | grep "09\|12\|13\|14")
 else
     # discard lines before START_STEPS
     PIPELINE_STEPS=$(printf "%s\n" "${ALL_PIPELINE_STEPS}" | sed -n -e '/'${START_STEP}'/,$p')
