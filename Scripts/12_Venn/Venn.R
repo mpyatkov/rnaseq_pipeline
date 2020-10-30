@@ -371,8 +371,10 @@ if (VENN_INDIVIDUAL == "0") {
   # files <- list.files(pattern = "DiffExp[[_]|[:alnum:]]+.txt", full.names = T)
   number = str_extract(files[1], "(?<=./)(\\d)+")
   counter = str_extract(files[1], "(?<=_)(featureCounts|htseq)(?=\\.txt)")
+  feature <- str_extract(files[1], "(?<=_)(ExonCollapsed|IntronicOnly|ExonOnly|IntronOnly|ExonicOnly|FullGeneBody)(?=_)")
+  comparison_name <- str_extract(files[1], paste0("(?<=(", feature,"_))([[:alnum:]|[_]]+)(?=(_featureCounts|_htseq))"))
 
-  title <- DATASET_LABEL
+  title <- paste0(DATASET_LABEL, ", ", comparison_name)
 
   draw_pairwise_for_each_feature(files,params, title, paste0(OUTPUT_NAME,"_Individual"))
   all_features_methods(files, data, params, title, paste0(OUTPUT_NAME,"_All"))  
