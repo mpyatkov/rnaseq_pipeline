@@ -31,12 +31,14 @@ if [[ $# -ne 1 ]]
 then
     echo "Usage: ./03_Run_Pipeline.sh <option>"
     echo "<option> = FULL - full pipeline run"
-    echo "<option> = start_step (ex. 05_Read_Strandness) start from specific step"
+    echo "<option> = start_step (example. 05) start from specific step"
     echo "<option> = DEONLY recalculate DE and summary directories (09abcd,13,14)"
+    echo "<option> = VENNONLY recalculate VENN (12)"
     echo "See 03_Run_Pipeline.sh for details."	
     exit 0
 fi
 
+# can be option or resume step number
 START_STEP=$1
 
 # Job time START_TIME in seconds
@@ -45,86 +47,88 @@ START_TIME=$(date +"%s")
 # export and print all variables from Pipeline_Setup.conf
 eval "$(./01_Pipeline_Setup.py --export)"
 
-# if full pipeline than generate DE directories
-if [[ "${START_STEP}" == "FULL" ]]
-then
-    ./01_Pipeline_Setup.py --generate
-fi
-# TODO: check existence of 09* directories
-
-
 # The Scripts folder is 1 level up from 00_Setup_Pipeline:
 SETUP_DIR=$(pwd)
 cd ..
 STEPS_DIR=$(pwd)
 
-# get all steps (directories with numbers in the beginning)
-ALL_PIPELINE_STEPS=$(find . -maxdepth 1 -type d -name '[[:digit:]]*' | sort -n | xargs -n1 basename | sed -n '/^[0-9]/p' | sed '/00_Setup_Pipeline/d' | sed '/Generate_Tracks/d')
+# arguments parsing
+# GENERATE: BOOL generate 09abcd folders 0/1
+# RESUME: BOOL only for case when we need restart from particular step [0/1]
+# INLCUDE: STRING list of steps which will be executed separated by "\|" 
 
-if [[ "${START_STEP}" == "FULL" ]]
-then
-    PIPELINE_STEPS=${ALL_PIPELINE_STEPS}
-elif [[ "${START_STEP}" == "DEONLY" ]]
-then
+if [[ "${START_STEP}" == "FULL" ]]; then
+    GENERATE=1
+    RESUME=0
+    INCLUDE="ALL"
+elif [[ "${START_STEP}" == "DEONLY" ]]; then
+    GENERATE=1
+    RESUME=0
+    INCLUDE="09\|12\|13\|14"
+elif [[ "${START_STEP}" == "VENNONLY" ]]; then
+    GENERATE=0
+    RESUME=0
+    INCLUDE="12"
+else
+    # resume from step $START_STEP
+    GENERATE=0
+    RESUME=1
+    INCLUDE="NONE"
+fi
+
+# generate 09abcd directories
+if [[ $GENERATE -eq 1 ]]; then
     pushd ${SETUP_DIR}
     ./01_Pipeline_Setup.py --generate
     popd
-    PIPELINE_STEPS=$(printf "%s\n" "${ALL_PIPELINE_STEPS}" | grep "09\|12\|13\|14")
-else
-    # discard lines before START_STEPS
-    PIPELINE_STEPS=$(printf "%s\n" "${ALL_PIPELINE_STEPS}" | sed -n -e '/'${START_STEP}'/,$p')
 fi
 
-# START PIPELINE
+# get all steps (directories with numbers in the beginning)
+ALL_PIPELINE_STEPS=$(find . -maxdepth 1 -type d -name '[[:digit:]]*' | sort -n | xargs -n1 basename | grep -Po "\K(^[0-9a-zA-Z]*)(?=_)" | uniq | sed '/00/d')
 
-#For loop over steps in the pipeline
-for STEP in ${PIPELINE_STEPS}
-do
-    echo "Running: ${STEP} ..." 
-    
-    # cd "${STEP}"
-    pushd "${STEP}"
-    
-    #Run_Jobs:
-    # TODO: check out the exit code of each step to prevent running pipeline
-    # if job return something wrong create error message and stop pipeline
+if [[ $INCLUDE == "ALL" ]]; then
+    echo "running full pipeline"
+    PIPELINE_STEPS=${ALL_PIPELINE_STEPS}
+else
+    if [[ $RESUME == 1 ]]; then
+	echo "resume from step: ${START_STEP}"
+	# resume from START_STEP
+	PIPELINE_STEPS=$(printf "%s\n" "${ALL_PIPELINE_STEPS}" | sed -n -e '/'${START_STEP}'/,$p')
+    else
+	echo "calculate only steps: ${INCLUDE}"
+	# run only required directories (VENNONLY, DEONLY options)
+	PIPELINE_STEPS=$(printf "%s\n" "${ALL_PIPELINE_STEPS}" | grep $INCLUDE)
+    fi
+fi
 
-    ./Run_Jobs.sh
-    # Need a way to periodically check that all jobs have completed 
-    # Count the number of jobs submitted by the user
-    # Once the count goes to zero then summarize this job and move to the next step
-    # Use the "${BU_USER}" variable from the 01_Pipeline_Setup.sh
-    # Need to omit the 1st 2 lines of qstat command:
-    # JOB_COUNT=$(qstat -u ${BU_USER} | awk 'FNR>2 {print $0}' | wc -l)
-    # echo ${JOB_COUNT} 
+# START THE PIPELINE
 
-    # Split by "_" grab the 1st part (use cut command)
-    STEP_NUM=$(echo "${STEP}" | cut -d'_' -f 1)
-    # Create the Job_Name:
-    JOB_NAME="Step_${STEP_NUM}"
-    
-    # Use ${JOB_NAME} for qsub -N parameter
-    # Better to check: qstat -r -u ${BU_USER}
-    # The (-r) option gives the Full jobname
-    # Extract lines with "Full jobname:"
-    # Extract lines with step-specific name
-    # Count the number of lines (number of running jobs)
+wait_until_completed() {
+    # return nothing just wait until job completes
+    # BU_USER is global var, exported from config
+
+    local JOB_NAME=$1
+
     JOB_COUNT=$(qstat -r -u "${BU_USER}" | grep 'Full jobname:' | grep "${JOB_NAME}" | wc -l)
 
     echo "${BU_USER} running ${JOB_COUNT} jobs"
-    
     echo "Periodically checking until jobs complete (please wait)..."
 
     # Use a while loop to check ${JOB_COUNT}
     while [[ ${JOB_COUNT} -ne 0 ]]
     do
-	#Wait 01 minute then check ${JOB_COUNT} again
+	# Wait 01 minute then check ${JOB_COUNT} again
 	sleep 1m
         
+	# use qstat to extract information from server queue
 	JOB_COUNT=$(qstat -r -u ${BU_USER} | grep 'Full jobname:' | grep ${JOB_NAME} | wc -l)
     done
-    
-    # check if step failed
+}
+
+logs_checking() {
+    # check logs in current directory, exit with an error if "IAMOK" is not found
+    # at the end of the log file
+
     number_of_runs=$(find ./logs/ -name "Step_*.o*" | wc -l)
     number_of_ok=$(find ./logs/ -name "Step_*.o*" | xargs grep -i "IAMOK" | wc -l)
     if [[ "${number_of_runs}" -ne "${number_of_ok}" ]]
@@ -132,16 +136,56 @@ do
 	echo "FOUND ERROR. CHECK LOGS ON STEP --> ${STEP} <--"
 	exit 1
     fi
+}
 
-    # prevent immediate exit if ./Summarize_Jobs.sh does not exist
-    set +eu
-    ./Summarize_Jobs.sh
-    set -eu
+execute_wait_summarize_job(){
+    # execute, wait, summarize the particular job
 
-    printf "Done: %s\n\n -------------------------" "${STEP}"
+    local STEP_NUMBER=$1
+    printf "Start: %s\n\n -------------------------" "${STEP_NUMBER}"
 
-    # cd ..
-    popd
+    search_body="${STEPS_DIR} -maxdepth 1 -name '${STEP_NUMBER}*' -type d"
+    sub_steps=$(eval find ${search_body} | xargs -n1 basename)
+    
+    for sstep in ${sub_steps}; do
+	
+
+	pushd "${STEPS_DIR}/$sstep"
+	./Run_Jobs.sh
+	popd
+    done
+    
+    job_name="Step_${STEP_NUMBER}"
+    
+    # check cluster queue until the step completes
+    wait_until_completed ${job_name}
+    
+    # checking and summarizing
+    for sstep in ${sub_steps}; do
+	pushd "${STEPS_DIR}/$sstep"
+	
+	# checking logs in current directory
+	logs_checking
+	
+	# summarize if all logs contain the "IAMOK" at the end
+	# prevent immediate exit if ./Summarize_Jobs.sh does not exist
+	set +eu
+	./Summarize_Jobs.sh
+	set -eu
+	printf "Done: %s\n\n -------------------------" "${job_name}"
+	popd
+    done
+
+    printf "END: %s\n\n -------------------------" "${STEP_NUMBER}"
+}
+
+
+#For loop over steps in the pipeline
+for STEP in ${PIPELINE_STEPS}
+do
+    # steps consisting from multiple substeps will be run as one task
+    # 09a -> 09a_1, 09a_2, 09a_3, ...
+    execute_wait_summarize_job $STEP
 done
 
 echo 'Printing job duration for all steps...'
@@ -154,19 +198,6 @@ printf "Run time for each submitted job:\n" >> "${OUTPUT_FILE}"
 printf "Job run times that deviate from the average should be inspected for possible errors (check the job log files)\n\n" >> "${OUTPUT_FILE}"
 
 cd "${STEPS_DIR}"
-
-# set +eu
-# # scan all steps again to extract information about time
-# for STEP in ${ALL_PIPELINE_STEPS}
-# do
-#     # Extract job runtimes and collect in output file
-#     (
-#         cd "${STEP}"
-#         echo "${STEP}" >> "${OUTPUT_FILE}"
-#         grep 'elapsed' *.o* >> "${OUTPUT_FILE}"
-#     )
-# done
-# set -eu
 
 #Also want to print the time to run this script:
 echo '--------------------' >> "${OUTPUT_FILE}"
