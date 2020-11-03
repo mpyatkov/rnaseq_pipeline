@@ -165,21 +165,25 @@ copy_files() {
 	    head -n -5 "${condname}_${Sample_ID}" > "${condname}_${Sample_ID}.temp1"
             mv "${condname}_${Sample_ID}.temp1" "${condname}_${Sample_ID}"
 	else
-	    # in case of featureCounts RefSeq files we should use also samtools summary file
-	    # line numbers are the only difference between RefSeq summary and LncRna (hehe. legacy!)
-	    # 12 for lncrna and 26 for RefSeq
+	    # 03.11.2020 (update)
+	    # In case of featureCounts we will use the "total_reads" from
+	    # featureCounts summary files (sum by column #2 for the top 13 lines)
+	    # it will lead us to dissimilarities bw htseq and
+	    # featureCounts in RefSeq genes, but should give us stable
+	    # output for LncRna and RefSeqLncRna (9b_refseq =
+	    # 9d_refseq, 9c_lncrna = 9d_lncrna)
 
-	    num_lines=$(wc -l "${Dataset_DIR}/${Sample_ID}/${COUNT_PROGRAM}/${COUNT_DIR}/${Sample_ID}_${COUNT_PROGRAM}.out.summary")
-	    echo "num_lines: ${num_lines}"
+	    # 02.11.2020 
+	    # In case of featureCounts RefSeq files we should use samtools summary file
+	    # The numbers of lines in the featureCounts.out.summary is
+	    # the only the difference between RefSeq summary and
+	    # LncRna (hehe. legacy!)  12 for lncrna and 26 for RefSeq
 
-	    if [[ "${num_lines}" < "20" ]]
-	    then
+
 	    # copy new summary file (copy summary file)
-
-		cat "${Dataset_DIR}/${Sample_ID}/${COUNT_PROGRAM}/${COUNT_DIR}/${Sample_ID}_${COUNT_PROGRAM}.out.summary" | \
-		    grep "Assigned\|Unassigned_NoFeatures" | \
-		    awk '{sum+=$2} END {print sum}' > "${condname}_${Sample_ID}_summary"
-	    fi
+	    cat "${Dataset_DIR}/${Sample_ID}/${COUNT_PROGRAM}/${COUNT_DIR}/${Sample_ID}_${COUNT_PROGRAM}.out.summary" | \
+		head -n13 | grep -i "assig" | \
+		awk '{sum+=$2} END {print sum}' > "${condname}_${Sample_ID}_summary"
 	fi
 	popd
 
@@ -210,7 +214,6 @@ then
 fi
 
 echo "=========================================================="
-
 
 #Rename folder names to match CONDITION_1_NAME and CONDITION_2_NAME
 mv ./Input/Condition_1 ./Input/$CONDITION_1_NAME
