@@ -31,14 +31,22 @@ eval "$(../00_Setup_Pipeline/01_Pipeline_Setup.py --export)"
 
 # load anaconda module for case when we need independent run
 set +eu
-module load anaconda2
-source activate RNAseq
+module load miniconda
+conda activate --stack /projectnb/wax-es/routines/condaenv/htseq
+conda activate --stack /projectnb/wax-es/routines/condaenv/featureCounts
+conda activate --stack /projectnb/wax-es/routines/condaenv/samtools
+conda activate --stack /projectnb/wax-es/routines/condaenv/bedtools
+conda activate --stack /projectnb/wax-es/routines/condaenv/rlang361
+# source activate RNAseq
 set -eu
 
 # get 3 parameters (sample_id, gtf_file, counter)
 SAMPLE_ID=$1
 EXT_GTF_FILE=$2
 EXT_COUNTER=$3
+
+echo "CURRENT GTF FILE: ${EXT_GTF_FILE}"
+echo "CURRENT COUNTER: ${EXT_COUNTER}"
 
 # We always count by gene_id when using HTSeq and featureCounts
 FEATURE_ID=gene_id
@@ -107,13 +115,6 @@ eval "$(../00_Setup_Pipeline/01_Pipeline_Setup.py --export_gtf_by_name_and_count
 
 # current directory
 SCRIPT_DIR="$(pwd)"
-
-# loading modules
-echo 'Loading required modules...'
-module load R/3.6.0
-module load gcc/8.1.0
-# module load samtools/0.1.19
-module load samtools
 
 cd "${TMPDIR}"
 
@@ -184,6 +185,7 @@ echo "input_bam: ${input_bam}"
 # usage:   samtools sort [options] <in.bam> <out.prefix>
 # options: -n        sort by read name
 samtools sort -n -o "${SAMPLE_ID}_sorted.bam" ${input_bam}
+# samtools index "${SAMPLE_ID}_sorted.bam"
 
 ## Start counting
 if [[ "$COUNTER" == "htseq" ]]
