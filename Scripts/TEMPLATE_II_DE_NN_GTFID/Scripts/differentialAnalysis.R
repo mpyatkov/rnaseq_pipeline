@@ -15,6 +15,7 @@ library(DESeq2)
 library(edgeR)
 library(GenomicRanges)
 library(readr)
+library(dplyr)
 
 #######################################################################
 #1. SETTING VARS
@@ -88,6 +89,7 @@ readSampleCounts <- function(cond_name) {
   sum_output <- sapply(sum_files, readMapping)
   sum_output <- as.data.frame(t(sum_output))
   colnames(sum_output) <- cond_files
+  print(sum_output)
 
   setwd(input_dir)
   list(data=df, gene.names = gene.names, mapping=sum_output)
@@ -182,7 +184,8 @@ colnames(mergedResult)[colnames(mergedResult) == "edgeR_FDR_copy"] <- new_edgeRF
 
 temp<-as.data.frame(rownames(condition1Count))
 names(temp) <- "GeneSymbol"
-geneLength <- merge(temp, geneLength, by.x="GeneSymbol", by.y="GeneSymbol", sort=FALSE)[]
+# geneLength <- merge(temp, geneLength, by.x="GeneSymbol", by.y="GeneSymbol", sort=FALSE)[]
+geneLength <- left_join(temp, geneLength, by=c("GeneSymbol"))
 
 rpkm <- function(x, totalLength, mappedReadsNum) {
   return(x/(unlist(mappedReadsNum) * 1e-09 * totalLength))
