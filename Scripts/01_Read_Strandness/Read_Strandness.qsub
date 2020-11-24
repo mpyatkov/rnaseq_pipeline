@@ -44,11 +44,17 @@ echo "=========================================================="
 cd "${TMPDIR}"
 
 echo 'Loading required modules...'
-# TODO: need to use anaconda environment here
-module load samtools
-module load python3
-module load rseqc
-module load hisat2
+set +eu
+module load miniconda
+conda activate --stack /projectnb/wax-es/routines/condaenv/rseqc
+conda activate --stack /projectnb/wax-es/routines/condaenv/samtools
+conda activate --stack /projectnb/wax-es/routines/condaenv/hisat2
+set -eu
+
+# module load samtools
+# module load python3
+# module load rseqc
+# module load hisat2
 
 # get first and second read files
 echo "Get R1 and R2"
