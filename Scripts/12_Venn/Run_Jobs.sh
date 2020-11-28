@@ -17,7 +17,12 @@ set -o nounset
 
 ## create venn diagrams for comparisons
 
-module load R/3.6.0
+set +eu
+module load miniconda
+conda activate --stack /projectnb/wax-es/routines/condaenv/rlang361
+set -eu
+
+# module load R/3.6.0
 
 #Remove *.o files from previous jobs
 # rm -rf ./logs && mkdir -p ./logs
