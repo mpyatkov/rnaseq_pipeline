@@ -10,11 +10,25 @@ set -o errexit
 set -o pipefail
 set -o nounset
 
-# module load gcc/8.1.0
-module load R/3.6.0
+# module load R/3.6.0
+
+set +eu
+module load miniconda
+conda activate --stack /projectnb/wax-es/routines/condaenv/rlang361
+set -eu
 
 # export all variables from Pipeline_Setup.conf
 eval "$(../00_Setup_Pipeline/01_Pipeline_Setup.py --export)"
+
+DEDIR=$1 # 09a, 09b, 09c,...
+SCRIPT_DIR="$(pwd)"
+
+declare -A OUTDIR_DICT=( [09a]="13a_RefSeq24_HTSeq_ExonCollapsed" \
+                         [09b]="13b_RefSeq24k_featureCounts_ExonCollapsed" \
+                         [09c]="13c_LncRNA15k_ExonCollapsed" \
+                         [09d]="13d_RefSeqLncRNA76k_ExonCollapsed" )
+
+declare -A DETITLE_DICT=( [09a]="RefSeq24k" [09b]="RefSeq24k" [09c]="LncRNA15k" [09d]="RefSeqLncRNA76k" )
 
 function combined_pdf() {
     local OUTNAME=$1
@@ -32,14 +46,19 @@ function calc_correlation()
 
     PCOR=Pearson_correlation
     SCOR=Spearman_correlation
+
+    rm -rf ${OUTDIR} && mkdir -p ${OUTDIR}
+    cp ${SCRIPT_DIR}/*.R ./${OUTDIR}
+
+    pushd ${OUTDIR}
     
     rm -rf PCA && mkdir -p PCA
     rm -rf ${PCOR} && mkdir -p ${PCOR}
     rm -rf ${SCOR} && mkdir -p ${SCOR}
 
-    rm -rf ${OUTDIR} && mkdir -p ${OUTDIR}
-
     # dd=$(find ../09b_DE_* -name "DiffEx*GeneBody*txt")
+    echo "current path: $(pwd)"
+    echo "${SEARCH_BODY}"
     defiles=$(eval find ${SEARCH_BODY})
 
     for fname in $defiles
@@ -63,40 +82,20 @@ function calc_correlation()
     rm -rf *DiffExp*
     
     # create combined pdf files 
-    (cd ${PCOR}; combined_pdf ${OUTDIR}_Pearson_Combined.pdf)
-    (cd ${SCOR}; combined_pdf ${OUTDIR}_Spearman_Combined.pdf)
-    (cd PCA; combined_pdf ${OUTDIR}_PCA_Combined.pdf)
+    # (cd ${PCOR}; ls -la)
 
-    mv ${PCOR} ./${OUTDIR}/
-    mv ${SCOR} ./${OUTDIR}/
-    mv PCA ./${OUTDIR}/
-    mv tSNE_All_Merge.pdf ./${OUTDIR}/
+    OUTNAME=$(basename ${OUTDIR})
+
+    (cd ${PCOR}; combined_pdf ${OUTNAME}_Pearson_Combined.pdf)
+    (cd ${SCOR}; combined_pdf ${OUTNAME}_Spearman_Combined.pdf)
+    (cd PCA; combined_pdf ${OUTNAME}_PCA_Combined.pdf)
+
+    rm ./*.R
+    popd
 }
 
-rm -rf Job_Summary && mkdir -p Job_Summary
-
-
-# set -/+eu is required in case if only have one 09 folder
-# (ex. 09d...) this allow us to skip other one
-
-set +eu
-
-echo "Start 13a_RefSeq24_HTSeq_ExonCollapsed: $(date)"
-calc_correlation "../09a_DE_* -name 'DiffEx*ExonCollapsed*txt'" 13a_RefSeq24_HTSeq_ExonCollapsed RefSeq24k
-
-echo "Start 13b_RefSeq24k_featureCounts_ExonCollapsed: $(date)"
-calc_correlation "../09b_DE_* -name 'DiffEx*ExonCollapsed*txt'" 13b_RefSeq24k_featureCounts_ExonCollapsed RefSeq24k
-
-echo "Start 13c_LncRNA15k_ExonCollapsed: $(date)"
-calc_correlation "../09c_DE_* -name 'DiffEx*ExonCollapsed*txt'" 13c_LncRNA15k_ExonCollapsed LncRNA15k
-
-echo "Start 13d_RefSeqLncRNA76k_ExonCollapsed: $(date)"
-calc_correlation "../09d_DE_* -name 'DiffEx*ExonCollapsed*txt'" 13d_RefSeqLncRNA76k_ExonCollapsed RefSeqLncRNA76k
-
-mv ./13/* ./Job_Summary
-
-set -eu
-
+echo "Start ${OUTDIR_DICT[$DEDIR]}: $(date)"
+calc_correlation "../../../${DEDIR}_DE_* -name 'DiffEx*ExonCollapsed*txt'" "./Job_Summary/${OUTDIR_DICT[$DEDIR]}" "${DETITLE_DICT[$DEDIR]}"
 
 ## Special symbol that step is ok (do not remove it)
 echo "IAMOK"
