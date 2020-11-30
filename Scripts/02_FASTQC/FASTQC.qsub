@@ -57,7 +57,13 @@ printf "\nChange dir to scratch directory\n"
 cd ${TMPDIR}
 printf "\nPrint scratch directory location: ${TMPDIR}"
 printf "\nLoading required modules...\n"
-module load fastqc
+
+set +eu
+module load miniconda
+conda activate --stack /projectnb/wax-es/routines/condaenv/fastqc
+set -eu
+
+# module load fastqc
 
 # copy user input data files to scratch
 # Copy over the *R1*.fq.gz file(s):
