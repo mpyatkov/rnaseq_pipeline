@@ -5,14 +5,23 @@
 #Usage: ./Run_Jobs.sh
 #Example:
 #./Run_Jobs.sh
-# The result fo this script copies all the Diffexp_v2_genebody (.txt) files from DE analysis (HTSeq Method) and copies in the current directory. These files are then used as input bu the Pearson_Script.R to generate pearson correlation plots and matrices. 
+
+# This script summarizes data from the directories located above:
+# - Copy "combined" pdf files from step 13
+# - Copy all Segex files 
+# - Summarize info about up/down genes by different features
 
 set -o errexit
 set -o pipefail
 set -o nounset
 
-module load gcc/8.1.0
-module load R/3.6.0
+set +eu
+module load miniconda
+conda activate --stack /projectnb/wax-es/routines/condaenv/rlang361
+set -eu
+
+# module load gcc/8.1.0
+# module load R/3.6.0
 
 # export all variables from Pipeline_Setup.conf
 eval "$(../00_Setup_Pipeline/01_Pipeline_Setup.py --export)"
@@ -46,7 +55,12 @@ set -eu
 
 mkdir ./output/12_Venn/ && cp -rf  ${Level_UP}/12_Venn/Job_Summary/*  ./output/12_Venn/
 cp -rf ${Level_UP}/13_Correlation/Job_Summary/* ./output/
+
+# remove all files which do not contain "combined" in the name
+# TODO: requirenments were changed refactor this to copy only combined
+# files
 find ./output/13* -name "*.pdf" | grep -iv "combined" | xargs rm -rf
+# remove all *.txt and *.csv files
 find ./output/13* \( -name "*.csv" -o -name "*.txt" \) | xargs rm -rf
 
 # remove from 09abc/Output* all segex files
@@ -58,44 +72,32 @@ set -eu
 copy_feature(){
     local de_index=$1
     local feature=$2
+
     mkdir -p output/Segex_${de_index}/Segex${de_index}_${feature}
+
+    # find all segex files associated with fpkm, edger, not located in
+    # output, contained ${feature} in the name and copy them to the
+    # required folder
     find ../${de_index}_DE_* -name "*SEGEX*" | grep -iv output | grep -i ${feature} | grep -i fpkm | grep -i edger | xargs -n1 -I{} cp {} ./output/Segex_${de_index}/Segex${de_index}_${feature}/
 }
 
-# copy all segex files in 
-# 09a 
-mkdir -p output/Segex_09a/
-find ../09a_DE_* -name "*SEGEX*" | grep -iv output | grep -i fpkm | grep -i exoncollapsed | grep -i edger | xargs -n1 -I{} cp {} ./output/Segex_09a/
-
-copy_feature 09a ExonCollapsed
-copy_feature 09a IntronOnly
-copy_feature 09a ExonOnly
-
-# # 09b
-mkdir output/Segex_09b
-find ../09b_DE_* -name "*SEGEX*" | grep -iv output | grep -i fpkm | grep -i exoncollapsed | grep -i edger | xargs -n1 -I{} cp {} ./output/Segex_09b/
-
-copy_feature 09b ExonCollapsed
-copy_feature 09b IntronOnly
-copy_feature 09b ExonOnly
-
-
-# # 09c
-mkdir output/Segex_09c
-find ../09c_DE_* -name "*SEGEX*" | grep -iv output | grep -i fpkm | grep -i exoncoll | grep -i edger | xargs -n1 -I{} cp {} ./output/Segex_09c/
-
-copy_feature 09c ExonCollapsed
-copy_feature 09c IntronicOnly
-copy_feature 09c ExonicOnly
-copy_feature 09c FullGeneBody
-
-# # 09d
-mkdir output/Segex_09d
-find ../09d_DE_* -name "*SEGEX*" | grep -iv output | grep -i fpkm | grep -i exoncoll | grep -i edger | xargs -n1 -I{} cp {} ./output/Segex_09d/
-
-copy_feature 09d ExonCollapsed
-copy_feature 09d FullGeneBody
-
+# copy segex files from DE directories to step 14 output
+copy_all_segex_files() {
+    local de_index=$1
+    
+    mkdir -p output/Segex_${de_index}
+    find ../${de_index}_DE_* -name "*SEGEX*" | grep -iv output | grep -i fpkm | grep -i exoncollapsed | grep -i edger | xargs -n1 -I{} cp {} ./output/Segex_${de_index}/
+    
+    # copy features (ex. for index 9a -> ExonOnly, IntronOnly, ExonCollapsed, ...)
+    features=$(find ../${de_index}* -iname "output*" | grep -Po "\K([a-zA-Z]*)(?=$)" | sort | uniq)
+    
+    # loop over each feature associated with de_index
+    for feature in $features
+    do
+	echo "copy_feature: ${de_index} ${feature}"
+	copy_feature ${de_index} ${feature}
+    done
+}
 
 # summarize up and down genes
 function updown_genes() {
@@ -112,10 +114,18 @@ function updown_genes() {
 
 }
 
-updown_genes 09a
-updown_genes 09b
-updown_genes 09c
-updown_genes 09d
+# find all 09a, 09b, 09c, ... directories
+dedirs=$(find ../09* -iname "output*" | grep -Po '09[a-z]' | sort | uniq)
+
+# for each 09a, 09b,...
+for de_ix in $dedirs
+do
+    # copy all segex files by DE index
+    copy_all_segex_files ${de_ix}
+    
+    # make summary for up/down genes
+    updown_genes ${de_ix}
+done
 
 # mv *.txt ${Level_UP}/14_final_summary/output
 # mv *.pdf ${Level_UP}/14_final_summary/output
