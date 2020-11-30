@@ -17,15 +17,12 @@ set -o nounset
 
 ## create venn diagrams for comparisons
 
+# module load R/3.6.0
+
 set +eu
 module load miniconda
 conda activate --stack /projectnb/wax-es/routines/condaenv/rlang361
 set -eu
-
-# module load R/3.6.0
-
-#Remove *.o files from previous jobs
-# rm -rf ./logs && mkdir -p ./logs
 
 # export all variables from Pipeline_Setup.conf
 eval "$(../00_Setup_Pipeline/01_Pipeline_Setup.py --export)"
@@ -78,13 +75,19 @@ venn_for_one_gtf_set() {
 	    done
         done
 
-        # ${DATASET_LABEL} - exported from config file
-        cp ${SCRIPT_DIR}/Venn.R ./
-        Rscript Venn.R "${DATASET_LABEL}_${DETITLE}" "${outname}" ${venn_individ}
-        rm *_DiffExp_v2* Venn.R
+	# check if current dir is empty (does not contain ExonCollapsed files)
+	if [[ -n $(find . -name "*.txt") ]]
+	then
+	    # ${DATASET_LABEL} - exported from config file
+            cp ${SCRIPT_DIR}/Venn.R ./
+            Rscript Venn.R "${DATASET_LABEL}_${DETITLE}" "${outname}" ${venn_individ}
+            rm *_DiffExp_v2* Venn.R
+	else
+	    echo "ERROR: Comparison directory (${OUTDIR_PREFIX}) does not contain ExonCollapsed files"
+	fi
+
     done
     popd
-    # mv ${OUTDIR_PREFIX} ./Job_Summary
 }
 
 # find ../ -name "09*" -maxdepth 1 -type d | xargs -n1 basename
@@ -141,8 +144,24 @@ individual_comparisons_wrapper() {
 # create individual venn diagrams for each 09 directory
 individual_comparisons_wrapper
 
+declare -A OUTDIR_DICT=( [09a]="12a_Venn_RefSeq24_HTSeq_ExonCollapsed" \
+                         [09b]="12b_Venn_RefSeq24_featureCounts_ExonCollapsed" \
+                         [09c]="12c_Venn_LncRNA15k_featureCounts_ExonCollapsed" \
+                         [09d]="12d_Venn_RefSeqLncRNA76k_featureCounts_ExonCollapsed" )
+
+declare -A DETITLE_DICT=( [09a]="RefSeq24k" [09b]="RefSeq24k" [09c]="LncRNA15k" [09d]="RefSeqLncRNA76k" )
+
 # create venn diagrams for each set of gtf+counter (09a,b,c,d)
-venn_for_one_gtf_set 09a 12a_Venn_RefSeq24_HTSeq_ExonCollapsed RefSeq24k
-venn_for_one_gtf_set 09b 12b_Venn_RefSeq24_featureCounts_ExonCollapsed RefSeq24k
-venn_for_one_gtf_set 09c 12c_Venn_LncRNA15k_featureCounts_ExonCollapsed LncRNA15k
-venn_for_one_gtf_set 09d 12d_Venn_RefSeqLncRNA76k_featureCounts_ExonCollapsed RefSeqLncRNA76k
+dedirs=$(find ../09* -iname "output*exoncoll*" | grep -Po '09[a-z]' | sort | uniq)
+
+for d in $dedirs
+do
+    echo "Process directory with prefix --> ${d}"
+    venn_for_one_gtf_set $d "${OUTDIR_DICT[$d]}" "DETITLE_DICT[$d]"
+done
+
+# create venn diagrams for each set of gtf+counter (09a,b,c,d)
+# venn_for_one_gtf_set 09a 12a_Venn_RefSeq24_HTSeq_ExonCollapsed RefSeq24k
+# venn_for_one_gtf_set 09b 12b_Venn_RefSeq24_featureCounts_ExonCollapsed RefSeq24k
+# venn_for_one_gtf_set 09c 12c_Venn_LncRNA15k_featureCounts_ExonCollapsed LncRNA15k
+# venn_for_one_gtf_set 09d 12d_Venn_RefSeqLncRNA76k_featureCounts_ExonCollapsed RefSeqLncRNA76k

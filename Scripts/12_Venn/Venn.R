@@ -12,14 +12,15 @@
 # ex. venn diagram will be created for each feature (ExonCollapsed/IntronOnly...) set
 # 1 type of venn - deseq/edger for each feature separately
 # 2 type of venn - all feature together
-
-library(readr)
-library(dplyr)
-library(RColorBrewer)
-library(VennDiagram)
-library(grid)
-library(gridExtra)
-library(stringr)
+suppressPackageStartupMessages({
+    library(readr)
+    library(dplyr)
+    library(RColorBrewer)
+    library(VennDiagram)
+    library(grid)
+    library(gridExtra)
+    library(stringr)
+})
 
 # get the subset of up and down genes for deseq and edger
 read_dataset <- function(dn, fc, padj) {
@@ -371,13 +372,21 @@ if (VENN_INDIVIDUAL == "0") {
   # files <- list.files(pattern = "DiffExp[[_]|[:alnum:]]+.txt", full.names = T)
   number = str_extract(files[1], "(?<=./)(\\d)+")
   counter = str_extract(files[1], "(?<=_)(featureCounts|htseq)(?=\\.txt)")
-  feature <- str_extract(files[1], "(?<=_)(ExonCollapsed|IntronicOnly|ExonOnly|IntronOnly|ExonicOnly|FullGeneBody)(?=_)")
-  comparison_name <- str_extract(files[1], paste0("(?<=(", feature,"_))([[:alnum:]|[_]]+)(?=(_featureCounts|_htseq))"))
+  features <- str_extract(files, "(?<=_)(ExonCollapsed|IntronicOnly|ExonOnly|IntronOnly|ExonicOnly|FullGeneBody)(?=_)")
+  comparison_name <- str_extract(files[1], paste0("(?<=(", features[1],"_))([[:alnum:]|[_]]+)(?=(_featureCounts|_htseq))"))
 
   title <- paste0(DATASET_LABEL, ", ", comparison_name)
 
   draw_pairwise_for_each_feature(files,params, title, paste0(OUTPUT_NAME,"_Individual"))
-  all_features_methods(files, data, params, title, paste0(OUTPUT_NAME,"_All"))  
+
+  # Draw all features together only if multiple features exist
+  print(features)
+  print(paste0("Number of features: ", length(unique(features))))
+
+  if (length(unique(features)) > 1) {
+     print("Draw all features together")
+     all_features_methods(files, data, params, title, paste0(OUTPUT_NAME,"_All"))  
+  }
 }
 
 
