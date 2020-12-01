@@ -22,10 +22,16 @@ set -o nounset
 
 # activate anaconda environment
 
+# module load samtools/0.1.19
+# load anaconda module for case when we need independent run
+
 set +eu
-module load anaconda2
-source activate RNAseq
+module load miniconda
+conda activate --stack /projectnb/wax-es/routines/condaenv/samtools
+# conda activate RNAseq
 set -eu
+
+
 
 if [ $# -ne 5 ] ; then
     echo "Need 7 arguments for the qsub command:"
@@ -110,8 +116,6 @@ echo 'Print scratch directory location:'
 echo $TMPDIR
 echo 'Loading required modules...'
 
-module load samtools/0.1.19
-
 cp ${Dataset_DIR}/${SAMPLE_ID}/tophat2/${SAMPLE_ID}'_primary_unique.bam' .
 #Initialize INPUT_BAM:
 INPUT_BAM=${SAMPLE_ID}'_primary_unique.bam'
@@ -148,9 +152,10 @@ echo 'Starting samtools sort and index'
 echo
 
 #samtools sort only takes file name without extension
-samtools sort ${INPUT_BAM} ${SAMPLE_ID}'_sorted'
+# samtools sort ${INPUT_BAM} ${SAMPLE_ID}'_sorted'
+samtools sort -o "${SAMPLE_ID}_sorted.bam" ${INPUT_BAM}
 #samtools sort only takes file name with extension
-samtools index ${SAMPLE_ID}'_sorted'.bam
+samtools index "${SAMPLE_ID}_sorted.bam"
 #Initilize variable:
 INPUT_FILE=${SAMPLE_ID}'_sorted.bam'
 
