@@ -22,7 +22,7 @@ set -o nounset
 # load anaconda environment
 set +eu
 module load miniconda
-conda activate --stack /projectnb/wax-es/routines/condaenv/picard
+conda activate --stack ${CONDA_DIR}/picard
 set -eu
 
 # export all variables from Pipeline_Setup.conf

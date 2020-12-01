@@ -46,9 +46,9 @@ cd "${TMPDIR}"
 echo 'Loading required modules...'
 set +eu
 module load miniconda
-conda activate --stack /projectnb/wax-es/routines/condaenv/rseqc
-conda activate --stack /projectnb/wax-es/routines/condaenv/samtools
-conda activate --stack /projectnb/wax-es/routines/condaenv/hisat2
+conda activate --stack ${CONDA_DIR}/rseqc
+conda activate --stack ${CONDA_DIR}/samtools
+conda activate --stack ${CONDA_DIR}/hisat2
 set -eu
 
 # module load samtools

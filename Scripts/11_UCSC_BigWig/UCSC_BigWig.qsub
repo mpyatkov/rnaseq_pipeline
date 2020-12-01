@@ -27,7 +27,7 @@ set -o nounset
 
 set +eu
 module load miniconda
-conda activate --stack /projectnb/wax-es/routines/condaenv/samtools
+conda activate --stack ${CONDA_DIR}/samtools
 # conda activate RNAseq
 set -eu
 

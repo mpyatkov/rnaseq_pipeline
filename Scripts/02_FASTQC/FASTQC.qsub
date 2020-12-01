@@ -60,7 +60,7 @@ printf "\nLoading required modules...\n"
 
 set +eu
 module load miniconda
-conda activate --stack /projectnb/wax-es/routines/condaenv/fastqc
+conda activate --stack ${CONDA_DIR}/fastqc
 set -eu
 
 # module load fastqc

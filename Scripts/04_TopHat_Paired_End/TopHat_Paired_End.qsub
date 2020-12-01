@@ -23,9 +23,17 @@ set -o nounset
 ##################################################################################
 
 set +eu
-module load anaconda2
-source activate RNAseq
+module load miniconda
+conda activate --stack ${CONDA_DIR}/samtools_old # 0.1.19
+conda activate --stack ${CONDA_DIR}/tophat # 0.1.19
 set -eu
+
+# module load samtools/0.1.19
+
+# set +eu
+# module load anaconda2
+# source activate RNAseq
+# set -eu
 
 # export all variables from Pipeline_Setup.conf
 eval "$(../00_Setup_Pipeline/01_Pipeline_Setup.py --export)"
@@ -108,9 +116,6 @@ echo "Change dir to scratch directory"
 cd "${TMPDIR}"
 
 echo "Print scratch directory location: ${TMPDIR}"
-echo 'Loading required modules...'
-
-module load samtools/0.1.19
 
 # copy user input data files to scratch
 #Copy over the *R1*.fq.gz file(s):

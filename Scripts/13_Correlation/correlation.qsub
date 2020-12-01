@@ -14,7 +14,7 @@ set -o nounset
 
 set +eu
 module load miniconda
-conda activate --stack /projectnb/wax-es/routines/condaenv/rlang361
+conda activate --stack ${CONDA_DIR}/rlang361
 set -eu
 
 # export all variables from Pipeline_Setup.conf

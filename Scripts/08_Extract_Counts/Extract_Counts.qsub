@@ -32,11 +32,11 @@ eval "$(../00_Setup_Pipeline/01_Pipeline_Setup.py --export)"
 # load anaconda module for case when we need independent run
 set +eu
 module load miniconda
-conda activate --stack /projectnb/wax-es/routines/condaenv/htseq
-conda activate --stack /projectnb/wax-es/routines/condaenv/featureCounts
-conda activate --stack /projectnb/wax-es/routines/condaenv/samtools
-conda activate --stack /projectnb/wax-es/routines/condaenv/bedtools
-conda activate --stack /projectnb/wax-es/routines/condaenv/rlang361
+conda activate --stack ${CONDA_DIR}/htseq
+conda activate --stack ${CONDA_DIR}/featureCounts
+conda activate --stack ${CONDA_DIR}/samtools
+conda activate --stack ${CONDA_DIR}/bedtools
+conda activate --stack ${CONDA_DIR}/rlang361
 # source activate RNAseq
 set -eu
 
