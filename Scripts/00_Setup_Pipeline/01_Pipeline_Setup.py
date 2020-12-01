@@ -95,7 +95,7 @@ BIGWIG_ENABLE=0
 
 [SYSTEM]
 
-# location of GTF files (by default you should have access to wax-es)
+# The location of the GTF files (by default you should have access to wax-es)
 GTF_FILES_DIR=/projectnb/wax-es/routines/GTF_Files_default
 
 # GTF configuration file which contains all information and options for GTF
@@ -104,11 +104,15 @@ GTF_FILES_DIR=/projectnb/wax-es/routines/GTF_Files_default
 # to this file. Example: GTF_FILES_CONFIG=custom.csv
 GTF_FILES_CONFIG=${SYSTEM:GTF_FILES_DIR}/default.csv
 
-# location for Bowtie2 indexes, at the moment it is only indexes for mouse mm9
+# The location of the Bowtie2 indexes, at the moment it is only indexes for mouse mm9
 # assembly
 BOWTIE2INDEX_DIR=/projectnb/wax-es/routines/BowtieIndex
 
-# location for HISAT indexes, at the moment it is only indexes for mouse mm9
+# The location of the conda packages. This directory also contains scripts and
+# configs and qsub file for setting up environments
+CONDA_DIR=/projectnb/wax-es/routines/condaenv
+
+# The location of the HISAT indexes, at the moment it is only indexes for mouse mm9
 # assembly
 HISAT2INDEX_DIR=/projectnb/wax-es/routines/hisat2index
 
