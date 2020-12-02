@@ -12,13 +12,13 @@ set -o nounset
 
 # module load R/3.6.0
 
+# export all variables from Pipeline_Setup.conf
+eval "$(../00_Setup_Pipeline/01_Pipeline_Setup.py --export)"
+
 set +eu
 module load miniconda
 conda activate --stack ${CONDA_DIR}/rlang361
 set -eu
-
-# export all variables from Pipeline_Setup.conf
-eval "$(../00_Setup_Pipeline/01_Pipeline_Setup.py --export)"
 
 DEDIR=$1 # 09a, 09b, 09c,...
 SCRIPT_DIR="$(pwd)"

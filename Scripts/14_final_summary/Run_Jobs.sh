@@ -15,6 +15,9 @@ set -o errexit
 set -o pipefail
 set -o nounset
 
+# export all variables from Pipeline_Setup.conf
+eval "$(../00_Setup_Pipeline/01_Pipeline_Setup.py --export)"
+
 set +eu
 module load miniconda
 conda activate --stack /projectnb/wax-es/routines/condaenv/rlang361
@@ -22,9 +25,6 @@ set -eu
 
 # module load gcc/8.1.0
 # module load R/3.6.0
-
-# export all variables from Pipeline_Setup.conf
-eval "$(../00_Setup_Pipeline/01_Pipeline_Setup.py --export)"
 
 rm -rf *.txt
 rm -rf *.pdf

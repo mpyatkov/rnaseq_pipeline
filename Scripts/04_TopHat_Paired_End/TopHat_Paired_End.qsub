@@ -22,6 +22,9 @@ set -o nounset
 #$ -l scratch_free=300G
 ##################################################################################
 
+# export all variables from Pipeline_Setup.conf
+eval "$(../00_Setup_Pipeline/01_Pipeline_Setup.py --export)"
+
 set +eu
 module load miniconda
 conda activate --stack ${CONDA_DIR}/samtools_old # 0.1.19
@@ -34,9 +37,6 @@ set -eu
 # module load anaconda2
 # source activate RNAseq
 # set -eu
-
-# export all variables from Pipeline_Setup.conf
-eval "$(../00_Setup_Pipeline/01_Pipeline_Setup.py --export)"
 
 #Initialize variables from TopHat_Paired_End.sh
 ##################################################################################

@@ -25,13 +25,14 @@ set -o nounset
 # module load samtools/0.1.19
 # load anaconda module for case when we need independent run
 
+# export all variables from Pipeline_Setup.conf
+eval "$(../00_Setup_Pipeline/01_Pipeline_Setup.py --export)"
+
 set +eu
 module load miniconda
 conda activate --stack ${CONDA_DIR}/samtools
 # conda activate RNAseq
 set -eu
-
-
 
 if [ $# -ne 5 ] ; then
     echo "Need 7 arguments for the qsub command:"
