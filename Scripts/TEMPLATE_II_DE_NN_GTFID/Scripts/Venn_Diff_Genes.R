@@ -218,12 +218,22 @@ main.cex = 2,
 sub = paste("(", Subtitle, ")",sep=""),
 sub.cex = 2
 );
-#Options explained:
-#http://www.inside-r.org/packages/cran/VennDiagram/docs/venn.diagram
-#Create the image file
-png(file=paste("Venn_", File1_Label, ".", File2_Label, ".png", sep=""))
-grid.draw(Venn_Diagram)
-dev.off()
+
+# TODO: 12.02.2020 (Venn refactoring)
+# all venn diagram functionality moved to step 12
+# This should be refactored 
+# 1. Remove code associated with Venn diagrams
+# 2. Refactor or remove code associated with Count.Table
+
+
+# #Options explained:
+# #http://www.inside-r.org/packages/cran/VennDiagram/docs/venn.diagram
+# #Create the image file
+
+# uncomment the following line to take the Venn output
+# png(file=paste("Venn_", File1_Label, ".", File2_Label, ".png", sep=""))
+# grid.draw(Venn_Diagram)
+# dev.off()
 
 #Also want a table of gene counts for the common and unique gene symbols
 Common_Count <- length(intersect(File1_Data$"Gene.Symbol", File2_Data$"Gene.Symbol"))

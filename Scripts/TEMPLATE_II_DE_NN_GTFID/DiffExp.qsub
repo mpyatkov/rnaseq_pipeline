@@ -93,8 +93,6 @@ cp ${SCRIPT_DIR}/Condition_2.txt .
 
 #Copy Rscripts:
 cp ${SCRIPT_DIR}/Scripts/differentialAnalysis.R .
-# cp ${SCRIPT_DIR}/Scripts/formatForSegex_ver3.R .
-# cp ${SCRIPT_DIR}/Scripts/formatForSegex_ver4.R .
 cp ${SCRIPT_DIR}/Scripts/formatForSegex.R .
 cp ${SCRIPT_DIR}/Scripts/Diff_Genes.R .
 cp ${SCRIPT_DIR}/Scripts/Venn_Diff_Genes.R . 
@@ -237,15 +235,13 @@ echo "Create SEGEX formatted file:"
 #cd in to Input folder to run script:
 cd ${TMPDIR}/Input
 
-#Move formatForSegex_ver3.R to Input folder
+# move formatForSegex.R to Input folder
 mv ${TMPDIR}/formatForSegex.R ${TMPDIR}/Input/
 
 Differential_Expression_File="${OUTPUT_PREFIX}_${CONDITION_1_NAME}_${CONDITION_2_NAME}.txt"
 
 SEGEX_File="${CONDITION_2_NAME}_${M_Num_Cond2_List}_vs_${CONDITION_1_NAME}_${M_Num_Cond1_List}_${OUTPUT_PREFIX}_forSEGEXUpload"
 pseudocount=1
-echo 'Printing Rscript command:'
-echo "Rscript formatForSegex_ver3.R  $Differential_Expression_File $SEGEX_File $pseudocount $COL_SUFFIX"
 
 # segex FPKM
 (set -x; Rscript formatForSegex.R  $Differential_Expression_File $SEGEX_File $pseudocount $COL_SUFFIX "rpkm")
@@ -318,14 +314,14 @@ do
 done
 
 
-set +eu
-PNG_file_list=*.png
-for PNG_file in ${PNG_file_list}
-do
-    file_name=${PNG_file%\.png}
-    mv ${PNG_file} ${file_name}'_'${COUNT_PROGRAM}'.png'
-done
-set -eu
+# set +eu
+# PNG_file_list=*.png
+# for PNG_file in ${PNG_file_list}
+# do
+#     file_name=${PNG_file%\.png}
+#     mv ${PNG_file} ${file_name}'_'${COUNT_PROGRAM}'.png'
+# done
+# set -eu
 
 echo "Finished on : $(date)"
 

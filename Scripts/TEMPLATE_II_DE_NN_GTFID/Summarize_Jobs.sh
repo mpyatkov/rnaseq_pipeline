@@ -21,17 +21,21 @@ rm -rf SEGEX_Upload_Files
 echo
 echo 'Loading required modules...'
 echo
-module load R/3.6.0
 
 # export all variables from Pipeline_Setup.conf
 eval "$(../00_Setup_Pipeline/01_Pipeline_Setup.py --export)"
+
+set +eu
+module load miniconda
+conda activate --stack ${CONDA_DIR}/rlang361
+set -eu
 
 SCRIPT_DIR=$(pwd)
 
 #Source job-specific variables:
 # source setup_DiffExp.sh
 
-# list of samples for each condition
+# list of samples for each condition (ex. G186_M1M2M3_G184_M1M2M3)
 samples_line(){
     local fname=$1
     a=$(tail -n+2 $fname | cut -f2 | cut -d "_" -f 1 | sort | uniq)
@@ -96,8 +100,8 @@ EDGER_OUTPUT_FILE=${Combined_DIR}/${COMPAR_NUM}_Combined_forSEGEXUpload_EdgeR'.'
 rm -rf ${DESEQ_OUTPUT_FILE} && touch ${DESEQ_OUTPUT_FILE}
 rm -rf ${EDGER_OUTPUT_FILE} && touch ${EDGER_OUTPUT_FILE}
 
-PNG_DIR=${OUTPUT_DIR}/PNG_Files
-rm -rf ${PNG_DIR} && mkdir -p ${PNG_DIR}
+# PNG_DIR=${OUTPUT_DIR}/PNG_Files
+# rm -rf ${PNG_DIR} && mkdir -p ${PNG_DIR}
 
 DE_Text_DIR=${OUTPUT_DIR}/DE_Text_Files
 rm -rf ${DE_Text_DIR} && mkdir -p ${DE_Text_DIR}
@@ -198,8 +202,8 @@ do
     echo 'Print to OUTPUT_TABLE_2'
     cat *_Venn_Tables*.txt >> ${OUTPUT_TABLE_2} 
 
-    echo 'Copy PNG files to PNG_DIR'
-    cp *.png ${PNG_DIR}
+    # echo 'Copy PNG files to PNG_DIR'
+    # cp *.png ${PNG_DIR}
     set -eu
 
     echo 'Copy Down_Genes*.txt and Up_Genes*.txt files to DE_Text_DIR'
@@ -209,56 +213,62 @@ do
 done
 
 
-OUTPUT_FILE_PDF=${OUTPUT_DIR}/DE_Genes_Venn_R_Package'.'${COUNT_PROGRAM}'.'${Comparison_Info}'.pdf'
+# TODO: remove outdated code
+# this code is not required anymore, all venn diagrams functionaly
+# moved to step 12
+# >>>>>>>>>>
+
+# OUTPUT_FILE_PDF=${OUTPUT_DIR}/DE_Genes_Venn_R_Package'.'${COUNT_PROGRAM}'.'${Comparison_Info}'.pdf'
 # rm -rf ${OUTPUT_FILE_PDF} && touch ${OUTPUT_FILE_PDF}
 
-echo 'Create montage of PNG files'
-cd ${PNG_DIR}
-montage -geometry 500x500 *.png ${OUTPUT_FILE_PDF}
-cd ..
-rm -r ${PNG_DIR}
+# echo 'Create montage of PNG files'
+# cd ${PNG_DIR}
+# montage -geometry 500x500 *.png ${OUTPUT_FILE_PDF}
+# cd ..
+# rm -r ${PNG_DIR}
 
-cd ${DE_Text_DIR}
-OUTPUT_FILE_PDF_2=${OUTPUT_DIR}/DE_Genes_Venn_Count_Method'.'${COUNT_PROGRAM}'.'${Comparison_Info}'.pdf'
-# rm -rf ${OUTPUT_FILE_PDF_2} && touch ${OUTPUT_FILE_PDF_2}
+# cd ${DE_Text_DIR}
+# OUTPUT_FILE_PDF_2=${OUTPUT_DIR}/DE_Genes_Venn_Count_Method'.'${COUNT_PROGRAM}'.'${Comparison_Info}'.pdf'
+# # rm -rf ${OUTPUT_FILE_PDF_2} && touch ${OUTPUT_FILE_PDF_2}
 
-echo 'Copy Venn_Count_Method.R script to DE_Text_DIR'
-cp ${SCRIPT_DIR}/Scripts/Venn_Count_Method.R . 
-echo 'Run Venn_Count_Method.R commands'
+# echo 'Copy Venn_Count_Method.R script to DE_Text_DIR'
+# cp ${SCRIPT_DIR}/Scripts/Venn_Count_Method.R . 
+# echo 'Run Venn_Count_Method.R commands'
 
 #Since renaming the files to include ${Comparison_Info} in the qsub
 #I need a different way to get the file names:
 #DESeq down files:
 
-venn_count() {
-    # direction Up, Down
-    local d=$1
-    # package deseq, edger
-    local p=$2
+# venn_count() {
+#     # direction Up, Down
+#     local d=$1
+#     # package deseq, edger
+#     local p=$2
     
-    # f1=$(ls ${d}_Genes_${p}_Exon* | grep "Exon_\|ExonCollapsed\|Exon_Collapsed")
-    # f2=$(ls ${d}_Genes_${p}_GeneBody*)
-    # f3=$(ls ${d}_Genes_${p}_Exonic_Only*)
-    # f4=$(ls ${d}_Genes_${p}_Intronic_Only*)
-    set +eu
-    f1=$(find . -name "${d}_Genes_${p}*" | grep "ExonCollapsed")
-    f2=$(find . -name "${d}_Genes_${p}*" | grep "GeneBody")
-    f3=$(find . -name "${d}_Genes_${p}*" | grep "ExonicOnly\|ExonOnly")
-    f4=$(find . -name "${d}_Genes_${p}*" | grep "IntronicOnly\|Intron")
-    set -eu
-    (set -x;Rscript Venn_Count_Method.R ${f1} ${f2} ${f3} ${f4})
-    echo "---------------->>>"
-}
+#     # f1=$(ls ${d}_Genes_${p}_Exon* | grep "Exon_\|ExonCollapsed\|Exon_Collapsed")
+#     # f2=$(ls ${d}_Genes_${p}_GeneBody*)
+#     # f3=$(ls ${d}_Genes_${p}_Exonic_Only*)
+#     # f4=$(ls ${d}_Genes_${p}_Intronic_Only*)
+#     set +eu
+#     f1=$(find . -name "${d}_Genes_${p}*" | grep "ExonCollapsed")
+#     f2=$(find . -name "${d}_Genes_${p}*" | grep "GeneBody")
+#     f3=$(find . -name "${d}_Genes_${p}*" | grep "ExonicOnly\|ExonOnly")
+#     f4=$(find . -name "${d}_Genes_${p}*" | grep "IntronicOnly\|Intron")
+#     set -eu
+#     (set -x;Rscript Venn_Count_Method.R ${f1} ${f2} ${f3} ${f4})
+#     echo "---------------->>>"
+# }
 
-venn_count Down DESeq
-venn_count Up DESeq
-venn_count Down EdgeR
-venn_count Up EdgeR
+# venn_count Down DESeq
+# venn_count Up DESeq
+# venn_count Down EdgeR
+# venn_count Up EdgeR
 
-echo 'Create montage of PNG files'
-montage -geometry 500x500 *.png ${OUTPUT_FILE_PDF_2}
+# echo 'Create montage of PNG files'
+# montage -geometry 500x500 *.png ${OUTPUT_FILE_PDF_2}
+# cd ..
+# <<<<<<<<<<
 
-cd ..
 rm -r ${DE_Text_DIR}
 echo '#--------------------------------------------------------------------------'
 echo 'Check out '${OUTPUT_DIR}
