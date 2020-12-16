@@ -7,7 +7,7 @@ set -o errexit
 
 ##################################################################################
 #Andy Rampersaud, 03.14.16
-#This 03_Run_Pipeline.sh script is used to run all steps in the pipeline
+#This 02_Run_Pipeline.sh script is used to run all steps in the pipeline
 #The purpose of this script is to stream-line the pipeline so that 
 #	1. A single command executes all steps sequentially
 #	2. Minimize user intervention by automatically moving to the next step
@@ -16,20 +16,20 @@ set -o errexit
 #	2. The 00_Setup_Pipeline folder is in a "Scripts"
 #	3. The Scripts folder contains all of the pipeline steps to run
 #Way to run script:
-#Usage: ./03_Run_Pipeline.sh <Start_Step>
+#Usage: ./02_Run_Pipeline.sh <Start_Step>
 #	<Start_Step> = Needs to be either "FULL" or a specific pipeline step 
 #Example: 
 #User wants to run the full pipeline:
-#./03_Run_Pipeline.sh FULL
+#./02_Run_Pipeline.sh FULL
 #User wants to run a subset of the pipeline starting at a specific step (04_TopHat_Paired_End):
-#./03_Run_Pipeline.sh 04_TopHat_Paired_End
+#./02_Run_Pipeline.sh 04_TopHat_Paired_End
 ##################################################################################
 #---------------------------------------------------------------------------------
 
 # Process system argument:
 if [[ $# -ne 1 ]]
 then
-    echo "Usage: ./03_Run_Pipeline.sh <option>"
+    echo "Usage: ./02_Run_Pipeline.sh <option>"
     echo "<option> = FULL - full pipeline run"
     echo "<option> = start_step (example. 05) start from specific step"
     echo "<option> = DEONLY recalculate DE and summary directories (09abcd,13,14)"
@@ -201,7 +201,7 @@ cd "${STEPS_DIR}"
 
 #Also want to print the time to run this script:
 echo '--------------------' >> "${OUTPUT_FILE}"
-echo '03_Run_Pipeline.sh run time:' >> "${OUTPUT_FILE}"
+echo '02_Run_Pipeline.sh run time:' >> "${OUTPUT_FILE}"
 echo "Check out: ${OUTPUT_FILE}"
 
 echo 'Pipeline is done, check out your results!'

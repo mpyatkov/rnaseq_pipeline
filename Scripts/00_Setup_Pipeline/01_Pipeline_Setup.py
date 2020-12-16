@@ -25,7 +25,7 @@ VENN_CONFIG = "venn_comparisons.txt"
 DEFAULT_VENN_CONFIG = """
 venn_comparisons
 1;2
-"""
+""".strip()
 
 DEFAULT_COMPARISON_CONFIG = """
 Comparison_Number; Condition_1; Condition_2
@@ -639,6 +639,7 @@ if __name__ == "__main__":
         print(venn_config.get_venn_by_index(int(a[0])))
     else:
         # TODO: print only information that configuration files were generated
-        parser.print_help()
+        # parser.print_help()
+        print("All config files are created!")
 
 
