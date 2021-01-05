@@ -605,7 +605,7 @@ if __name__ == "__main__":
 
         # Output dir by default the same as TEMPLATES_PATH
         diffex.generate(DE_DIR_PATH)
-        print("Diff.ex directories generated")
+        print("Diff.ex directories are generated")
         exit(0)
         
     elif args.samples:
