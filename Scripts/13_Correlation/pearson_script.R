@@ -36,6 +36,20 @@ library(tictoc)
 # save correlation plot and table
 plot_cor <- function(df, title, method, out_name)
 {
+   if (dim(df)[1] == 0) {
+      message(paste0("WARNING: ", out_name, " does not have any significant/non-significant genes, table is empty, correlation plot will not be created"))
+
+      # create empty ggplot
+      rpkm_plot<-ggplot() + ggtitle(title) + theme_bw()+
+      theme_minimal()+ 
+      theme(axis.text.x = element_text(angle = 90, vjust = 1, 
+                                       size = 13, hjust = 1),
+            axis.text.y = element_text(size=13),
+            text = element_text(size=12),
+            legend.title = element_text(size=14),
+            legend.text=element_text(size=14))
+
+   } else {
    
    # create correlation matrix
    td <- df %>% 
@@ -81,29 +95,43 @@ plot_cor <- function(df, title, method, out_name)
             legend.title = element_text(size=14),
             legend.text=element_text(size=14))+
       coord_fixed()
-  
+  }
    # Save the correlation plot
    # ggsave(f,plot= rpkm_plot, device = "pdf",path= wd, width = 30, height = 30, units = "cm")
    ggsave(paste0(out_name,".pdf"),plot= rpkm_plot, device = "pdf",path= wd, width = 40, height =30, units = "cm")
-   write.table(td, file= paste0(out_name,".csv")) # keeps the rownames
+   if (dim(df)[1] != 0) {
+      write.table(td, file= paste0(out_name,".csv")) # keeps the rownames
+   }
 }
 
 plot_pca <- function(df_pca, df, title, out_names) {
-   # PCA plot
-   pca <- autoplot(prcomp(df_pca), data= df, colour= "label", label = F, label.size = 6)
 
-   nb.cols <- length(unique(df$label))
-   mycolors <- colorRampPalette(brewer.pal(8, "Dark2"))(nb.cols)
+   if (dim(df_pca)[2] == 0) {
+      message(paste0("WARNING: ", out_names, " does not have any significant/non-significant genes, table is empty, PCA will not be created"))
 
-   pca <- pca + 
-      ggtitle(title)+
-      geom_label_repel(aes(label = rownames(df_pca), color = label), size = 6)+
-      # scale_colour_brewer(type="qual", palette = 2)+
-      scale_fill_manual(values = mycolors) +
-      theme_bw()+
+      # create empty ggplot
+      pca<-ggplot() + ggtitle(title) + theme_bw()+
       theme(text = element_text(size=14),
             legend.title = element_text(size=15),
             legend.text=element_text(size=15))
+   } else {
+
+      # PCA plot
+      pca <- autoplot(prcomp(df_pca), data= df, colour= "label", label = F, label.size = 6)
+
+      nb.cols <- length(unique(df$label))
+      mycolors <- colorRampPalette(brewer.pal(8, "Dark2"))(nb.cols)
+
+      pca <- pca + 
+      	  ggtitle(title)+
+      	  geom_label_repel(aes(label = rownames(df_pca), color = label), size = 6)+
+      	  # scale_colour_brewer(type="qual", palette = 2)+
+      	  scale_fill_manual(values = mycolors) +
+      	  theme_bw()+
+      	  theme(text = element_text(size=14),
+          	       legend.title = element_text(size=15),
+            	       legend.text=element_text(size=15))
+   }
    
    ggsave(paste0(out_names,".pdf"),plot= pca, device = "pdf",path= wd, width = 50, height =30, units = "cm")   
 
