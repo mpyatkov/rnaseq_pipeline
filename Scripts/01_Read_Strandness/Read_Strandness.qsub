@@ -61,6 +61,11 @@ echo "Get R1 and R2"
 R1=${DATASET_DIR}/${SAMPLE_ID}/*_1.f*q.gz
 R2=${DATASET_DIR}/${SAMPLE_ID}/*_2.f*q.gz
 
+# if fastq files do not exist the following commands should raise
+# an error and script will be interrupted
+[ -e "$R1" ] && echo "file $R1 found" || echo "file $R1 not found" && exit 1
+[ -e "$R2" ] && echo "file $R2 found" || echo "file $R2 not found" && exit 1
+
 echo "Make a subset of R1,R2"
 # get only 100000 lines from each fastq file
 # TODO: to figure out why we need to switch off the control under pipes here
