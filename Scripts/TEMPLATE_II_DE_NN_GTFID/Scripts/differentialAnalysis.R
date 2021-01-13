@@ -54,7 +54,8 @@ setwd(READ_COUNT_FOLDER)
 # get files with counts ex. Male_G186_M1
 f_cond_files <- function(p){
   # r <- list.files(pattern = paste0(p,"_[[:alnum:]*][_{1}]"))
-  r <- list.files(pattern = paste0("^",p,"_[[:alnum:]]*_[[:alnum:]]*$"))
+  # r <- list.files(pattern = paste0("^",p,"_[[:alnum:]]*_[[:alnum:]]*$"))
+  r <- list.files()
   r <- r[!grepl("summary", r)]
   r
 }
