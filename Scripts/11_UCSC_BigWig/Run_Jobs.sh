@@ -32,8 +32,6 @@ echo "Start of variable list:"
 echo "-----------------------"
 echo "DATASET_DIR:"
 echo ${DATASET_DIR}
-echo "STRAND_RULE:"
-echo ${STRAND_RULE}
 echo "BU_User:"
 echo ${BU_USER}
 echo "VM_DIR_UCSC:"

@@ -31,6 +31,7 @@ eval "$(../00_Setup_Pipeline/01_Pipeline_Setup.py --export)"
 set +eu
 module load miniconda
 conda activate --stack ${CONDA_DIR}/samtools
+conda activate --stack ${CONDA_DIR}/rseqc
 # conda activate RNAseq
 set -eu
 
