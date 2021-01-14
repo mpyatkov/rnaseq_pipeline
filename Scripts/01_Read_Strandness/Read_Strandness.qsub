@@ -63,8 +63,8 @@ R2=${DATASET_DIR}/${SAMPLE_ID}/*_2.f*q.gz
 
 # if fastq files do not exist the following commands should raise
 # an error and script will be interrupted
-[ -e "$R1" ] && echo "file $R1 found" || echo "file $R1 not found" && exit 1
-[ -e "$R2" ] && echo "file $R2 found" || echo "file $R2 not found" && exit 1
+# [ -e "$R1" ] && echo "file $R1 found" || echo "file $R1 not found" && exit 1
+# [ -e "$R2" ] && echo "file $R2 found" || echo "file $R2 not found" && exit 1
 
 echo "Make a subset of R1,R2"
 # get only 100000 lines from each fastq file
