@@ -15,31 +15,63 @@ set -o nounset
 # export all variables from Pipeline_Setup.conf
 eval "$(../00_Setup_Pipeline/01_Pipeline_Setup.py --export)"
 
-# automated strand detection
-if [ ${STRANDEDNESS} -eq 3 ]; then
-    export_file="${DATASET_DIR}/${SAMPLE_ID}/Read_Strandness/${SAMPLE_ID}_export.sh"
-    if [[ -f "${export_file}" ]]; then
-	# re-export STRANDEDNESS
-	source ${export_file}
-	echo "Auto: $STRANDEDNESS"
-    else
-	echo "Error: cannot find file: ${export_file}"
-	echo "To use automatic strand detection, you must complete step 01_Read_Strandness"
-	exit 1
+function get_strand_rule() {
+    local STRANDEDNESS=$1
+    local DDIR=$2
+    local SID=$3
+    
+    if [ ${STRANDEDNESS} -eq 3 ]; then
+	export_file="${DDIR}/${SID}/Read_Strandness/${SID}_export.sh"
+	if [[ -f "${export_file}" ]]; then
+	    # re-export STRANDEDNESS
+	    source ${export_file}
+	    # echo "Auto: $STRANDEDNESS"
+	else
+	    echo "Error: cannot find file: ${export_file}"
+	    echo "To use automatic strand detection, you must complete step 01_Read_Strandness"
+	    exit 1
+	fi
     fi
-fi
 
-# calculate STRAND_RULE from STRANDEDNESS
-if [ ${STRANDEDNESS} -eq 0 ]
-then
-    STRAND_RULE="none"
-elif [ ${STRANDEDNESS} -eq 2 ]
-then
-    STRAND_RULE="1++,1--,2+-,2-+"
-elif [ ${STRANDEDNESS} -eq 1 ]
-then
-    STRAND_RULE="1+-,1-+,2++,2--"
-fi
+    if [ ${STRANDEDNESS} -eq 0 ]
+    then
+	STRAND_RULE="none"
+    elif [ ${STRANDEDNESS} -eq 2 ]
+    then
+	STRAND_RULE="1++,1--,2+-,2-+"
+    elif [ ${STRANDEDNESS} -eq 1 ]
+    then
+	STRAND_RULE="1+-,1-+,2++,2--"
+    fi
+    
+    echo ${STRAND_RULE}
+}
+
+# # automated strand detection
+# if [ ${STRANDEDNESS} -eq 3 ]; then
+#     export_file="${DATASET_DIR}/${SAMPLE_ID}/Read_Strandness/${SAMPLE_ID}_export.sh"
+#     if [[ -f "${export_file}" ]]; then
+# 	# re-export STRANDEDNESS
+# 	source ${export_file}
+# 	echo "Auto: $STRANDEDNESS"
+#     else
+# 	echo "Error: cannot find file: ${export_file}"
+# 	echo "To use automatic strand detection, you must complete step 01_Read_Strandness"
+# 	exit 1
+#     fi
+# fi
+
+# # calculate STRAND_RULE from STRANDEDNESS
+# if [ ${STRANDEDNESS} -eq 0 ]
+# then
+#     STRAND_RULE="none"
+# elif [ ${STRANDEDNESS} -eq 2 ]
+# then
+#     STRAND_RULE="1++,1--,2+-,2-+"
+# elif [ ${STRANDEDNESS} -eq 1 ]
+# then
+#     STRAND_RULE="1+-,1-+,2++,2--"
+# fi
 
 SCRIPT_DIR="$(pwd)"
 
@@ -53,8 +85,8 @@ echo "DATASET_LABEL:"
 echo ${DATASET_LABEL}
 echo "BU_USER:"
 echo ${BU_USER}
-echo "STRAND_RULE:"
-echo ${STRAND_RULE}
+# echo "STRAND_RULE:"
+# echo ${STRAND_RULE}
 echo "-----------------------"
 echo "End of variable list"
 echo "-----------------------"
@@ -148,6 +180,8 @@ do
     Sample_ID=${samples[i+1]}
     Description=${samples[i+2]}
     Color=${samples[i+3]}
+
+    STRAND_RULE=$(get_strand_rule $STRANDEDNESS ${DATASET_DIR} ${Sample_ID})
 
     #visibility options for bw files:
     #full, dense, hide
@@ -285,6 +319,8 @@ do
     Description=${samples[i+2]}
     Color=${samples[i+3]}
 
+    STRAND_RULE=$(get_strand_rule $STRANDEDNESS ${DATASET_DIR} ${Sample_ID})
+    
     #---------------------------
     #visibility options for bw files:
     #full, dense, hide
@@ -407,6 +443,8 @@ do
     Description=${samples[i+2]}
     Color=${samples[i+3]}
 
+    STRAND_RULE=$(get_strand_rule $STRANDEDNESS ${DATASET_DIR} ${Sample_ID})
+    
     #---------------------------
     #visibility options for bw files:
     #full, dense, hide
