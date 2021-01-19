@@ -505,6 +505,10 @@ echo '#-------------------------------------------------------------------------
 #echo 'Check out '${OUTPUT_FILE_PileUp}'!'
 #echo 'Check out '${OUTPUT_FILE_Wiggle}'!'
 #echo 'Check out '${OUTPUT_FILE_Wiggle_autoON}'!'
-echo 'Check out '${OUTPUT_DIR}
+
+# copy track to ${VM_DIR_UCSC}
+cp -a ${OUTPUT_DIR} ${VM_DIR_UCSC}
+
+echo "Check out ${OUTPUT_DIR} or ${VM_DIR_UCSC}/$(basename ${OUTPUT_DIR})"
 echo '#--------------------------------------------------------------------------'
 ##################################################################################
