@@ -65,12 +65,31 @@ set -eu
 
 # module load fastqc
 
-# copy user input data files to scratch
-# Copy over the *R1*.fq.gz file(s):
-cp ${DATASET_DIR}/${sample_id}/*_1*.f*q.gz .
+# get correct reads
+function get_fastq_by_read_number(){
+    local READ_NUMBER=$1
+    R=$(find ${DATASET_DIR}/${sample_id} \( -name "*_${READ_NUMBER}.f*q.gz" -o -name "*R${READ_NUMBER}*.f*q.gz" \) | head -n1)
+    echo $R
+}
 
-# Copy over the *R2*.fq.gz file(s):
-cp ${DATASET_DIR}/${sample_id}/*_2*.f*q.gz .
+# read 1 and 2
+R1=$(get_fastq_by_read_number 1)
+R2=$(get_fastq_by_read_number 2)
+
+# if fastq files do not exist the following commands should raise
+# an error and script will be interrupted
+for f in $R1; do
+    [ -e "$f" ] && echo "R1 file $f exists" || (echo "ERROR: R1 file $f does not exist"; exit 1)
+done
+
+for f in $R2; do
+    [ -e "$f" ] && echo "R2 file $f exists" || (echo "ERROR: R2 file $f does not exist"; exit 1) 
+done
+
+# copy R1 to TMPDIR
+cp $R1 .
+# copy R2 to TMPDIR
+cp $R2 .
 
 # Create FASTQC output folder to store files:
 fastqc_dir="${sample_id}_FASTQC"

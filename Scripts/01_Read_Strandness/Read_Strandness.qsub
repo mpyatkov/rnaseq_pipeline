@@ -56,15 +56,43 @@ set -eu
 # module load rseqc
 # module load hisat2
 
+# get reads using the following wildcard: {*_1.f*q.gz,*R1*.f*q.gz}
+function get_fastq_by_read_number(){
+    local READ_NUMBER=$1
+
+    R=$(find ${DATASET_DIR}/${SAMPLE_ID} \( -name "*_${READ_NUMBER}.f*q.gz" -o -name "*R${READ_NUMBER}*.f*q.gz" \) | head -n1)
+    
+    echo $R
+}
+
 # get first and second read files
+
 echo "Get R1 and R2"
-R1=${DATASET_DIR}/${SAMPLE_ID}/*_1.f*q.gz
-R2=${DATASET_DIR}/${SAMPLE_ID}/*_2.f*q.gz
+# R1=${DATASET_DIR}/${SAMPLE_ID}/*_1.f*q.gz
+# R2=${DATASET_DIR}/${SAMPLE_ID}/*_2.f*q.gz
+# R1=${DATASET_DIR}/${SAMPLE_ID}/{*_1.f*q.gz,*R1*.f*q.gz}
+# R2=${DATASET_DIR}/${SAMPLE_ID}/{*_2.f*q.gz,*R2*.f*q.gz}
+
+R1=$(get_fastq_by_read_number 1)
+R2=$(get_fastq_by_read_number 2)
+
+
+# show all fastq files
+echo "first reads"
+ls -l $R1
+echo "second reads"
+ls -l $R2
 
 # if fastq files do not exist the following commands should raise
 # an error and script will be interrupted
-# [ -e "$R1" ] && echo "file $R1 found" || echo "file $R1 not found" && exit 1
-# [ -e "$R2" ] && echo "file $R2 found" || echo "file $R2 not found" && exit 1
+
+for f in $R1; do
+    [ -e "$f" ] && echo "file $f exists" || (echo "ERROR: file $f does not exist"; exit 1)
+done
+
+for f in $R2; do
+    [ -e "$f" ] && echo "file $f exists" || (echo "ERROR: file $f does not exist"; exit 1) 
+done
 
 echo "Make a subset of R1,R2"
 # get only 100000 lines from each fastq file

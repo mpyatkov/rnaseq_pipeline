@@ -117,11 +117,38 @@ cd "${TMPDIR}"
 
 echo "Print scratch directory location: ${TMPDIR}"
 
+# get correct reads
+function get_fastq_by_read_number(){
+    local READ_NUMBER=$1
+    R=$(find ${DATASET_DIR}/${SAMPLE_ID} \( -name "*_${READ_NUMBER}.f*q.gz" -o -name "*R${READ_NUMBER}*.f*q.gz" \) | head -n1)
+    echo $R
+}
+
+R1=$(get_fastq_by_read_number 1)
+R2=$(get_fastq_by_read_number 2)
+
+# if fastq files do not exist the following commands should raise
+# an error and script will be interrupted
+for f in $R1; do
+    [ -e "$f" ] && echo "R1 file $f exists" || (echo "ERROR: R1 file $f does not exist"; exit 1)
+done
+
+for f in $R2; do
+    [ -e "$f" ] && echo "R2 file $f exists" || (echo "ERROR: R2 file $f does not exist"; exit 1) 
+done
+
+
 # copy user input data files to scratch
-#Copy over the *R1*.fq.gz file(s):
-cp ${DATASET_DIR}/${SAMPLE_ID}/*_1*.f*q.gz .
-#Copy over the *R2*.fq.gz file(s):
-cp ${DATASET_DIR}/${SAMPLE_ID}/*_2*.f*q.gz .
+# copy R1 to TMPDIR
+cp $R1 .
+# copy R2 to TMPDIR
+cp $R2 .
+
+# #Copy over the *R1*.fq.gz file(s):
+# cp ${DATASET_DIR}/${SAMPLE_ID}/*_1*.f*q.gz .
+# #Copy over the *R2*.fq.gz file(s):
+# cp ${DATASET_DIR}/${SAMPLE_ID}/*_2*.f*q.gz .
+
 #Need the Bowtie2 index:
 cp -r ${BOWTIE2INDEX_DIR}/Bowtie2Index .
 #Copy RefSeq_GeneBody.gtf
@@ -133,13 +160,19 @@ cp "${GTF_FILES_DIR}/${TOPHAT_ANNOTATION_FILE}" .
 #<[reads1_2,...readsN_2]> 	A comma-separated list of files containing reads in FASTA or FASTA format. Only used when running TopHat with paired end reads, and contains the *_2 ("right") set of files. The *_2 files MUST appear in the same order as the *_1 files. 
 #-----------------------------------------------------
 
-#We need a comma separated list for the *_1 ("left") set of files:
+# We need a comma separated list for the *_1 ("left") set of files:
+# TODO: I suppose that we have only 1 file for left reads and 1 file for right reads
+# make lists for left and right reads
 
-left_list=$(find . -name "*_1*.f*q.gz" | xargs -n1 basename | paste -s -d ",")
-right_list=$(find . -name "*_2*.f*q.gz" | xargs -n1 basename | paste -s -d ",")
+# left_list=$(find . -name "*_1*.f*q.gz" | xargs -n1 basename | paste -s -d ",")
+# right_list=$(find . -name "*_2*.f*q.gz" | xargs -n1 basename | paste -s -d ",")
+
+left_list=$(basename $R1)
+right_list=$(basename $R2)
 
 echo "left_list: ${left_list}"
 echo "right_list: ${right_list}"
+
 # Set the standard deviation for the ${DISTANCE_BT_READ_PAIR}
 # --mate-std-dev <int>
 # The standard deviation for the distribution on inner distances between mate
