@@ -36,7 +36,8 @@ library(tictoc)
 # save correlation plot and table
 plot_cor <- function(df, title, method, out_name)
 {
-   if (dim(df)[1] == 0) {
+   WRITE_FILE <- TRUE
+   if (dim(df)[1] <= 1) {
       message(paste0("WARNING: ", out_name, " does not have any significant/non-significant genes, table is empty, correlation plot will not be created"))
 
       # create empty ggplot
@@ -48,7 +49,7 @@ plot_cor <- function(df, title, method, out_name)
             text = element_text(size=12),
             legend.title = element_text(size=14),
             legend.text=element_text(size=14))
-
+      WRITE_FILE <- FALSE		
    } else {
    
    # create correlation matrix
@@ -56,7 +57,6 @@ plot_cor <- function(df, title, method, out_name)
       drop_na() %>% 
       as.matrix() %>% 
       cor(., method = method) 
-   
    # remove duplicated rows and columns
    duplicated.columns <- duplicated(t(td))
    duplicated.rows <- duplicated(td)
@@ -99,14 +99,14 @@ plot_cor <- function(df, title, method, out_name)
    # Save the correlation plot
    # ggsave(f,plot= rpkm_plot, device = "pdf",path= wd, width = 30, height = 30, units = "cm")
    ggsave(paste0(out_name,".pdf"),plot= rpkm_plot, device = "pdf",path= wd, width = 40, height =30, units = "cm")
-   if (dim(df)[1] != 0) {
+   if (WRITE_FILE) {
       write.table(td, file= paste0(out_name,".csv")) # keeps the rownames
    }
 }
 
 plot_pca <- function(df_pca, df, title, out_names) {
 
-   if (dim(df_pca)[2] == 0) {
+   if (dim(df_pca)[2] <= 1) {
       message(paste0("WARNING: ", out_names, " does not have any significant/non-significant genes, table is empty, PCA will not be created"))
 
       # create empty ggplot
@@ -377,7 +377,8 @@ if(!is.na(list.filenames.HT[1])){
       cor_3plot(list.filenames.HT[i], "pearson", EXTARGS, number)
       cor_3plot(list.filenames.HT[i], "spearman", EXTARGS, number)
    }
-   toc()   
+   toc()
+   print("DONE")
 } else{
    print("No  files in the folder !!")
    
