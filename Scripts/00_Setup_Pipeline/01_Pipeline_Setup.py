@@ -157,15 +157,26 @@ class SampleConfig:
         return result
 
     def groups(self):
-        return set(map(lambda s: s.Group, self.samples))
+        return sorted(set(map(lambda s: s.Group, self.samples)))
 
-    def samplesToBash(self):
+    # def groupsToBash(self):
+    #     return " ".join(self.groups())
+    
+    def samplesToBash(self, group=None):
         # only Sample_DIR, Sample_ID, Description
         result = []
-        for sample in self.samples:
+        if group:
+            SAMPLES = self.samplesByGroup(group)
+        else:
+            SAMPLES=self.samples
+            
+        for sample in SAMPLES:
             result.append(sample.Sample_DIR)
             result.append(sample.Sample_ID)
-            result.append(sample.Description)
+            if group:
+                result.append(sample.Condition_Name)
+            else:
+                result.append(sample.Description)
         return " ".join(result)
 
     def samplesWithColorToBash(self):
@@ -528,8 +539,17 @@ if __name__ == "__main__":
                         help="return bash array of triples (DIR,ID,DESCR)",
                         action="store_true")
 
+    parser.add_argument("--samples_by_group",
+                        nargs=1,
+                        metavar=('group'),
+                        help="return bash array of samples by group name (ex. A, B, ..)")
+    
     parser.add_argument("-c", "--samples_with_color",
                         help="return bash array of (DIR,ID,DESCR,COLOR)",
+                        action="store_true")
+
+    parser.add_argument("--groups",
+                        help="return bash array of all groups from Sample_Labels.txt",
                         action="store_true")
 
     parser.add_argument("-f", "--gtf_annotation_and_counter",
@@ -611,9 +631,19 @@ if __name__ == "__main__":
     elif args.samples:
         print(sample_config.samplesToBash())
         exit(0)
-        
+
+    elif args.samples_by_group:
+        print(sample_config.samplesToBash(args.samples_by_group[0]))
+        # sample_config.samplesByGroup(args.samples_by_group[0])
+        # print(" ".join(sample_config.samplesByGroup(args.samples_by_group[0])))
+        exit(0)
+
     elif args.samples_with_color:
         print(sample_config.samplesWithColorToBash())
+        exit(0)
+
+    elif args.groups:
+        print(" ".join(sample_config.groups()))
         exit(0)
 
     elif args.gtf_annotation_and_counter:
