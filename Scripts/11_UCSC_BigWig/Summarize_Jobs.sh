@@ -33,9 +33,6 @@ echo "End of variable list"
 echo "-----------------------"
 
 ##################################################################################
-# INPUT_DIR=$(pwd)
-# cd $INPUT_DIR
-
 # samples contains array of (sample_dir, sample_id, description) for each sample
 samples=($("${SETUP_PIPELINE_DIR}"/01_Pipeline_Setup.py --samples))
 
@@ -66,12 +63,20 @@ do
     set +eu
     cp ${DATASET_DIR}/${Sample_ID}/tophat2/$Sample_ID'_primary_unique.bam' ${VM_DIR_UCSC}
     cp ${DATASET_DIR}/${Sample_ID}/tophat2/$Sample_ID'_primary_unique.bam.bai' ${VM_DIR_UCSC}
-    cp ${DATASET_DIR}/${Sample_ID}/UCSC_BigWig/*'.bw' ${VM_DIR_UCSC}
+    cp ${DATASET_DIR}/${Sample_ID}/UCSC_BigWig/*.bw ${VM_DIR_UCSC}
     set -eu
 done 
-# cd $INPUT_DIR
 
+# move all combined tracks to VM_DIR_UCSC
+set +eu
+mv *combined*.bw ${VM_DIR_UCSC}
+set -eu
+
+# Generate tracks for singular and combined bigwig files
 ./Generate_Tracks.sh
+
+# copy track to ${VM_DIR_UCSC}
+cp -a UCSC_Track_Lines ${VM_DIR_UCSC}
 
 echo 'UCSC files for data visualization should now be copied to the VM.'
 echo '#--------------------------------------------------------------------------'

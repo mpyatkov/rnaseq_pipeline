@@ -59,7 +59,11 @@ do
     Description=${samples[i+2]}
     (set -x; qsub -N "${job_name}_${Sample_ID}" -P "${PROJECT}" -l h_rt="${TIME_LIMIT}" UCSC_BigWig.qsub ${Sample_ID} ${DATASET_DIR} ${BU_USER} ${VM_DIR_UCSC} ${SCRIPT_DIR})
 
-done 
+done
+
+# waiting for competion of previous jobs and starting combining files creation
+qsub -hold_jid "${job_name}*" -N "${job_name}_Combined" -P "${PROJECT}" -l h_rt="${TIME_LIMIT}" Generate_combined_bigwig.sh
+
 #Remove the temp file:
 
 echo "End of qsub commands"
