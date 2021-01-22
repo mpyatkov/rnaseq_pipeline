@@ -194,7 +194,7 @@ generate_tracks $fname $bwvisual $autoscale $bamvisual $leftlimit $rightlimit
 OUTPUT_FILE_Wiggle=${OUTPUT_DIR}/${DATASET_LABEL}'_Tracks_Wiggle.txt'
 rm -rf ${OUTPUT_FILE_Wiggle}
 
-echo 'Start *_Tracks_Wiggle.txt'
+echo 'Start *_Tracks_Wiggle_100.txt'
 
 print_header ${OUTPUT_FILE_Wiggle}
 
