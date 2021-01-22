@@ -112,3 +112,5 @@ for group in "${groups[@]}"; do
 
 done
 
+echo "-----"
+echo "IAMOK"
