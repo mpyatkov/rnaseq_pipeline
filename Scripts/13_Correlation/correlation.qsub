@@ -50,6 +50,9 @@ function calc_correlation()
     rm -rf ${OUTDIR} && mkdir -p ${OUTDIR}
     cp ${SCRIPT_DIR}/*.R ./${OUTDIR}
 
+    # copy file with correct group names for PCA
+    cp SAMPLE_CONDNAME.tsv ./${OUTDIR}
+
     pushd ${OUTDIR}
     
     rm -rf PCA && mkdir -p PCA
@@ -91,6 +94,7 @@ function calc_correlation()
     (cd PCA; combined_pdf ${OUTNAME}_PCA_Combined.pdf)
 
     rm ./*.R
+    rm ./SAMPLE_CONDNAME.tsv
     popd
 }
 
