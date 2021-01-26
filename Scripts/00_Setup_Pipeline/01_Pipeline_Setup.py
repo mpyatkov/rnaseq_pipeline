@@ -24,7 +24,6 @@ VENN_CONFIG = "venn_comparisons.txt"
 
 DEFAULT_VENN_CONFIG = """
 venn_comparisons
-1;2
 """.strip()
 
 DEFAULT_COMPARISON_CONFIG = """
