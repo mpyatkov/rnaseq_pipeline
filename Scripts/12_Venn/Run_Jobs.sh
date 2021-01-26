@@ -40,6 +40,12 @@ rm -rf ${OUTDIR} && mkdir -p ${OUTDIR}
 # get number of venn comparisons
 venn_number=($("${SETUP_PIPELINE_DIR}"/01_Pipeline_Setup.py --venn_number))
 
+# do not continue this step if configuration file is empty
+if [ $venn_number -eq 0 ]; then
+    echo "WARNING: venn_config file is empty. This step will be skipped."
+    exit 0
+fi
+
 # for pairwise comparison (ex. 09a_1 vs 09a_2,...)
 venn_for_one_gtf_set() {
     local DE_INDEX=$1
