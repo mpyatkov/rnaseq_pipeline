@@ -48,16 +48,16 @@ C;      E0771_4HC_Ab_T72;    G180_M9;     G180_M9;    E0771_5uM_4HC_AntiIFNAR_72
 DEFAULT_PIPELINE_CONFIG = """
 [USER]
 # Setup dataset directory
-DATASET_DIR=/restricted/projectnb/waxmanlab/Cam/G180
+DATASET_DIR=PATH_TO_PROJECT
 
 # Setup dataset label
-DATASET_LABEL=G180
+DATASET_LABEL=DEFAULT_LABEL
 
-# Setup user name
+# Setup BU login user name
 BU_USER=CHANGE_USER_NAME
 
 # Setup project name. Choices: (wax-dk,waxmanlab,wax-es)
-PROJECT=wax-dk
+PROJECT=wax-es
 
 [STEPS]
 # Bioanalyzer length (from Bioanalyzer tracings)
@@ -519,6 +519,21 @@ class DiffExpression():
 def generate_example(config_path, default_config):
     if not os.path.exists(config_path):
         print(f"Generating example config file: {os.path.basename(config_path)}")
+
+        import getpass
+        import os.path as op
+        
+        # change user in Pipeline_Setup.conf
+        default_config=default_config.replace("CHANGE_USER_NAME", getpass.getuser())
+
+        # change DATASET_DIR in Pipeline_Setup.conf
+        PROJPATH=op.abspath(op.join(__file__, op.pardir, op.pardir, op.pardir))
+        default_config = default_config.replace("PATH_TO_PROJECT", PROJPATH)
+
+        # change project name
+        PROJECT_LABEL=os.path.basename(PROJPATH)
+        default_config = default_config.replace("DEFAULT_LABEL", PROJECT_LABEL)
+        
         with open(config_path, "w") as conf:
             conf.write(default_config)
 
