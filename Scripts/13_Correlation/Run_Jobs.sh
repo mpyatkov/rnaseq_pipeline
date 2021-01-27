@@ -5,12 +5,12 @@ set -o pipefail
 set -o nounset
 
 #Clean directory
-# rm -rf ./logs && mkdir -p ./logs
+rm -rf ./logs && mkdir -p ./logs
 
 # export all variables from Pipeline_Setup.conf
 eval "$(../00_Setup_Pipeline/01_Pipeline_Setup.py --export)"
 
-# rm -rf Job_Summary && mkdir -p Job_Summary
+rm -rf Job_Summary && mkdir -p Job_Summary
 
 # create table (SAMPLE_ID \t Condition_Name \t Condition_Name_SAMPLE_ID)
 SAMPLE_FILE="SAMPLE_CONDNAME.tsv"
