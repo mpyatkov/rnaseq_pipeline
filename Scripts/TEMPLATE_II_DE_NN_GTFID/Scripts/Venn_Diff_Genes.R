@@ -101,10 +101,10 @@ feature_counted <- "Intronic_Only"
 
 #End of if statement
 #print(feature_counted)
-Count_Program <- ifelse(grepl("featureCounts",File1_Name),"featureCounts","HTSeq")
+# Count_Program <- ifelse(grepl("featureCounts",File1_Name),"featureCounts","HTSeq")
 #print(Count_Program)
 #Once I get each part; paste them together
-File1_Label <- paste(Direction, R_Package,feature_counted,  Count_Program, sep=".")
+File1_Label <- paste(Direction, R_Package,feature_counted, sep=".")
 print(File1_Label)
 
 #Read in File2
@@ -150,10 +150,10 @@ feature_counted <- "Intronic_Only"
 
 #End of if statement
 #print(feature_counted)
-Count_Program <- ifelse(grepl("featureCounts",File2_Name),"featureCounts","HTSeq")
+# Count_Program <- ifelse(grepl("featureCounts",File2_Name),"featureCounts","HTSeq")
 #print(Count_Program)
 #Once I get each part; paste them together
-File2_Label <- paste(Direction, R_Package,feature_counted,  Count_Program, sep=".")
+File2_Label <- paste(Direction, R_Package,feature_counted, sep=".")
 print(File2_Label)
 
 #Sort data_frames by gene symbol

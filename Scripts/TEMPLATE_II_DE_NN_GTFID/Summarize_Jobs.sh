@@ -212,6 +212,11 @@ do
     cd ..
 done
 
+# remove not required anymore segex files
+find . -name "*_forSEGEXUpload*.txt" | grep Output | xargs -n1 rm -rf 
+
+# remove not required Venn diagrams
+find . -name "*_Venn_*.txt" | grep Output | xargs -n1 rm -rf 
 
 # TODO: remove outdated code
 # this code is not required anymore, all venn diagrams functionaly
