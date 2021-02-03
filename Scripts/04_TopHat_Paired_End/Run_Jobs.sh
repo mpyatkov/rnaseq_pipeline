@@ -22,10 +22,6 @@ mkdir -p ./logs
 # export all variables from Pipeline_Setup.conf
 eval "$(../00_Setup_Pipeline/01_Pipeline_Setup.py --export)"
 
-# calculate distance_bt_read_pair from BIOANALYZER_LEN, ADAPTOR_LEN, READ_LEN
-fragment_len=$(echo "scale=4;${BIOANALYZER_LEN}-(2*${ADAPTOR_LEN})" | bc)
-distance_bt_read_pair=$(echo "scale=4;${fragment_len}-(2*${READ_LEN})" | bc)
-
 # dir_name and job_name are required in the next steps
 dir_name=$(basename $(pwd))
 step_num=$(echo ${dir_name} | cut -d'_' -f 1)
@@ -41,7 +37,7 @@ do
     sample_id=${samples[i+1]}
     # description=${samples[i+2]}
     
-    (set -x; qsub -N "${job_name}_${sample_id}" -P "${PROJECT}" -l h_rt="${TIME_LIMIT}" TopHat_Paired_End.qsub "${sample_id}" "${distance_bt_read_pair}")
+    (set -x; qsub -N "${job_name}_${sample_id}" -P "${PROJECT}" -l h_rt="${TIME_LIMIT}" Paired_End.qsub "${sample_id}")
 done
 
 echo "End of TOPHAT commands"

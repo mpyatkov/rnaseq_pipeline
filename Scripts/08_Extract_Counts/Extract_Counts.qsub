@@ -119,7 +119,7 @@ SCRIPT_DIR="$(pwd)"
 cd "${TMPDIR}"
 
 # copy user input data files to scratch
-cp "${DATASET_DIR}/${SAMPLE_ID}/tophat2/${SAMPLE_ID}_primary_unique.bam" .
+cp "${DATASET_DIR}/${SAMPLE_ID}/STAR/${SAMPLE_ID}_primary_unique.bam" .
 
 # copy gtf file (annotation file):
 cp "${GTF_FILES_DIR}/${ANNOTATION_FILE}" .
