@@ -62,9 +62,9 @@ plot_cor <- function(df, title, method, out_name)
       cor(., method = method) 
    
    # remove duplicated rows and columns
-   duplicated.columns <- duplicated(t(td))
-   duplicated.rows <- duplicated(td)
-   td <- td[!duplicated.rows,!duplicated.columns]
+   # duplicated.columns <- duplicated(t(td))
+   # duplicated.rows <- duplicated(td)
+   # td <- td[!duplicated.rows,!duplicated.columns]
    
    # get only lower triangle of matrix
    td[upper.tri(td)] <- NA   
