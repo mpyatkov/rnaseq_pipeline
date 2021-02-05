@@ -32,7 +32,7 @@ then
     echo "Usage: ./02_Run_Pipeline.sh <option>"
     echo "<option> = FULL - full pipeline run"
     echo "<option> = start_step (example. 05) start from specific step"
-    echo "<option> = DEONLY recalculate DE and summary directories (09abcd,13,14)"
+    echo "<option> = DEONLY recalculate DE and summary directories (09abcd,12,13,14)"
     echo "<option> = VENNONLY recalculate VENN (12)"
     echo "See 02_Run_Pipeline.sh for details."	
     exit 0
