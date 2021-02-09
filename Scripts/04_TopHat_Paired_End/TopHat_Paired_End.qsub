@@ -27,8 +27,8 @@ eval "$(../00_Setup_Pipeline/01_Pipeline_Setup.py --export)"
 
 set +eu
 module load miniconda
+conda activate --stack ${CONDA_DIR}/hisat2
 conda activate --stack ${CONDA_DIR}/samtools_old # 0.1.19
-conda activate --stack ${CONDA_DIR}/tophat # 0.1.19
 set -eu
 
 # module load samtools/0.1.19
