@@ -47,7 +47,7 @@ do
         sample_id=${samples[j+1]}
         description=${samples[j+2]}
 
-        pushd "${DATASET_DIR}/${sample_id}/tophat2"
+        pushd "${DATASET_DIR}/${sample_id}/HISAT"
 
         Aligned_Pairs=$(grep "Aligned pairs:"  "${sample_id}_align_summary.txt"  | awk '{print $3}')
         counter_DIR="${DATASET_DIR}/${sample_id}/${COUNTER}"
@@ -82,7 +82,7 @@ do
         sample_id=${samples[j+1]}
         description=${samples[j+2]}
 
-        pushd "${DATASET_DIR}/${sample_id}/tophat2"
+        pushd "${DATASET_DIR}/${sample_id}/HISAT"
 
         Aligned_Pairs=$(grep "Aligned pairs:"  "${sample_id}_align_summary.txt"  | awk '{print $3}')
         counter_DIR="${DATASET_DIR}/${sample_id}/${COUNTER}"

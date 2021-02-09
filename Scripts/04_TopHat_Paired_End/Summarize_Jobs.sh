@@ -59,7 +59,7 @@ do
     sample_id=${samples[i+1]}
     description=${samples[i+2]}
 
-    pushd "${DATASET_DIR}/${sample_id}/tophat2"
+    pushd "${DATASET_DIR}/${sample_id}/HISAT"
 
     #Summary for $output_file
     # TODO: refactor this latter

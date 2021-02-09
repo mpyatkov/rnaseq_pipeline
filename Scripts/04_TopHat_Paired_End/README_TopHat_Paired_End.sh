@@ -31,7 +31,7 @@ chmod 700 *.qsub
 grep 'elapsed' *.o*
 #---------------------------------------------------------------------------------
 #Job output:
-#A "tophat2" folder will be created within each sample specific folder
+#A "HISAT" folder will be created within each sample specific folder
 #Output file descriptions:
 #1) accepted_hits.bam -> The mapped reads for your sample. If your reads are mappable to several places, this file will have up to 20 of those.
 #2) Several mapping statistics:

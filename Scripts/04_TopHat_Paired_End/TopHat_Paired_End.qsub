@@ -13,7 +13,7 @@ set -o nounset
 #$ -S /bin/bash
 # Run on the current working directory
 #$ -cwd
-#$ -pe omp 8
+#$ -pe omp 16
 # Join standard output and error to a single file
 # change to y if you want a single qlog file
 #$ -j y
@@ -70,13 +70,13 @@ fi
 # calculate STRANDEDNESS for TOPHAT
 if [ ${STRANDEDNESS} -eq 0 ]
 then
-    tophat_strandedness="fr-unstranded"
+    tophat_strandedness="NONE"
 elif [ ${STRANDEDNESS} -eq 1 ]
 then
-    tophat_strandedness="fr-firststrand"
+    tophat_strandedness="RF"
 elif [ ${STRANDEDNESS} -eq 2 ]
 then
-    tophat_strandedness="fr-secondstrand"
+    tophat_strandedness="FR"
 fi
 
 
@@ -182,7 +182,7 @@ param_std=150
 
 #Make output dir:
 storage_dir="${DATASET_DIR}/${SAMPLE_ID}"
-output_dir="${TMPDIR}/tophat2"
+output_dir="${TMPDIR}/HISAT"
 mkdir -p "${output_dir}"
 
 echo 'List files in the scratch directory:'
@@ -198,7 +198,15 @@ echo 'Starting tophat'
 #Need the option: --no-coverage-search
 #------------------------------------------------------------------------------
 
-(set -x; tophat --no-coverage-search -o ${output_dir} -G ${TOPHAT_ANNOTATION_FILE} -p $NSLOTS --library-type ${tophat_strandedness} -r ${DISTANCE_BT_READ_PAIR} --mate-std-dev ${param_std} Bowtie2Index/genome ${left_list} ${right_list})
+# (set -x; tophat --no-coverage-search -o ${output_dir} -G ${TOPHAT_ANNOTATION_FILE} -p $NSLOTS --library-type ${tophat_strandedness} -r ${DISTANCE_BT_READ_PAIR} --mate-std-dev ${param_std} Bowtie2Index/genome ${left_list} ${right_list})
+
+# hisat2 -x ${HISAT2INDEX_DIR}/mm9.primary_assembly -1 R1.fq -2 R2.fq | samtools view -Sb - > "${SAMPLE_ID}_primary_unique.bam"
+(set -x; hisat2 -x ${HISAT2INDEX_DIR}/mm9.primary_assembly \
+       --known-splicesite-infile ${HISAT2INDEX_DIR}/genome.txt \
+       -p ${NSLOTS} \
+       --rna-strandness ${tophat_strandedness} \
+       -1 ${left_list} \
+       -2 ${right_list} | samtools view -bS - > "${output_dir}/accepted_hits.bam")
 
 echo 'Ending tophat'
 

@@ -61,8 +61,8 @@ do
     #Copy over BAM and *.bw files:
     echo 'Copying over BAM, bigWig, and bigBed files to waxmanlabvm...'
     set +eu
-    cp ${DATASET_DIR}/${Sample_ID}/tophat2/$Sample_ID'_primary_unique.bam' ${VM_DIR_UCSC}
-    cp ${DATASET_DIR}/${Sample_ID}/tophat2/$Sample_ID'_primary_unique.bam.bai' ${VM_DIR_UCSC}
+    cp ${DATASET_DIR}/${Sample_ID}/HISAT/$Sample_ID'_primary_unique.bam' ${VM_DIR_UCSC}
+    cp ${DATASET_DIR}/${Sample_ID}/HISAT/$Sample_ID'_primary_unique.bam.bai' ${VM_DIR_UCSC}
     cp ${DATASET_DIR}/${Sample_ID}/UCSC_BigWig/*.bw ${VM_DIR_UCSC}
     set -eu
 done 
