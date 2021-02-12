@@ -65,9 +65,9 @@ find ./output/13* \( -name "*.csv" -o -name "*.txt" \) | xargs rm -rf
 
 # remove from 09abc/Output* all segex files
 # TODO: refactor this, data should be processed and removed at the 09 steps
-set +eu
-find ../09* -name "*_forSEGEXUpload*.txt" | grep Output | xargs -n1 rm -rf 
-set -eu
+# set +eu
+# find ../09* -name "*_forSEGEXUpload*.txt" | grep Output | xargs -n1 rm -rf 
+# set -eu
 
 copy_feature(){
     local de_index=$1
@@ -114,6 +114,34 @@ function updown_genes() {
 
 }
 
+# make combined files for segex output
+function segex_combained_files() {
+    local DIR=$1
+
+    output_header=""
+    afnames=()
+    
+    for f in $(find . -name "*.txt" | sort -n); do
+	fname=$(basename $f)
+	subdirname=$(basename $(dirname $DIR))
+	
+	# add file name to the array
+	afnames+=($fname)
+	
+	# add file to the
+	output_header+="$fname\t\t\t\t\t\t\t"
+    done
+
+    # combine all files
+    output_fname="Combined_${subdirname}.txt"
+    tmp_fname="tmp_fname"
+    paste ${afnames[@]} > ${tmp_fname}
+
+    # add header (only in the first 'cell' for each 8 cells )
+    cat <(echo -ne ${output_header}) ${tmp_fname} > ${output_fname}
+    rm ${tmp_fname}
+}
+
 # find all 09a, 09b, 09c, ... directories
 dedirs=$(find ../09* -iname "output*" | grep -Po '09[a-z]' | sort | uniq)
 
@@ -129,5 +157,13 @@ done
 
 # mv *.txt ${Level_UP}/14_final_summary/output
 # mv *.pdf ${Level_UP}/14_final_summary/output
+
+# find all directories with segex files and process them
+for segexdir in $(find . -type d -name "Segex09*"); do
+    pushd $segexdir
+    segex_combained_files $segexdir
+    popd
+done
+
 
 echo "All files copied. Done "
