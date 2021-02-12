@@ -138,7 +138,7 @@ function segex_combained_files() {
     paste ${afnames[@]} > ${tmp_fname}
 
     # add header (only in the first 'cell' for each 8 cells )
-    cat <(echo -ne ${output_header}) ${tmp_fname} > ${output_fname}
+    cat <(echo -ne "${output_header}\n") ${tmp_fname} > ${output_fname}
     rm ${tmp_fname}
 }
 
