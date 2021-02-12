@@ -92,6 +92,14 @@ MODE=2
 # option below
 BIGWIG_ENABLE=0
 
+# This configuration file contains all specific settings for GTF files
+# used in the pipeline, like: name, enable/disable double counting,
+# etc. For all options please visit GTF_FILES_DIR directory and check
+# 9abcd.csv default config. The GTF_FILES_CONFIG parameter below
+# combines GTF_FILES_DIR and DEFAULT_GTF_CONFIG
+# Options: 9d.csv, 9abcd.csv
+DEFAULT_GTF_CONFIG=9d.csv
+
 [SYSTEM]
 
 # The location of the GTF files (by default you should have access to wax-es)
@@ -101,7 +109,7 @@ GTF_FILES_DIR=/projectnb/wax-es/routines/GTF_Files_default
 # files used in this pipeline. If you would like to use custom configuration
 # file just copy the default file in the current directory and assign the path
 # to this file. Example: GTF_FILES_CONFIG=custom.csv
-GTF_FILES_CONFIG=${SYSTEM:GTF_FILES_DIR}/default.csv
+GTF_FILES_CONFIG=${SYSTEM:GTF_FILES_DIR}/${STEPS:DEFAULT_GTF_CONFIG}
 
 # The location of the Bowtie2 indexes, at the moment it is only indexes for mouse mm9
 # assembly
