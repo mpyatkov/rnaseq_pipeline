@@ -100,6 +100,11 @@ BIGWIG_ENABLE=0
 # Options: 9d.csv, 9abcd.csv
 DEFAULT_GTF_CONFIG=9d.csv
 
+# Default aligner, options:
+# 0 - TopHat
+# 1 - STAR
+DEFAULT_ALIGNER=1
+
 [SYSTEM]
 
 # The location of the GTF files (by default you should have access to wax-es)
@@ -122,6 +127,10 @@ CONDA_DIR=/projectnb/wax-es/routines/condaenv
 # The location of the HISAT indexes, at the moment it is only indexes for mouse mm9
 # assembly
 HISAT2INDEX_DIR=/projectnb/wax-es/routines/hisat2index
+
+# The location of the STAR indexes, at the moment it is only indexes for mouse mm9
+# assembly (ExonCollapsed_76k GTF file)
+STARINDEX_DIR=/projectnb/wax-es/routines/starindex_EC76K
 
 # special directory which will contain FASTQC reports
 VM_DIR_FASTQC=/net/waxman-server/mnt/data/waxmanlabvm_home/${USER:BU_USER}/FASTQC/${USER:DATASET_LABEL}

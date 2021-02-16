@@ -153,7 +153,7 @@ copy_files() {
 	pushd ./Input/${condfile}/
 
 	# by default we using summary file from samtools
-	cat "${Dataset_DIR}/${Sample_ID}/tophat2/${Sample_ID}_statistics_for_primary_unique_reads.txt" | \
+	cat "${Dataset_DIR}/${Sample_ID}/aligner/${Sample_ID}_statistics_for_primary_unique_reads.txt" | \
 	    grep "total" | \
 	    awk '{print $1}' > "${condname}_${Sample_ID}_summary"
 	

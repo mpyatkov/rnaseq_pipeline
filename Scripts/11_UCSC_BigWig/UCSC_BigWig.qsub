@@ -118,7 +118,7 @@ echo 'Print scratch directory location:'
 echo $TMPDIR
 echo 'Loading required modules...'
 
-cp ${Dataset_DIR}/${SAMPLE_ID}/tophat2/${SAMPLE_ID}'_primary_unique.bam' .
+cp ${Dataset_DIR}/${SAMPLE_ID}/aligner/${SAMPLE_ID}'_primary_unique.bam' .
 #Initialize INPUT_BAM:
 INPUT_BAM=${SAMPLE_ID}'_primary_unique.bam'
 

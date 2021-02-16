@@ -40,8 +40,13 @@ do
     # sample_dir=${samples[i]}
     sample_id=${samples[i+1]}
     # description=${samples[i+2]}
-    
-    (set -x; qsub -N "${job_name}_${sample_id}" -P "${PROJECT}" -l h_rt="${TIME_LIMIT}" TopHat_Paired_End.qsub "${sample_id}" "${distance_bt_read_pair}")
+    if [ ${DEFAULT_ALIGNER} -eq 0 ]; then
+	echo "TopHat runned..."
+	(set -x; qsub -N "${job_name}_${sample_id}" -P "${PROJECT}" -l h_rt="${TIME_LIMIT}" TopHat_Paired_End.qsub "${sample_id}" "${distance_bt_read_pair}")
+    else
+	echo "STAR runned..."
+	(set -x; qsub -N "${job_name}_${sample_id}" -P "${PROJECT}" -l h_rt="${TIME_LIMIT}" STAR_Paired_End.qsub "${sample_id}")
+    fi
 done
 
 echo "End of TOPHAT commands"

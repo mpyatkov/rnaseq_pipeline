@@ -182,7 +182,7 @@ param_std=150
 
 #Make output dir:
 storage_dir="${DATASET_DIR}/${SAMPLE_ID}"
-output_dir="${TMPDIR}/tophat2"
+output_dir="${TMPDIR}/aligner"
 mkdir -p "${output_dir}"
 
 echo 'List files in the scratch directory:'
