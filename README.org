@@ -8,7 +8,7 @@
 
 * Pipeline usage (will be updated)
 ** Install last version of pipeline
-This and all other steps assume that you are using *scc4* cluster .
+This and all other steps assume that you are using *scc4* cluster.
 
 Run the following command in the directory that you are going to use for RNAseq analysis:
 
