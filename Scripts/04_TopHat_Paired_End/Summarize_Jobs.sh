@@ -14,6 +14,11 @@ set -o nounset
 # export all variables from Pipeline_Setup.conf
 eval "$(../00_Setup_Pipeline/01_Pipeline_Setup.py --export)"
 
+if [ ${DEFAULT_ALIGNER} -eq 1 ]; then
+    echo "Summarizing for STAR aligner in progress..."
+    exit 0
+fi
+
 output_dir="$(pwd)/Job_Summary"
 rm -rf "${output_dir}" && mkdir -p "${output_dir}"
 
