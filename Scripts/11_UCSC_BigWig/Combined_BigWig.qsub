@@ -135,7 +135,6 @@ mv *.bw ${VM_DIR_UCSC}/COMMON/
 set -eu
 
 # generate track lines
-./Generate_Tracks.sh
-
+./UCSC_Tracks.sh
 echo "-----"
 echo "IAMOK"

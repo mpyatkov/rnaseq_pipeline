@@ -62,12 +62,12 @@ do
     Sample_DIR=${samples[i]}
     Sample_ID=${samples[i+1]}
     Description=${samples[i+2]}
-    (set -x; qsub -N "${job_name}_${Sample_ID}" -P "${PROJECT}" -l h_rt="${TIME_LIMIT}" UCSC_BigWig.qsub ${Sample_ID})
+    (set -x; qsub -N "${job_name}_${Sample_ID}" -P "${PROJECT}" -l h_rt="${TIME_LIMIT}" Individual_BigWig.qsub ${Sample_ID})
 
 done
 
 # waiting for competion of previous jobs and starting combining files creation
-qsub -hold_jid "${job_name}*" -N "${job_name}_Combined" -P "${PROJECT}" -l h_rt="${TIME_LIMIT}" Generate_combined_bigwig.sh
+qsub -hold_jid "${job_name}*" -N "${job_name}_Combined" -P "${PROJECT}" -l h_rt="${TIME_LIMIT}" Combined_BigWig.qsub
 
 #Remove the temp file:
 
