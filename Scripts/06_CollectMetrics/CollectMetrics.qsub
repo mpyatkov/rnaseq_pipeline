@@ -106,12 +106,19 @@ cp -r "$output_dir" "$storage_dir"
 
 # ----------
 
-echo "CollectRnaSeqMetrics"
-# create CollectRnaSeqMetrics output folder to store files:
-output_dir="CollectRnaSeqMetrics"
-mkdir -p "${output_dir}"
-(set -x; picard CollectRnaSeqMetrics REF_FLAT=genes_refFlat RIBOSOMAL_INTERVALS=rRNA_intervalList_sorted STRAND="${strand_specificity}" INPUT="${input_bam}" OUTPUT="${output_dir}/${SAMPLE_ID}_metrics")
-cp -r ${output_dir} ${storage_dir}
+# echo "CollectRnaSeqMetrics"
+# # create CollectRnaSeqMetrics output folder to store files:
+# output_dir="CollectRnaSeqMetrics"
+# mkdir -p "${output_dir}"
+
+# # TODO: temporary patch, we changed default GTF file from RefSeq24k to RefSeqLncRNA76K, so we need to change input files
+# # new syntax
+# # (set -x; picard CollectRnaSeqMetrics -REF_FLAT genes_refFlat -RIBOSOMAL_INTERVALS rRNA_intervalList_sorted -STRAND "${strand_specificity}" -INPUT "${input_bam}" -OUTPUT "${output_dir}/${SAMPLE_ID}_metrics")
+
+# # old syntax
+# (set -x; picard CollectRnaSeqMetrics REF_FLAT=genes_refFlat RIBOSOMAL_INTERVALS=rRNA_intervalList_sorted STRAND="${strand_specificity}" INPUT="${input_bam}" OUTPUT="${output_dir}/${SAMPLE_ID}_metrics")
+
+# cp -r ${output_dir} ${storage_dir}
 
 echo "=========================================================="
 echo "Finished on : $(date)"
