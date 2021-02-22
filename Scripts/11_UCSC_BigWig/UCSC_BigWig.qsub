@@ -17,6 +17,8 @@ set -o nounset
 # change to y if you want a single qlog file 
 #$ -e ./logs/
 #$ -o ./logs/
+#$ -pe omp 8
+#$ -l mem_per_core=2G
 #$ -l scratch_free=200G
 ##################################################################################
 
@@ -32,21 +34,21 @@ set +eu
 module load miniconda
 conda activate --stack ${CONDA_DIR}/samtools
 conda activate --stack ${CONDA_DIR}/rseqc
+conda activate --stack ${CONDA_DIR}/wig
 # conda activate RNAseq
 set -eu
 
-if [ $# -ne 5 ] ; then
-    echo "Need 7 arguments for the qsub command:"
-    echo "qsub -N ${Job_Name}'_'${Sample_ID} -P wax-dk -l h_rt=${TIME_LIMIT} UCSC_BigWig.qsub ${Sample_ID} ${Dataset_DIR} ${STRAND_RULE} ${BU_User} ${VM_DIR_UCSC} ${SCRIPT_DIR}"
+if [ $# -ne 1 ] ; then
+    echo "Need 6 arguments for the qsub command:"
+    echo "qsub -N ${Job_Name}'_'${Sample_ID} -P wax-dk -l h_rt=${TIME_LIMIT} UCSC_BigWig.qsub ${Sample_ID}"
     exit 0
 fi
 
 #process the command line arguments
 SAMPLE_ID=$1
-Dataset_DIR=$2
-BU_User=$3
-VM_DIR_UCSC=$4
-SCRIPT_DIR=$5
+
+SCRIPT_DIR="$(pwd)"
+PROJECT_DIR="$(pwd)/../../"
 
 # automated strand detection
 if [ ${STRANDEDNESS} -eq 3 ]; then
@@ -74,24 +76,14 @@ then
 STRAND_RULE="1+-,1-+,2++,2--"
 fi
 
-
-
 #Print variables (make sure they appear correctly):
 echo "-----------------------"
 echo "Start of variable list:"
 echo "-----------------------"
 echo "SAMPLE_ID:"
 echo ${SAMPLE_ID}
-echo "Dataset_DIR:"
-echo ${Dataset_DIR}
 echo "STRAND_RULE:"
 echo ${STRAND_RULE}
-echo "BU_User:"
-echo ${BU_User}
-echo "VM_DIR_UCSC:"
-echo ${VM_DIR_UCSC}
-echo "SCRIPT_DIR:"
-echo ${SCRIPT_DIR}
 echo "-----------------------"
 echo "End of variable list"
 echo "-----------------------"
@@ -112,15 +104,15 @@ echo "=========================================================="
 
 # Go to local scratch directory
 
-echo 'Change dir to scratch directory'
-cd ${TMPDIR}
-echo 'Print scratch directory location:'
-echo $TMPDIR
-echo 'Loading required modules...'
+# TMPDIR=DEBUG
+# rm -rf $TMPDIR && mkdir $TMPDIR
 
-cp ${Dataset_DIR}/${SAMPLE_ID}/aligner/${SAMPLE_ID}'_primary_unique.bam' .
+cd ${TMPDIR}
+
+cp ${DATASET_DIR}/${SAMPLE_ID}/aligner/"${SAMPLE_ID}_primary_unique.bam" .
 #Initialize INPUT_BAM:
-INPUT_BAM=${SAMPLE_ID}'_primary_unique.bam'
+
+INPUT_BAM="${SAMPLE_ID}_primary_unique.bam"
 
 echo
 echo 'INPUT_BAM:'
@@ -129,45 +121,36 @@ echo
 
 #Copy UCSC_BigWig required files:
 cp ${SCRIPT_DIR}/Chrom_Sizes/mm9.chrom.sizes .
+
 #Initialize variable:
 CHROMSIZE_FILE=mm9.chrom.sizes
-#cp ${SCRIPT_DIR}/UCSC_Tools/wigToBigWig .
-cp -r ${SCRIPT_DIR}/UCSC_Tools .
 
-STORAGE_DIR=${Dataset_DIR}/${SAMPLE_ID}
+# # STORAGE_DIR=${DATASET_DIR}/${SAMPLE_ID}
+# STORAGE_DIR=${DATASET_DIR}
+
 #Create UCSC_BigWig output folder to store files:
-OUTPUT_DIR=${TMPDIR}/'UCSC_BigWig'
+# OUTPUT_DIR="${PROJECT_DIR}/UCSC_TRACKS"
+# mkdir -p $OUTPUT_DIR
 
-mkdir -p $OUTPUT_DIR
-
-echo
-echo 'List files in scratch directory:'
-echo
 ls -alh
-
-echo
-echo 'Starting to run my commands'
-echo
 
 echo
 echo 'Starting samtools sort and index'
 echo
 
-#samtools sort only takes file name without extension
+
 # samtools sort ${INPUT_BAM} ${SAMPLE_ID}'_sorted'
-samtools sort -o "${SAMPLE_ID}_sorted.bam" ${INPUT_BAM}
-#samtools sort only takes file name with extension
-samtools index "${SAMPLE_ID}_sorted.bam"
+samtools sort -@ ${NSLOTS} -o "${SAMPLE_ID}_sorted.bam" ${INPUT_BAM}
+
+# samtools sort only takes file name with extension
+samtools index -@ ${NSLOTS} "${SAMPLE_ID}_sorted.bam"
+
 #Initilize variable:
 INPUT_FILE=${SAMPLE_ID}'_sorted.bam'
 
-echo
-echo 'Finished samtools sort and index'
-echo
 
-echo
 echo 'Starting bam2wig.py command'
-echo
+
 #--------------------------------------------------------------------------------
 #http://rseqc.sourceforge.net/#infer-experiment-py
 #1. bam2wig.py converts all types of RNA-seq data from BAM format into wiggle format.
@@ -201,73 +184,49 @@ fi
 #------------------------------------------
 echo 'Printing command:'
 echo "bam2wig.py "${bam2wig_options}
-echo
-#Run command:
-bam2wig.py ${bam2wig_options}
+
+# TODO: if file is already created do not recalculate it
+# Before run we should check existence of the bw files on server
+COMMON_DIR="${VM_DIR_UCSC}/COMMON"
+
+if [ ! -f "${COMMON_DIR}/${SAMPLE_ID}.Forward.bw" -o ! -f "${COMMON_DIR}/${SAMPLE_ID}.Reverse.bw" ]; then
+    echo "Generate bigwig files..."
+    # if one or both files do not exist - recalculate both of them
+    bam2wig.py ${bam2wig_options}
+fi
+
 #--------------------------------------------------------------------------------
 
-echo
-echo 'Finished bam2wig.py command'
-echo
+ls -l
 
-echo
-echo 'Sample from wiggle files:'
-echo
+# As mentioned above:
+# 2. If UCSC wigToBigWig tool was found, output wiggle file will be converted into bigwig format automatically.
+# For some reason when bam2wig.py calls the wigToBigWig tool it may return an error
+# Better to call the wigToBigWig tool directly
 
-head -10 *.wig
+# TODO: use bamCoverage instead of bam2wig.py + wigToBigWig
 
-#Need some processing of the wig files before wigToBigWig conversion
-#Previously saw error with "-" in the 2nd column of wig file (cause an error with wigToBigWig conversion)
-#Move the wigToBigWig to another folder (copy the whole UCSC_Tools/)
-#Need to by-pass the bam2wig.py finding the wigToBigWig script
+# Convert sorted bam to cram to keep space in waxmanlabvm
+BAM_IN="${SAMPLE_ID}_primary_unique.bam"
+CRAM_OUT="${SAMPLE_ID}_primary_unique.cram"
+GENOME=${FASTA_DIR}/genome_mm9.fa
 
-wig_list=*.wig
-for wig_file in $wig_list
-do
-    wig_file_name=${wig_file%\.wig}
-    echo
-    echo '#--------------------------------'
-    echo $wig_file
-    echo '#--------------------------------'
-    echo 'Line count where 2nd column does not equal "-":'
-    awk '$2!="-" {print $0}' $wig_file | wc -l 
-    echo 'Line count where 2nd column is only a negative sign:'
-    awk '$2=="-" {print $0}' $wig_file | wc -l 
-    echo 'Copy '$wig_file' to UCSC_Tools folder'
-    cp $wig_file ./UCSC_Tools
-    echo 'Copy mm9.chrom.sizes to UCSC_Tools folder'
-    cp mm9.chrom.sizes ./UCSC_Tools
-    echo 'Start wigToBigWig'
-    cd UCSC_Tools
-    #Change permissions to run program:
-    chmod 700 wigToBigWig
-    ./wigToBigWig $wig_file mm9.chrom.sizes $OUTPUT_DIR/$wig_file_name.bw
-    echo 'End wigToBigWig'
-    cd ..
-done
+# convert to CRAM
+if [ ! -f "${COMMON_DIR}/${CRAM_OUT}" ]; then
+    echo "Generate CRAM files..."
+    samtools view -@ ${NSLOTS} -b  -T ${GENOME} -C -o ${CRAM_OUT} ${BAM_IN}
+    samtools index ${CRAM_OUT}
+fi
 
-echo
-echo 'List of files in UCSC_Tools folder:'
-echo
-ls -al ./UCSC_Tools/*
-
-#As mentioned above:
-#2. If UCSC wigToBigWig tool was found, output wiggle file will be converted into bigwig format automatically.
-#For some reason when bam2wig.py calls the wigToBigWig tool it may return an error
-#Better to call the wigToBigWig tool directly (as I do above)
-
-#Copy bigWig files to $OUTPUT_DIR
-#cp ${SAMPLE_ID}.Forward.bw $OUTPUT_DIR
-#cp ${SAMPLE_ID}.Reverse.bw $OUTPUT_DIR
-
-echo
 echo 'Copy output to storage dir'
-echo
-cp -r $OUTPUT_DIR $STORAGE_DIR
+# cp *.bw *.cra* ${OUTPUT_DIR}
 
-echo
+set +eu
+echo "copy files if it is required"
+cp *.bw *.cra* ${COMMON_DIR}
+set -ue
+
 echo "List files in scratch"
-echo
 ls -alh
 
 echo "=========================================================="

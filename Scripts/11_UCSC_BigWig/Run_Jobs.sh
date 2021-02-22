@@ -24,6 +24,11 @@ if [[ ${BIGWIG_ENABLE} == 0 ]]; then
     exit 0
 fi
 
+set +eu
+# remove COMBINED_PAIRS.txt if exists
+rm COMBINED_PAIRS.txt
+set -eu
+
 SCRIPT_DIR="$(pwd)"
 
 #Check that each variable prints a value to the terminal:
@@ -57,7 +62,7 @@ do
     Sample_DIR=${samples[i]}
     Sample_ID=${samples[i+1]}
     Description=${samples[i+2]}
-    (set -x; qsub -N "${job_name}_${Sample_ID}" -P "${PROJECT}" -l h_rt="${TIME_LIMIT}" UCSC_BigWig.qsub ${Sample_ID} ${DATASET_DIR} ${BU_USER} ${VM_DIR_UCSC} ${SCRIPT_DIR})
+    (set -x; qsub -N "${job_name}_${Sample_ID}" -P "${PROJECT}" -l h_rt="${TIME_LIMIT}" UCSC_BigWig.qsub ${Sample_ID})
 
 done
 

@@ -90,7 +90,7 @@ MODE=2
 
 # if you need tracks for samples and BigWig files use BIGWIG_ENABLE=1 in the
 # option below
-BIGWIG_ENABLE=0
+BIGWIG_ENABLE=1
 
 # This configuration file contains all specific settings for GTF files
 # used in the pipeline, like: name, enable/disable double counting,
@@ -120,6 +120,9 @@ GTF_FILES_CONFIG=${SYSTEM:GTF_FILES_DIR}/${STEPS:DEFAULT_GTF_CONFIG}
 # assembly
 BOWTIE2INDEX_DIR=/projectnb/wax-es/routines/BowtieIndex
 
+# Directory with full genomes
+FASTA_DIR=/projectnb2/wax-es/routines/FASTA
+
 # The location of the conda packages. This directory also contains scripts and
 # configs and qsub file for setting up environments
 CONDA_DIR=/projectnb/wax-es/routines/condaenv
@@ -136,10 +139,12 @@ STARINDEX_DIR=/projectnb/wax-es/routines/starindex_EC76K
 VM_DIR_FASTQC=/net/waxman-server/mnt/data/waxmanlabvm_home/${USER:BU_USER}/FASTQC/${USER:DATASET_LABEL}
 
 # special directory which will contain BIGWIG files
-VM_DIR_UCSC=/net/waxman-server/mnt/data/waxmanlabvm_home/${USER:BU_USER}/${USER:DATASET_LABEL}
+# subdirectory $VM_DIR_UCSC/COMMON for cram/bw/combined bw
+# subdirectory $VM_DIR_UCSC/PERSONAL/USERNAME/DATASET_LABEL for track lines
+VM_DIR_UCSC=/net/waxman-server/mnt/data/waxmanlabvm_home/TRACKS/
 
 # default time limit
-TIME_LIMIT=96:00:00
+TIME_LIMIT=36:00:00
 """.strip()
 
 
