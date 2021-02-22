@@ -92,7 +92,22 @@ input_bam="${SAMPLE_ID}_primary_unique.bam"
 
 # copy CollectRnaSeqMetrics required files:
 cp "${script_dir}/Input_Regions/genes_refFlat" .
-cp "${script_dir}/Input_Regions/rRNA_intervalList_sorted" .
+
+# aligners produces little different headers for BAM files, we need to
+# copy correct one.
+
+# To get the correct header use the following:
+# samtools view -H file.bam > header.txt
+
+if [ ${DEFAULT_ALIGNER} -eq 1 ]; then
+    echo "Copy STAR intervalList"
+    cp "${script_dir}/Input_Regions/rRNA_intervalList_sorted.STAR" ./rRNA_intervalList_sorted
+else
+    echo "Copy TOPHAT2 intervalList"
+    cp "${script_dir}/Input_Regions/rRNA_intervalList_sorted.TOPHAT" ./rRNA_intervalList_sorted
+fi
+
+# cp "${script_dir}/Input_Regions/rRNA_intervalList_sorted" .
 
 storage_dir=${DATASET_DIR}/${SAMPLE_ID}/
 
@@ -106,19 +121,15 @@ cp -r "$output_dir" "$storage_dir"
 
 # ----------
 
-# echo "CollectRnaSeqMetrics"
-# # create CollectRnaSeqMetrics output folder to store files:
-# output_dir="CollectRnaSeqMetrics"
-# mkdir -p "${output_dir}"
-
-# # TODO: temporary patch, we changed default GTF file from RefSeq24k to RefSeqLncRNA76K, so we need to change input files
-# # new syntax
-# # (set -x; picard CollectRnaSeqMetrics -REF_FLAT genes_refFlat -RIBOSOMAL_INTERVALS rRNA_intervalList_sorted -STRAND "${strand_specificity}" -INPUT "${input_bam}" -OUTPUT "${output_dir}/${SAMPLE_ID}_metrics")
+echo "CollectRnaSeqMetrics"
+# create CollectRnaSeqMetrics output folder to store files:
+output_dir="CollectRnaSeqMetrics"
+mkdir -p "${output_dir}"
 
 # # old syntax
-# (set -x; picard CollectRnaSeqMetrics REF_FLAT=genes_refFlat RIBOSOMAL_INTERVALS=rRNA_intervalList_sorted STRAND="${strand_specificity}" INPUT="${input_bam}" OUTPUT="${output_dir}/${SAMPLE_ID}_metrics")
+(set -x; picard CollectRnaSeqMetrics REF_FLAT=genes_refFlat RIBOSOMAL_INTERVALS=rRNA_intervalList_sorted STRAND="${strand_specificity}" INPUT="${input_bam}" OUTPUT="${output_dir}/${SAMPLE_ID}_metrics")
 
-# cp -r ${output_dir} ${storage_dir}
+cp -r ${output_dir} ${storage_dir}
 
 echo "=========================================================="
 echo "Finished on : $(date)"
