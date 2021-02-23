@@ -86,8 +86,9 @@ venn_for_one_gtf_set() {
 	then
 	    # ${DATASET_LABEL} - exported from config file
             cp ${SCRIPT_DIR}/Venn.R ./
+	    cp ${SCRIPT_DIR}/../00_Setup_Pipeline/{Sample_Labels.txt,Comparisons.txt} ./
             Rscript Venn.R "${DATASET_LABEL}_${DETITLE}" "${outname}" ${venn_individ}
-            rm *_DiffExp_v2* Venn.R
+            rm *_DiffExp_v2* Venn.R Sample_Labels.txt Comparisons.txt
 	else
 	    echo "ERROR: Comparison directory (${OUTDIR_PREFIX}) does not contain ExonCollapsed files"
 	fi
@@ -150,6 +151,8 @@ individual_comparisons_wrapper() {
 # create individual venn diagrams for each 09 directory
 individual_comparisons_wrapper
 
+# ----------
+
 declare -A OUTDIR_DICT=( [09a]="12a_Venn_RefSeq24_HTSeq_ExonCollapsed" \
                          [09b]="12b_Venn_RefSeq24_featureCounts_ExonCollapsed" \
                          [09c]="12c_Venn_LncRNA15k_featureCounts_ExonCollapsed" \
@@ -163,7 +166,7 @@ dedirs=$(find ../09* -iname "output*exoncoll*" | grep -Po '09[a-z]' | sort | uni
 for d in $dedirs
 do
     echo "Process directory with prefix --> ${d}"
-    venn_for_one_gtf_set $d "${OUTDIR_DICT[$d]}" "DETITLE_DICT[$d]"
+    venn_for_one_gtf_set $d "${OUTDIR_DICT[$d]}" "${DETITLE_DICT[$d]}"
 done
 
 # create venn diagrams for each set of gtf+counter (09a,b,c,d)

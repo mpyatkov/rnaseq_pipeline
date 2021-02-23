@@ -22,6 +22,26 @@ suppressPackageStartupMessages({
     library(stringr)
 })
 
+# convert file names to correct titles for venn diagrams
+get_correct_names <- function(comparisons, samples, names) {
+  library(tidyr)
+  cmp <- read_delim(comparisons, delim = ";", col_names = T, trim_ws = T) %>%
+    select(comparison = Comparison_Number, Condition_1, Condition_2)
+  
+  samples <- read_delim(samples, delim=";", col_names = T, trim_ws = T) %>%
+    select(Group, Condition_Name) %>%
+    distinct(Group, Condition_Name)
+  
+  cmp_samples <- left_join(cmp, samples, by=c("Condition_1"="Group")) %>%
+    left_join(., samples, by=c("Condition_2"="Group")) %>% 
+    select(comparison, Condition_1 = Condition_Name.x, Condition_2 = Condition_Name.y) %>% 
+    mutate(old_name = paste0(Condition_1,"_",Condition_2),
+           new_name = paste0(Condition_2," / \n", Condition_1)) %>% 
+    select(comparison, old_name, new_name)
+  
+  left_join(tibble(old_name = names), cmp_samples) %>% pull(new_name)
+}
+
 # get the subset of up and down genes for deseq and edger
 read_dataset <- function(dn, fc, padj) {
   df <- read_tsv(dn) %>% 
@@ -152,28 +172,37 @@ draw_pair <- function(data, names, type, parameters) {
   if (type == "updown") {
     edger_data <- list(data[[1]]$up_edger, data[[2]]$down_edger)
     deseq_data <- list(data[[1]]$up_deseq, data[[2]]$down_deseq)
-    new_names <- paste0(names, c("_up","_down"))
+    # new_names <- paste0(names, c("_up","_down"))
+    new_names <- names
   } else if (type == "downup") {
     edger_data <- list(data[[1]]$down_edger, data[[2]]$up_edger)
     deseq_data <- list(data[[1]]$down_deseq, data[[2]]$up_deseq)
-    new_names <- paste0(names, c("_down","_up"))
+    # new_names <- paste0(names, c("_down","_up"))
+    new_names <- names
   } else {
     edger_data <- lapply(data, function(x) {x[[paste0(type,"_edger")]]})
     deseq_data <- lapply(data, function(x) {x[[paste0(type,"_deseq")]]})
-    new_names <- paste0(names, "_", type)
+    # new_names <- paste0(names, "_", type)
+    new_names <- names
   }
   
   print(length(unlist(edger_data)))
   
   label<-ifelse(type=="all", "all_DE", type)
   
+  label <- if (type == "updown" || type == "downup") {
+    paste0(label, " genes\n(red - up, blue -down)")
+  } else {
+    paste0(label, " genes")
+  }
+  
   edger <- drawVenn(edger_data, new_names, col, 
                     parameters[[num]]$pos, parameters[[num]]$dist, parameters[[num]]$main_title_height,
-                    paste0("edgeR_", label, " genes"), main_color)
+                    paste0("edgeR_", label), main_color)
   
   deseq <- drawVenn(deseq_data, new_names, col, 
                     parameters[[num]]$pos, parameters[[num]]$dist, parameters[[num]]$main_title_height,
-                    paste0("DESeq_", label, " genes"), main_color)
+                    paste0("DESeq_", label), main_color)
   
   grid.arrange(gTree(children=edger), gTree(children=deseq), ncol=2)
 }
@@ -298,7 +327,7 @@ all_features_methods <- function(files, data, params, title, out_name) {
 }
 
 # wrapper for "draw_pair_methods"
-# separate plots for each future individually
+# separate plots for each feature individually
 # edger/deseq and up/down for each future
 draw_pairwise_for_each_feature <- function(files, params, title, out_name) {
 
@@ -336,20 +365,20 @@ params <- c()
 # parameters for 2 circles
 params[[2]] <- list(
   pos = c(-180, 0),
-  dist = c(0.03, 0.03),
+  dist = c(0.05, 0.05),
   main_title_height = 0.95
 )
 # parameters for 3 circles
 params[[3]] <- list(
   pos = c(-24, 24, 180),
-  dist = c(0.055, 0.055, 0.055),
+  dist = c(0.08, 0.08, 0.08),
   main_title_height = 1.05
 )
 # parameters for 4 circles
 params[[4]] <- list(
-  pos = c(0, 0, -30, 30),
-  dist = c(-0.37, -0.33, 0.1, 0.1),
-  main_title_height = 0.95
+  pos = c(-10, 5, -30, 30),
+  dist = c(-0.38, -0.38, 0.15, 0.15),
+  main_title_height = 1.0
 )
 
 # read files from the current directory
@@ -358,10 +387,12 @@ files <- list.files(pattern = "DiffExp[[_]|[:alnum:]]+.txt", full.names = T)
 # read data
 data <- lapply(files, function(x) {read_dataset(x, 2, 0.05)})
 
-# extract group names (ex. *_ExonCollapsed_LONG..NAME_featureCounts)
-names <- str_extract(files, "(?<=(ExonCollapsed_))([[:alnum:]|[_]]+)(?=(_featureCounts|_htseq))")
-
 if (VENN_INDIVIDUAL == "0") {
+
+   # extract group names (ex. *_ExonCollapsed_LONG..NAME_featureCounts)
+   names <- str_extract(files, "(?<=(ExonCollapsed_))([[:alnum:]|[_]]+)(?=(_featureCounts|_htseq))")
+   names <- get_correct_names("./Comparisons.txt", "./Sample_Labels.txt", names)
+
   # extract comparison numbers: 1_Diff..., 3_Diff... -> 1,3,..
   numbers <- str_extract(basename(files), "^(\\d)+")
   
