@@ -74,7 +74,7 @@ function calc_correlation()
     done
     
     # DATASET_LABEL exported from the Pipeline_Setup.conf, Step_0
-    Rscript pearson_script.R $DATASET_LABEL $DETITLE
+    Rscript pearson_script.R $DATASET_LABEL $DETITLE ${CUSTOM_FC} ${CUSTOM_FDR}
     
     # mv all plots to corresponding directories
     mv *_Pearson* ./${PCOR}

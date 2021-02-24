@@ -9,7 +9,11 @@ args <- commandArgs(T)
 # DATASET_LABEL <- args[1]
 
 EXTARGS=list(dataset_label=args[1],
-             detitle=args[2])
+             detitle=args[2],
+             CUSTOM_FC=as.double(args[3]),
+             CUSTOM_FDR=as.double(args[4]))
+
+print(EXTARGS)
 
 #---------------------------------------------------------------------------------
 wd <- getwd()
@@ -133,16 +137,16 @@ plot_pca <- function(df_pca, title, out_names) {
 }
 
 # create filter conditions for PCA plots
-get_conditions <- function(filenames_prefix) {
+get_conditions <- function(filenames_prefix, extargs) {
    listFC <- NULL
    listFDR <- NULL
-   cond<- NULL  #cond is significant genes defined as FC >2 and FDR < 0.05
+   cond<- NULL  #cond is significant genes defined as FC >custom_FC and FDR < custom_FDR
    cond1<- NULL #cond1 is non-significant genes defined as 1.2 < FC < 1/|1.2|  and FDR >0.1
    for(i in 1:length(filenames_prefix))
    {   
       listFC[i] <- paste(filenames_prefix[i],"_edgeRlogFC", sep="")
       listFDR[i] <- paste(filenames_prefix[i],"_edgeRFDR",sep="")
-      cond[i] <-  paste("((","abs(",listFC[i],")",">1)","&","(", listFDR[i],"<0.05))", sep=" ")
+      cond[i] <-  paste("((","abs(",listFC[i],")",">",log2(extargs$CUSTOM_FC),")","&","(", listFDR[i],"<",extargs$CUSTOM_FDR,"))", sep=" ")
       cond1[i] <-  paste("((",listFC[i],")","<0.263034","&(","(",listFC[i],")",">","-0.263)","&","(", listFDR[i],">0.1))", sep=" ")
    }
    
@@ -223,7 +227,7 @@ pca_3plot <- function(filename, group_names, extargs, number, meanonly = F) {
    out_names <- get_outnames(filename)
    
    # get significant and not-significant genes
-   cond <- get_conditions(out_names)
+   cond <- get_conditions(out_names, extargs)
    
    # reassign out_names 
    out_names <- ifelse(length(out_names) > 1, "Merge", out_names)
@@ -237,7 +241,7 @@ pca_3plot <- function(filename, group_names, extargs, number, meanonly = F) {
    # dataset with significant genes
    ds <- read_dataset(filename, group_names, filter_condition = cond$signif, meanonly = meanonly)
    out_fname <- paste0(number, "_PCA_Significant_",out_names)
-   header <- paste0(extargs$dataset_label, ", ", out_fname, ", ", "\nSignificant genes (|FC|>2 and FDR<0.05), ",extargs$detitle,"_Genes: ", dim(ds$df_pca)[[2]])
+   header <- paste0(extargs$dataset_label, ", ", out_fname, ", ", "\nSignificant genes (|FC|>",extargs$CUSTOM_FC," and FDR<", extargs$CUSTOM_FDR,"), ",extargs$detitle,"_Genes: ", dim(ds$df_pca)[[2]])
    plot_pca(ds$df_pca, header, out_fname)
    
    # dataset with non-significant genes
@@ -254,7 +258,7 @@ cor_3plot <- function(filename, group_names, method, extargs, number, meanonly =
    out_names <- get_outnames(filename)
    
    # get significant and not-significant genes
-   cond <- get_conditions(out_names)
+   cond <- get_conditions(out_names, extargs)
    
    # reassign out_names 
    out_names <- ifelse(length(out_names) > 1, "Merge", out_names)
@@ -281,7 +285,7 @@ cor_3plot <- function(filename, group_names, method, extargs, number, meanonly =
    ds <- read_dataset(filename, group_names, filter_condition = cond$signif, meanonly = meanonly)
    out_fname <- paste0(number, "_", mname, "_Significant_", out_names)
    out_fname <- double_number(out_fname, meanonly)
-   header <- paste0(extargs$dataset_label, ", ", out_fname, ", ", "\nSignificant genes (|FC|>2 and FDR<0.05), ",extargs$detitle,"_Genes: ", dim(ds$df_cor)[[1]])
+   header <- paste0(extargs$dataset_label, ", ", out_fname, ", ", "\nSignificant genes (|FC|>",extargs$CUSTOM_FC," and FDR<",extargs$CUSTOM_FDR,"), ",extargs$detitle,"_Genes: ", dim(ds$df_cor)[[1]])
    plot_cor(ds$df_cor, header, method, out_fname)
    
    # dataset with non-significant genes

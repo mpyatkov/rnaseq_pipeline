@@ -105,6 +105,15 @@ DEFAULT_GTF_CONFIG=9d.csv
 # 1 - STAR
 DEFAULT_ALIGNER=1
 
+# Custom FC and FDR for step 13 (PCA and correlation plots) and step
+# 14 (summary statistics for up/down genes). By default the pipeline
+# uses FC>2 and FDR<0.05. The PCA and correlation plots use options below
+# as defaults (Step 13). For up/down genes tables (Step 14) this
+# parameters change only additional table (ex:
+# ../14_final_summary/output/09d_DE_Genes_counts.csv, second table)
+CUSTOM_FC=2
+CUSTOM_FDR=0.05
+
 [SYSTEM]
 
 # The location of the GTF files (by default you should have access to wax-es)
