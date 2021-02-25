@@ -99,23 +99,49 @@ copy_all_segex_files() {
     done
 }
 
+# make links for segex files by normalization method (fpkm/tpm)
+link_all_segex_by_norm() {
+    local de_index=$1
+    local norm_method=$2 # fpkm/tpm
+    local feature=$3
+
+    if [[ ${norm_method} == "TPM" ]]; then
+	find ../../${de_index}_DE_* -name "*SEGEX*" | grep -i ${feature} | grep -i edger |grep -i ${norm_method} | xargs -n1 -I{} ln -s {} ./	
+    else
+	find ../../${de_index}_DE_* -name "*SEGEX*" | grep -i ${feature} | grep -i edger |grep -iv "TPM" | xargs -n1 -I{} ln -s {} ./	
+    fi
+    
+}
+
+# make links for segex files by de index
+link_all_segex_by_ix() {
+    local de_index=$1
+    find ../../${de_index}_DE_* -name "*SEGEX*" | grep -i "TPM" | xargs -n1 -I{} ln -s {} ./
+}
+
 # summarize up and down genes
 function updown_genes() {
     local de_index=$1
     
-    INPUT_UPDOWN_FILE="./gene_counts.csv"
-    SAMPLES_FILE="../00_Setup_Pipeline/Sample_Labels.txt"
-    CMP_FILE="../00_Setup_Pipeline/Comparisons.txt"
+    # INPUT_UPDOWN_FILE="./gene_counts.csv"
+    SAMPLES_FILE="../../00_Setup_Pipeline/Sample_Labels.txt"
+    CMP_FILE="../../00_Setup_Pipeline/Comparisons.txt"
+    OUTPUT_FILE="$(basename $(pwd)).txt"
     
-    OUTPUT_FILE="$(pwd)/${de_index}_DE_Genes_counts.csv"
-    find ../"${de_index}"_DE_* -iname  "*DE_Gene_C*" | xargs -n1 -I{} cat {} | grep -v "Output_File" >> ${INPUT_UPDOWN_FILE}
-    Rscript ./Scripts/updown_genes.R ${INPUT_UPDOWN_FILE} ${CMP_FILE} ${SAMPLES_FILE} ${OUTPUT_FILE} ${DATASET_LABEL}
-    mv ${OUTPUT_FILE} ./output && rm ${INPUT_UPDOWN_FILE}
+    cp ../Scripts/updown_genes.R ./
 
+    # default params, |FC| > 2, FDR < 0.05
+    Rscript updown_genes.R ${CMP_FILE} ${SAMPLES_FILE} default.csv ${DATASET_LABEL} 2 0.05
+    cat <(echo -ne "|FC|>2 & FDR<0.05\n") default.csv > ${OUTPUT_FILE}
+    Rscript updown_genes.R ${CMP_FILE} ${SAMPLES_FILE} custom.csv ${DATASET_LABEL} ${CUSTOM_FC} ${CUSTOM_FDR}
+    cat <(echo -ne "|FC|>${CUSTOM_FC} & FDR<${CUSTOM_FDR}\n") custom.csv > custom_tmp.csv
+    # mv ${OUTPUT_FILE} ./output && rm ${INPUT_UPDOWN_FILE}
+    cat custom_tmp.csv >> ${OUTPUT_FILE}
+    echo ${OUTPUT_FILE}
 }
 
 # make combined files for segex output
-function segex_combained_files() {
+function segex_combined_files() {
     local DIR=$1
 
     output_header=""
@@ -123,7 +149,8 @@ function segex_combained_files() {
     
     for f in $(find . -name "*.txt" | sort -n); do
 	fname=$(basename $f)
-	subdirname=$(basename $(dirname $DIR))
+	# subdirname=$(basename $(dirname $DIR))
+	subdirname=$(basename $DIR)
 	
 	# add file name to the array
 	afnames+=($fname)
@@ -140,30 +167,54 @@ function segex_combained_files() {
     # add header (only in the first 'cell' for each 8 cells )
     cat <(echo -ne "${output_header}\n") ${tmp_fname} > ${output_fname}
     rm ${tmp_fname}
+    
+    # return output filename
+    echo ${output_fname}
 }
 
 # find all 09a, 09b, 09c, ... directories
 dedirs=$(find ../09* -iname "output*" | grep -Po '09[a-z]' | sort | uniq)
+norm_methods=( "TPM" "FPKM" )
 
 # for each 09a, 09b,...
 for de_ix in $dedirs
 do
-    # copy all segex files by DE index
+    ## copy all segex files by DE index
     copy_all_segex_files ${de_ix}
     
-    # make summary for up/down genes
-    updown_genes ${de_ix}
+
+    ## make combined files
+    # find all features associated with de index
+    features=$(find ../${de_ix}* -iname "output*" | grep -Po "\K([a-zA-Z]*)(?=$)" | sort | uniq)
+    
+    for norm_method in "${norm_methods[@]}"; do
+	for feature in $features; do
+	    # create temporary dir
+	    tmpdir=${de_ix}_${feature}_${norm_method}
+	    rm -rf tmpdir && mkdir $tmpdir && pushd $tmpdir
+
+	    # process files
+	    link_all_segex_by_norm ${de_ix} ${norm_method} ${feature}
+	    combined_fname=$(segex_combined_files $(pwd))
+
+	    # copy output to correct dir
+	    mv ${combined_fname} ../output/Segex_${de_ix}/
+	    popd && rm -rf $tmpdir
+	done
+    done
+
+    ## make summary for up/down genes
+    tmpdir=${de_ix}_DE_Genes_counts
+    rm -rf $tmpdir && mkdir $tmpdir && pushd ${tmpdir}
+
+    # process files
+    link_all_segex_by_ix ${de_ix}
+    outname=$(updown_genes ${de_ix})
+
+    # copy output to correct dir
+    mv ${outname} ../output/
+    popd &&  rm -rf $tmpdir
+
 done
-
-# mv *.txt ${Level_UP}/14_final_summary/output
-# mv *.pdf ${Level_UP}/14_final_summary/output
-
-# find all directories with segex files and process them
-for segexdir in $(find . -type d -name "Segex09*"); do
-    pushd $segexdir
-    segex_combained_files $segexdir
-    popd
-done
-
 
 echo "All files copied. Done "
