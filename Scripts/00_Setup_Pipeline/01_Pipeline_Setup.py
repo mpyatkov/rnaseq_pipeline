@@ -90,7 +90,7 @@ MODE=2
 
 # if you need tracks for samples and BigWig files use BIGWIG_ENABLE=1 in the
 # option below
-BIGWIG_ENABLE=1
+BIGWIG_ENABLE=0
 
 # This configuration file contains all specific settings for GTF files
 # used in the pipeline, like: name, enable/disable double counting,
