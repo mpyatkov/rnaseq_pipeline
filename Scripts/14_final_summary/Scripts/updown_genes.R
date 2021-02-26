@@ -12,8 +12,11 @@ comparisons <- args[1]
 samples_file <- args[2]
 output_name <- args[3]
 dataset_label <- args[4]
-CUSTOM_FC <- as.double(args[5])
-CUSTOM_FDR <- as.double(args[6])
+## CUSTOM_FC <- as.double(args[5])
+## CUSTOM_FDR <- as.double(args[6])
+
+CUSTOM_FC <- eval(parse(text=args[5]))
+CUSTOM_FDR <- eval(parse(text=args[6]))
 
 files <- list.files(pattern = "forSEGEX")
 
@@ -27,10 +30,20 @@ updown_one <- function(f, FCparam, FDRparam, Dataset_label) {
     mutate(Up_genes = ifelse(FC>FCparam,1,0),
            Down_genes= ifelse(FC<FCparam,1,0)) %>% 
     summarise(Up_genes = sum(Up_genes), Down_genes = sum(Down_genes))
-  cbind(Dataset_label, comparison, feature, package,df)
+  cbind(Dataset_label, FCparam, FDRparam, comparison, feature, package,df)
 }
 
-up.down.genes <- dplyr::bind_rows(lapply(files, function(fn){updown_one(fn, CUSTOM_FC, CUSTOM_FDR, dataset_label)}))
+## up.down.genes <- dplyr::bind_rows(lapply(files, function(fn){updown_one(fn, CUSTOM_FC, CUSTOM_FDR, dataset_label)}))
+
+## get list of data.frames with different FC and FDR
+up.down.genes <- lapply(1:length(CUSTOM_FC), function(ix) {
+    
+    dplyr::bind_rows(lapply(files, function(fn){updown_one(fn, CUSTOM_FC[ix], CUSTOM_FDR[ix], dataset_label)}))
+})
+
+## combine all tables together
+up.down.genes <- dplyr::bind_rows(up.down.genes)
+
 
 # read table with DE_gene_counts
 ## up.down.genes <- read_delim(input_file, delim = " ", col_names = F, trim_ws = T) %>% 
@@ -78,7 +91,7 @@ cmp_samples <- left_join(cmp, samples, by=c("Condition_1"="Group")) %>%
 
 # final table
 left_join(up.down.genes,cmp_samples) %>% 
-  select(Dataset_label, comparison,feature,package,Condition_1,Condition_2,
+  select(Dataset_label, FC = FCparam, FDR = FDRparam, comparison,feature,package,Condition_1,Condition_2,
          Condition_Name_1,Condition_Name_2,
          Condition_1_GM_Numbers,Condition_2_GM_Numbers,
          Up_genes,Down_genes) %>% 

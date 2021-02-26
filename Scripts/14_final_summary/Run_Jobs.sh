@@ -130,13 +130,10 @@ function updown_genes() {
     
     cp ../Scripts/updown_genes.R ./
 
-    # default params, |FC| > 2, FDR < 0.05
-    Rscript updown_genes.R ${CMP_FILE} ${SAMPLES_FILE} default.csv ${DATASET_LABEL} 2 0.05
-    cat <(echo -ne "|FC|>2 & FDR<0.05\n") default.csv > ${OUTPUT_FILE}
-    Rscript updown_genes.R ${CMP_FILE} ${SAMPLES_FILE} custom.csv ${DATASET_LABEL} ${CUSTOM_FC} ${CUSTOM_FDR}
-    cat <(echo -ne "|FC|>${CUSTOM_FC} & FDR<${CUSTOM_FDR}\n") custom.csv > custom_tmp.csv
-    # mv ${OUTPUT_FILE} ./output && rm ${INPUT_UPDOWN_FILE}
-    cat custom_tmp.csv >> ${OUTPUT_FILE}
+    # two last parameters for updown_genes.R should be paired arrays
+    # "c(2,1,1,4)" -- array with FC
+    # "c(0.05,0.05,0.001,0.05)" -- array with FDR
+    Rscript updown_genes.R ${CMP_FILE} ${SAMPLES_FILE} ${OUTPUT_FILE} ${DATASET_LABEL} "c(2,1,1,4)" "c(0.05,0.05,0.001,0.05)"
     echo ${OUTPUT_FILE}
 }
 
@@ -184,7 +181,7 @@ do
     
 
     ## make combined files
-    # find all features associated with de index
+    ## find all features associated with de index
     features=$(find ../${de_ix}* -iname "output*" | grep -Po "\K([a-zA-Z]*)(?=$)" | sort | uniq)
     
     for norm_method in "${norm_methods[@]}"; do
