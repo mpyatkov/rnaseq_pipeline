@@ -133,7 +133,7 @@ function updown_genes() {
     # two last parameters for updown_genes.R should be paired arrays
     # "c(2,1,1,4)" -- array with FC
     # "c(0.05,0.05,0.001,0.05)" -- array with FDR
-    Rscript updown_genes.R ${CMP_FILE} ${SAMPLES_FILE} ${OUTPUT_FILE} ${DATASET_LABEL} "c(2,1,1,4)" "c(0.05,0.05,0.001,0.05)"
+    Rscript updown_genes.R ${CMP_FILE} ${SAMPLES_FILE} ${OUTPUT_FILE} ${DATASET_LABEL} "c(2,1,1,4)" "c(0.05,0.05,0.001,0.0001)"
     echo ${OUTPUT_FILE}
 }
 
