@@ -140,6 +140,12 @@ HISAT2INDEX_DIR=/projectnb/wax-es/routines/hisat2index
 # assembly (ExonCollapsed_76k GTF file)
 STARINDEX_DIR=/projectnb/wax-es/routines/starindex_EC76K
 
+# The location of the global FASTQ index for all laboratory
+# experiments. You can extract information about sample using the
+# following command: ./01_Pipeline_Setup.py --get_sample_info
+# SAMPLE_ID. Each SAMPLE_ID should be unique in this file.
+FASTQ_GLOBAL_INDEX=/projectnb/wax-es/routines/index.csv
+
 # special directory which will contain FASTQC reports
 VM_DIR_FASTQC=/net/waxman-server/mnt/data/waxmanlabvm_home/${USER:BU_USER}/FASTQC/${USER:DATASET_LABEL}
 
@@ -563,8 +569,86 @@ def generate_example(config_path, default_config):
         
         with open(config_path, "w") as conf:
             conf.write(default_config)
+            
+
+# function which parse FASTQ index files
+# INPUT: index_file - file with FASTQ indexes
+# INPUT: sample_id (ex. G186_M1)
+# OUTPUT: None (if found nothing) otherwise (PROJECT_NAME, READ1, READ2)
+# FASTQ index simple text format allows to store information about
+# sample:
+# PRJ,PROJECT_NAME1,/PROJECT_PATH1
+# SAMPLE_ID1, FASTQ_WITH_READS1, FASTQ_WITH_READS2
+# SAMPLE_ID2, FASTQ_WITH_READS1, FASTQ_WITH_READS2
+# PRJ,PROJECT_NAME2,/PROJECT_PATH2
+# SAMPLE_ID3, FASTQ_WITH_READS1, FASTQ_WITH_READS2
+# SAMPLE_ID4, FASTQ_WITH_READS1, FASTQ_WITH_READS2
+# ...
+# each SAMPLE_ID must have unique name
+
+def find_in_index(index_file, sample_id_param):
+
+    sample_dict = {}
+    with open(index_file, "r") as f:
+        project_name = ""
+        project_path = ""
+        for line in f:
+            # TODO: check if line is appropriate for format
+            if len(line.split(",")) != 3:
+                continue
+            
+            # if header line
+            if line.startswith("PRJ"):
+                header = line.strip().split(",")
+                header = list(filter(lambda x: x != '', header))
+                project_name, project_path = header[1], header[2]
+                if not project_path.endswith('/'):
+                    project_path = project_path+"/"
+                continue
+            
+            # if sample line
+            sample = list(filter(lambda y: y != '', map(lambda x: x.strip(), line.strip().split(','))))
+            sample_id, read1, read2 = sample[0],sample[1],sample[2]
+            sample_dict[sample_id] = (project_name, project_path+read1, project_path+read2)
+
+    if sample_id_param not in sample_dict:
+        return None
+    else:
+        # return values, but strip before
+        return list(map(lambda x: x.strip(), list(sample_dict[sample_id_param])))
 
 
+    
+# This function take local and global FASTQ index files and try to
+# find required SAMPLE_ID inside. If local index file is presented
+# then function tries to find SAMPLE_ID in this file first. If
+# SAMPLE_ID was not found in local index then try to find it in the
+# global index. If sample was not found in both indexes raise
+# ValueError
+# INPUT: sample_id
+# INPUT: local index file path
+# INPUT: global index file path
+# OUTPUT: (PROJECT_NAME, /PATH/TO/READ1.f*q.gz, /PATH/TO/READ2.f*q.gz)
+
+def get_sample_info(SAMPLE_ID, LOCAL_INDEX, GLOBAL_INDEX):
+
+    # if LOCAL_INDEX exist try to find SAMPLE_ID otherwise continue
+    if os.path.exists(LOCAL_INDEX):
+        result = find_in_index(LOCAL_INDEX, SAMPLE_ID)
+        if result is not None:
+            return result
+        
+    # if GLOBAL_INDEX exist try to find SAMPLE_ID otherwise generate error 
+    if os.path.exists(GLOBAL_INDEX):
+        result = find_in_index(GLOBAL_INDEX, SAMPLE_ID)
+        if result is not None:
+            return result
+        else:
+            raise ValueError(f"cannot find sample: {SAMPLE_ID} in GLOBAL_INDEX")
+    else:
+        raise ValueError(f"GLOBAL_INDEX: {GLOBAL_INDEX} does not exist")
+    
+            
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
@@ -621,6 +705,11 @@ if __name__ == "__main__":
                         metavar=('VENN_INDEX'),
                         help=f"return bash array of comparison numbers by venn index ({VENN_CONFIG})")
 
+    parser.add_argument("--get_sample_info",
+                        nargs=1,
+                        metavar=('SAMPLE_ID'),
+                        help="return (PROJECT, READ1, READ2) by SAMPLE_ID from index files")
+    
     # gtf_by_annotation_and_counter
     args = parser.parse_args()
 
@@ -708,6 +797,14 @@ if __name__ == "__main__":
     elif args.venn_comparisons_by_ix:
         a = args.venn_comparisons_by_ix
         print(venn_config.get_venn_by_index(int(a[0])))
+
+    elif args.get_sample_info:
+        sample_id = args.get_sample_info[0]
+        local_index = current_path+"/index.csv"
+        global_index = system_config.config["SYSTEM"]["FASTQ_GLOBAL_INDEX"]
+        print(get_sample_info(sample_id, local_index, global_index))
+        print(" ".join(get_sample_info(sample_id, local_index, global_index)))
+        exit(0)
     else:
         # TODO: print only information that configuration files were generated
         # parser.print_help()
