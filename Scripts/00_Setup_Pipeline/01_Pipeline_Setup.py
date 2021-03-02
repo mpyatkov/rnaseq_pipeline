@@ -609,14 +609,16 @@ def find_in_index(index_file, sample_id_param):
             # if sample line
             sample = list(filter(lambda y: y != '', map(lambda x: x.strip(), line.strip().split(','))))
             sample_id, read1, read2 = sample[0],sample[1],sample[2]
-            sample_dict[sample_id] = (project_name, project_path+read1, project_path+read2)
+            sample_dict[sample_id] = [project_name, project_path+read1, project_path+read2]
 
     if sample_id_param not in sample_dict:
         return None
     else:
         # return values, but strip before
-        return list(map(lambda x: x.strip(), list(sample_dict[sample_id_param])))
-
+        import string
+        def only_printable(w):
+            return "".join(list(filter(lambda x: x in string.ascii_letters + string.digits+"-_/.()", w)))
+        return list(map(lambda x: only_printable(x), sample_dict[sample_id_param]))
 
     
 # This function take local and global FASTQ index files and try to
@@ -644,9 +646,9 @@ def get_sample_info(SAMPLE_ID, LOCAL_INDEX, GLOBAL_INDEX):
         if result is not None:
             return result
         else:
-            raise ValueError(f"cannot find sample: {SAMPLE_ID} in GLOBAL_INDEX")
+            raise ValueError(f"ERROR: cannot find {SAMPLE_ID} sample in GLOBAL_INDEX")
     else:
-        raise ValueError(f"GLOBAL_INDEX: {GLOBAL_INDEX} does not exist")
+        raise ValueError(f"ERROR: {GLOBAL_INDEX} file does not exist")
     
             
 if __name__ == "__main__":
@@ -802,8 +804,14 @@ if __name__ == "__main__":
         sample_id = args.get_sample_info[0]
         local_index = current_path+"/index.csv"
         global_index = system_config.config["SYSTEM"]["FASTQ_GLOBAL_INDEX"]
-        print(get_sample_info(sample_id, local_index, global_index))
         print(" ".join(get_sample_info(sample_id, local_index, global_index)))
+        # try:
+        #     res = " ".join(get_sample_info(sample_id, local_index, global_index))
+        # except Exception as e:
+        #     print(e)
+        #     raise e
+        
+        # print(res)
         exit(0)
     else:
         # TODO: print only information that configuration files were generated
