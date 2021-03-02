@@ -1,0 +1,65 @@
+#!/bin/bash -l
+
+## convert CRAM to BAM by SAMPLE_ID
+## SAMPLE_ID/aligner directory should contain links to CRAM and CRAI
+## files
+
+set -o errexit
+set -o pipefail
+set -o nounset
+
+##################################################################################
+#$ -S /bin/bash
+#$ -cwd
+#$ -j y
+#$ -pe omp 4
+#$ -e ./logs/
+#$ -o ./logs/
+##################################################################################
+
+
+#checking the command line arg
+if [ $# -ne 1 ] ; then
+    echo "Additional arguments are required for this command."
+    exit 1
+fi
+
+# export all variables from Pipeline_Setup.conf
+eval "$(../00_Setup_Pipeline/01_Pipeline_Setup.py --export)"
+
+echo 'Loading required modules...'
+set +eu
+module load miniconda
+conda activate --stack ${CONDA_DIR}/samtools
+set -eu
+
+SAMPLE_ID=$1
+
+start_time=$(date +"%s")
+echo "Starting on : $(date)"
+echo "Running on node : $(hostname)"
+echo "Current directory : $(pwd)"
+echo "Parameter for multiple cores : $NSLOTS"
+echo "=========================================================="
+
+SAMPLE_DIR="${DATASET_DIR}/${SAMPLE_ID}/aligner"
+IN="${SAMPLE_ID}_primary_unique.cram"
+OUT="${SAMPLE_ID}_primary_unique.bam"
+
+pushd ${SAMPLE_DIR}
+echo "we are here: $(pwd)"
+ls -l
+date
+samtools view -@ ${NSLOTS} -b -T ${FASTA_DIR}/genome_mm9.fa -o $OUT $IN
+date
+samtools index -@ ${NSLOTS} $OUT
+date
+# rm -rf *.cra*
+samtools flagstat $OUT > "statistics_for_primary_unique_reads.txt"
+popd
+
+end_time=$(date +"%s")
+diff=$((end_time-start_time))
+echo "$((diff / 3600)) hours, $(((diff / 60) % 60)) minutes and $((diff % 60)) seconds elapsed."
+echo "=========================================================="
+echo "IAMOK"
