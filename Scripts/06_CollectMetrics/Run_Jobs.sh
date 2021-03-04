@@ -4,11 +4,25 @@ set -o errexit
 set -o pipefail
 set -o nounset
 
+# ./Run_Jobs.sh has one parameter - FULL_RECALC, if specify nothing by
+# default will be used FULL_RECALC=1 (full recalculation)
+# ./Run_Jobs.sh 0 -- allows to reuse previously calculated resutls
+
+# FULL_RECALC=1 by default if nothing provided
+FULL_RECALC=${1:-1}
+
+# Skip this step if recalculation flag set to 0
+if [ ${FULL_RECALC} -eq 0 ]; then
+    echo "Recalculation is not required. FULL_RECALC set to 0."
+    exit 0
+fi
+
 # export all variables from Pipeline_Setup.conf
 eval "$(../00_Setup_Pipeline/01_Pipeline_Setup.py --export)"
 
 #Remove *.o files from previous jobs
 rm -rf ./logs && mkdir -p ./logs
+
 
 # dir_name and job_name are required in the next steps
 dir_name=$(basename $(pwd))
