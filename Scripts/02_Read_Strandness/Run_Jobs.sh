@@ -10,8 +10,13 @@ set -o nounset
 #Way to run script:
 #Usage: ./Run_Jobs.sh
 #Example: 
-#./Run_Jobs.sh
+# ./Run_Jobs.sh has one parameter - FULL_RECALC, if specify nothing by
+# default will be used FULL_RECALC=1 (full recalculation)
+# ./Run_Jobs.sh 0 -- allows to reuse previously calculated resutls
 ##################################################################################
+
+# FULL_RECALC=1 by default if nothing provided
+FULL_RECALC=${1:-1}
 
 # export all variables from Pipeline_Setup.conf
 eval "$(../00_Setup_Pipeline/01_Pipeline_Setup.py --export)"
@@ -35,6 +40,13 @@ do
     sample_id=${samples[i+1]}
     # description=${samples[i+2]}
 
+    # skip recalculation if FULL_RECALC=0
+    result_path="${DATASET_DIR}/${sample_id}/Read_Strandness/${sample_id}_export.sh"
+    if [ -f ${result_path} -a ${FULL_RECALC} -eq 0 ]; then
+	echo "Skip recalculation for ${sample_id} sample. Results already obtained and FULL_RECALC flag set to 0."
+	continue
+    fi
+    
     # (set -x; qsub -N "${job_name}_${sample_id}" -P "${PROJECT}" -l h_rt="${TIME_LIMIT}" Read_Strandness.qsub "${sample_id}")
     (set -x; qsub -N "${job_name}_${sample_id}" -P "${PROJECT}" -l h_rt="00:15:00" Read_Strandness.qsub "${sample_id}")
     
