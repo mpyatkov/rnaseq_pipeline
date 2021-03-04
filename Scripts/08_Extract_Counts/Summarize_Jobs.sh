@@ -4,6 +4,15 @@ set -o errexit
 set -o pipefail
 set -o nounset
 
+# FULL_RECALC=1 by default if nothing provided
+FULL_RECALC=${1:-1}
+
+# Skip this step if recalculation flag set to 0
+if [ ${FULL_RECALC} -eq 0 ]; then
+    echo "Recalculation is not required. FULL_RECALC set to 0."
+    exit 0
+fi
+
 # export all variables from Pipeline_Setup.conf
 eval "$(../00_Setup_Pipeline/01_Pipeline_Setup.py --export)"
 
