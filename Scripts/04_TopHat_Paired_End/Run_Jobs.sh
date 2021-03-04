@@ -11,8 +11,13 @@ set -o nounset
 #Way to run script:
 #Usage: ./Run_Jobs.sh
 #Example: 
-#./Run_Jobs.sh
+# ./Run_Jobs.sh has one parameter - FULL_RECALC, if specify nothing by
+# default will be used FULL_RECALC=1 (full recalculation)
+# ./Run_Jobs.sh 0 -- allows to reuse previously calculated resutls
 ##################################################################################
+
+# FULL_RECALC=1 by default if nothing provided
+FULL_RECALC=${1:-1}
 
 #Remove *.o files from previous jobs
 rm -rf *.po* *.pe*
@@ -40,6 +45,15 @@ do
     # sample_dir=${samples[i]}
     sample_id=${samples[i+1]}
     # description=${samples[i+2]}
+
+    ## skip this step if BAM file exists
+    result_path="${DATASET_DIR}/${sample_id}/aligner/${sample_id}_primary_unique.bam"
+    if [ -f ${result_path} -a ${FULL_RECALC} -eq 0 ]; then
+	echo "Skip recalculation for ${sample_id} sample. Results already obtained and FULL_RECALC flag set to 0."
+	continue
+    fi
+
+    
     if [ ${DEFAULT_ALIGNER} -eq 0 ]; then
 	echo "TopHat runned..."
 	(set -x; qsub -N "${job_name}_${sample_id}" -P "${PROJECT}" -l h_rt="${TIME_LIMIT}" TopHat_Paired_End.qsub "${sample_id}" "${distance_bt_read_pair}")
