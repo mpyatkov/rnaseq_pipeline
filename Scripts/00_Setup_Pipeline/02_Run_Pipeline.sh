@@ -56,11 +56,19 @@ STEPS_DIR=$(pwd)
 # GENERATE: BOOL generate 09abcd folders 0/1
 # RESUME: BOOL only for case when we need restart from particular step [0/1]
 # INLCUDE: STRING list of steps which will be executed separated by "\|" 
+# FULL_RECALC: 1/0 - if set to 0 that means that some steps
+# can reuse already calculated results (ex. BAM files, Counts, Strandedness)
+FULL_RECALC=1
 
 if [[ "${START_STEP}" == "FULL" ]]; then
     GENERATE=1
     RESUME=0
     INCLUDE="ALL"
+if [[ "${START_STEP}" == "REFRESH" ]]; then
+    GENERATE=1
+    RESUME=0
+    INCLUDE="ALL"
+    FULL_RECALC=0
 elif [[ "${START_STEP}" == "DEONLY" ]]; then
     GENERATE=1
     RESUME=0
@@ -142,6 +150,7 @@ execute_wait_summarize_job(){
     # execute, wait, summarize the particular job
 
     local STEP_NUMBER=$1
+    local FULL_RECALC=$2
     printf "Start: %s\n\n -------------------------" "${STEP_NUMBER}"
 
     search_body="${STEPS_DIR} -maxdepth 1 -name '${STEP_NUMBER}*' -type d"
@@ -151,7 +160,7 @@ execute_wait_summarize_job(){
 	
 
 	pushd "${STEPS_DIR}/$sstep"
-	./Run_Jobs.sh
+	./Run_Jobs.sh ${FULL_RECALC}
 	popd
     done
     
@@ -170,7 +179,7 @@ execute_wait_summarize_job(){
 	# summarize if all logs contain the "IAMOK" at the end
 	# prevent immediate exit if ./Summarize_Jobs.sh does not exist
 	set +eu
-	./Summarize_Jobs.sh
+	./Summarize_Jobs.sh ${FULL_RECALC}
 	set -eu
 	printf "Done: %s\n\n -------------------------" "${job_name}"
 	popd
@@ -185,7 +194,7 @@ for STEP in ${PIPELINE_STEPS}
 do
     # steps consisting from multiple substeps will be run as one task
     # 09a -> 09a_1, 09a_2, 09a_3, ...
-    execute_wait_summarize_job $STEP
+    execute_wait_summarize_job $STEP ${FULL_RECALC}
 done
 
 echo 'Printing job duration for all steps...'
