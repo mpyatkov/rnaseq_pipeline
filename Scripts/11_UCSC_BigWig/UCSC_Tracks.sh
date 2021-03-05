@@ -144,27 +144,41 @@ function generate_tracks() {
 	Description=${samples[i+2]}
 	Color=${samples[i+3]}
 
+	# check if sample in db
+	sample_info=($("${SETUP_PIPELINE_DIR}"/01_Pipeline_Setup.py --get_sample_info ${Sample_ID}))
+
+	# project name should be the same for all combined samples
+	project_name=${sample_info[0]}
+
+	# get path to sample, if sample in db - indexed path, if not then check the non-indexed dir
+	# path will be common for all samples
+	if [ "${sample_info[0]}" = "SAMPLE_NOT_FOUND" ]; then
+	    SERVER_DIR_NAME="NON-INDEXED"
+	else
+	    SERVER_DIR_NAME="INDEXED_PROJECTS/${project_name}"
+	fi
+	
 	STRAND_RULE=$(get_strand_rule $STRANDEDNESS ${DATASET_DIR} ${Sample_ID})
 	
 	if [[ "${STRAND_RULE}" != "none" ]]
 	then
             #Make bigWig tracks (reads):
-            echo "track type=bigWig name='${Sample_ID}_Forward_norm' description='${Description}_Forward_norm' db=mm9 visibility=${BWVISUAL} autoScale=${AUTOSCALE} viewLimits=${LEFTLIMIT}:${RIGHTLIMIT} color='${Color}' yLineOnOff=off windowingFunction=mean smoothingWindow=3 maxHeightPixels=100:45:8 bigDataUrl=http://waxmanlabvm.bu.edu/TRACKS/COMMON/${Sample_ID}.Forward.bw"
+            echo "track type=bigWig name='${Sample_ID}_Forward_norm' description='${Description}_Forward_norm' db=mm9 visibility=${BWVISUAL} autoScale=${AUTOSCALE} viewLimits=${LEFTLIMIT}:${RIGHTLIMIT} color='${Color}' yLineOnOff=off windowingFunction=mean smoothingWindow=3 maxHeightPixels=100:45:8 bigDataUrl=http://waxmanlabvm.bu.edu/TRACKS/${SERVER_DIR_NAME}/${Sample_ID}.Forward.bw"
 
             #Make bigWig tracks (reads):
-            echo "track type=bigWig name='${Sample_ID}_Reverse_norm' description='${Description}_Reverse_norm' db=mm9 visibility=${BWVISUAL} autoScale=${AUTOSCALE} viewLimits=-${RIGHTLIMIT}:${LEFTLIMIT} color='${Color}' yLineOnOff=off windowingFunction=mean smoothingWindow=3 negateValues=off maxHeightPixels=100:45:8 bigDataUrl=http://waxmanlabvm.bu.edu/TRACKS/COMMON/${Sample_ID}.Reverse.bw"
+            echo "track type=bigWig name='${Sample_ID}_Reverse_norm' description='${Description}_Reverse_norm' db=mm9 visibility=${BWVISUAL} autoScale=${AUTOSCALE} viewLimits=-${RIGHTLIMIT}:${LEFTLIMIT} color='${Color}' yLineOnOff=off windowingFunction=mean smoothingWindow=3 negateValues=off maxHeightPixels=100:45:8 bigDataUrl=http://waxmanlabvm.bu.edu/TRACKS/${SERVER_DIR_NAME}/${Sample_ID}.Reverse.bw"
 	else
 	    #---------------------------------------------------------------------------------
 	    #For un-stranded data we get a single *.bw file
 	    #---------------------------------------------------------------------------------
 
 	    
-            echo "track type=bigWig name='${Sample_ID}_norm' description='${Description}' db=mm9 visibility=${BWVISUAL} autoScale=${AUTOSCALE} viewLimits=${LEFTLIMIT}:${RIGHTLIMIT} color='${Color}' yLineOnOff=off windowingFunction=mean smoothingWindow=3 maxHeightPixels=100:45:8 bigDataUrl=http://waxmanlabvm.bu.edu/TRACKS/COMMON/${Sample_ID}.bw"
+            echo "track type=bigWig name='${Sample_ID}_norm' description='${Description}' db=mm9 visibility=${BWVISUAL} autoScale=${AUTOSCALE} viewLimits=${LEFTLIMIT}:${RIGHTLIMIT} color='${Color}' yLineOnOff=off windowingFunction=mean smoothingWindow=3 maxHeightPixels=100:45:8 bigDataUrl=http://waxmanlabvm.bu.edu/TRACKS/${SERVER_DIR_NAME}/${Sample_ID}.bw"
 	fi
 
 	# Draw BAM tracks if BAMVISUAL not 0
 	if [[ "${BAMVISUAL}" != "0" ]]; then
-	    echo "track type=bam name='${Sample_ID}_${Description}' description='${Sample_ID}_${Description}' bamColorMode=strand db=mm9 visibility=${BAMVISUAL} bigDataUrl=http://waxmanlabvm.bu.edu/TRACKS/COMMON/${Sample_ID}_primary_unique.cram"
+	    echo "track type=bam name='${Sample_ID}_${Description}' description='${Sample_ID}_${Description}' bamColorMode=strand db=mm9 visibility=${BAMVISUAL} bigDataUrl=http://waxmanlabvm.bu.edu/TRACKS/${SERVER_DIR_NAME}/${Sample_ID}_primary_unique.cram"
 	fi
 	
     done >> ${FNAME}
@@ -250,11 +264,12 @@ while IFS=$'\t' read -r -a comb
 do
     fname=${comb[0]}
     group_name=${comb[1]}
+    server_dir_name=${comb[2]}
 
     if [[ $fname == *"Forward"* ]]; then
-	echo "track type=bigWig name='${fname}' description='${group_name}' db=mm9 visibility=full autoScale=on viewLimits=0.0:100.0 color='255,0,0' yLineOnOff=off windowingFunction=mean smoothingWindow=3 maxHeightPixels=100:45:8 bigDataUrl=http://waxmanlabvm.bu.edu/TRACKS/COMMON/${fname}" >> "${OUTPUT_DIR}/${DATASET_LABEL}_Combined_Tracks_Wiggle_autoON.txt"
+	echo "track type=bigWig name='${fname}' description='${group_name}' db=mm9 visibility=full autoScale=on viewLimits=0.0:100.0 color='255,0,0' yLineOnOff=off windowingFunction=mean smoothingWindow=3 maxHeightPixels=100:45:8 bigDataUrl=http://waxmanlabvm.bu.edu/TRACKS/${server_dir_name}/${fname}" >> "${OUTPUT_DIR}/${DATASET_LABEL}_Combined_Tracks_Wiggle_autoON.txt"
     else
-	echo "track type=bigWig name='${fname}' description='${group_name}' db=mm9 visibility=full autoScale=on viewLimits=-100.0:0.0 color='255,0,0' yLineOnOff=off windowingFunction=mean smoothingWindow=3 maxHeightPixels=100:45:8 bigDataUrl=http://waxmanlabvm.bu.edu/TRACKS/COMMON/${fname}" >> "${OUTPUT_DIR}/${DATASET_LABEL}_Combined_Tracks_Wiggle_autoON.txt"
+	echo "track type=bigWig name='${fname}' description='${group_name}' db=mm9 visibility=full autoScale=on viewLimits=-100.0:0.0 color='255,0,0' yLineOnOff=off windowingFunction=mean smoothingWindow=3 maxHeightPixels=100:45:8 bigDataUrl=http://waxmanlabvm.bu.edu/TRACKS/${server_dir_name}/${fname}" >> "${OUTPUT_DIR}/${DATASET_LABEL}_Combined_Tracks_Wiggle_autoON.txt"
     fi
 
     

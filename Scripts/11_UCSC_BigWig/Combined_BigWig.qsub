@@ -12,8 +12,8 @@
 # groups of previously obtained Forward and Reverse bigwig files
 
 # At this step that all required Forward and Reverse bigwig files are located
-# in the /net/waxman-server/mnt/data/waxmanlabvm_home/TRACKS/COMMON
-# directory.
+# in the /net/waxman-server/mnt/data/waxmanlabvm_home/TRACKS/{INDEXED_PROJECTS,NON-INDEXED}
+# directories.
 
 # set strict options
 set -o errexit
@@ -22,7 +22,8 @@ set -o nounset
 
 # Extract samples names and combine them to appropriate lines, ex: G186_M1M2M3
 # This procedure works only if your sample folders called as "PROJECTNAME_SAMPLEID",
-# because here we extract all SAMPLEIDs and combine them as one line
+# because here we extract all SAMPLEIDs and combine them as one line.
+# Will work for combining samples from different projects like: G184_M1M2_G186_M1M2 (sorted lexicograhically)
 samples_line(){
     local fname=$1
     a=$(tail -n+2 $fname | cut -f2 | cut -d "_" -f 1 | sort | uniq)
@@ -72,6 +73,22 @@ for group in "${groups[@]}"; do
     do
 	SAMPLE_ID=${samples[i+1]}
 
+	# check if sample in db
+	sample_info=($("${SETUP_PIPELINE_DIR}"/01_Pipeline_Setup.py --get_sample_info ${SAMPLE_ID}))
+
+	# project name should be the same for all combined samples
+	project_name=${sample_info[0]}
+	
+	# get path to sample, if sample in db - indexed path, if not then check the non-indexed dir
+	# path will be common for all samples
+	if [ "${sample_info[0]}" = "SAMPLE_NOT_FOUND" ]; then
+	    PATH_TO_SAMPLE="${VM_DIR_UCSC}/NON-INDEXED/"
+	    SERVER_DIR_NAME="NON-INDEXED"
+	else
+	    PATH_TO_SAMPLE="${VM_DIR_UCSC}/INDEXED_PROJECTS/${project_name}/"
+	    SERVER_DIR_NAME="INDEXED_PROJECTS/${project_name}"
+	fi
+	
 	# because we use --samples_by_group with a group name
 	# 01_Pipeline_Setup.py give us condition_name column instead
 	# of description column. Condition_name should be the same for all
@@ -87,12 +104,12 @@ for group in "${groups[@]}"; do
 	# forward+=("${DATASET_DIR}/${SAMPLE_ID}/${UCSC_SAMPLE}/${SAMPLE_ID}.Forward.bw")
 	# reverse+=("${DATASET_DIR}/${SAMPLE_ID}/${UCSC_SAMPLE}/${SAMPLE_ID}.Reverse.bw")
 
-	forward+=("${VM_DIR_UCSC}/COMMON/${SAMPLE_ID}.Forward.bw")
-	reverse+=("${VM_DIR_UCSC}/COMMON/${SAMPLE_ID}.Reverse.bw")
+	forward+=("${PATH_TO_SAMPLE}/${SAMPLE_ID}.Forward.bw")
+	reverse+=("${PATH_TO_SAMPLE}/${SAMPLE_ID}.Reverse.bw")
 	
 	suffix+=("${SAMPLE_ID}")
     done
-    
+
     # make tmp file for names (it is easy to work with file than array)
     printf "%s\n" "${suffix[@]}" > tmpfile
     suffix_combined=$(samples_line tmpfile)
@@ -103,7 +120,7 @@ for group in "${groups[@]}"; do
     REVERSE_BW="${suffix_combined}.Reverse.combined.bw"
 
     # if both files created skip calculation
-    if [ ! -f "${VM_DIR_UCSC}/COMMON/${FORWARD_BW}" -o ! -f "${VM_DIR_UCSC}/COMMON/${REVERSE_BW}" ]; then
+    if [ ! -f "${PATH_TO_SAMPLE}/${FORWARD_BW}" -o ! -f "${PATH_TO_SAMPLE}/${REVERSE_BW}" ]; then
 	# run wiggletools to calculate average for bigwig files and
 	# convert them back to bigwig again
 	echo "Forward reads ${suffix_combined}"
@@ -121,20 +138,19 @@ for group in "${groups[@]}"; do
     # add filename to COMBINED_PAIRS.txt (this file is required for track lines(next step))
     
     # print "filename \t group_name for forward reads"
-    printf "%s\t%s\n" "${FORWARD_BW}" "${group_name}" >> COMBINED_PAIRS.txt
+    printf "%s\t%s\t%s\n" "${FORWARD_BW}" "${group_name}" "${SERVER_DIR_NAME}" >> COMBINED_PAIRS.txt
 
     # print "filename \t group_name for reverse reads"
-    printf "%s\t%s\n" "${REVERSE_BW}" "${group_name}" >> COMBINED_PAIRS.txt
+    printf "%s\t%s\t%s\n" "${REVERSE_BW}" "${group_name}" "${SERVER_DIR_NAME}" >> COMBINED_PAIRS.txt
 
+    set +eu
+    mv ${FORWARD_BW} ${REVERSE_BW} ${PATH_TO_SAMPLE}/
+    set -eu
 done
-
-# move all combined files to the server if it is required
-echo "move files to the server"
-set +eu
-mv *.bw ${VM_DIR_UCSC}/COMMON/
-set -eu
 
 # generate track lines
 ./UCSC_Tracks.sh
+
+
 echo "-----"
 echo "IAMOK"

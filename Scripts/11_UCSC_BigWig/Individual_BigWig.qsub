@@ -39,16 +39,37 @@ conda activate --stack ${CONDA_DIR}/wig
 set -eu
 
 if [ $# -ne 1 ] ; then
-    echo "Need 6 arguments for the qsub command:"
-    echo "qsub -N ${Job_Name}'_'${Sample_ID} -P wax-dk -l h_rt=${TIME_LIMIT} UCSC_BigWig.qsub ${Sample_ID}"
+    echo "Need 3 argument for the qsub command"
     exit 0
 fi
 
+## PARAMETERS
 #process the command line arguments
 SAMPLE_ID=$1
-
 SCRIPT_DIR="$(pwd)"
-PROJECT_DIR="$(pwd)/../../"
+
+# check if sample in db
+sample_info=($("${SETUP_PIPELINE_DIR}"/01_Pipeline_Setup.py --get_sample_info ${SAMPLE_ID}))
+PROJECT_DIR=${sample_info[0]}
+if [ "${PROJECT_DIR}" = "SAMPLE_NOT_FOUND" ]; then
+    echo "${SAMPLE_ID} sample is not indexed"
+    OUTPUT_DIR="${VM_DIR_UCSC}/NON-INDEXED/"
+else
+    echo "${SAMPLE_ID} sample is not indexed"
+    OUTPUT_DIR="${VM_DIR_UCSC}/INDEXED_PROJECTS/${PROJECT_DIR}/"
+    mkdir -p ${OUTPUT_DIR}
+    
+    set +eu
+    chmod g+w ${OUTPUT_DIR}
+    set -eu
+    
+    pushd ${OUTPUT_DIR}
+    # if link to genome is not created then we need to make it for CRAM files
+    if [ ! -L "genome_mm9.fa" ]; then
+	ln -s ../../genome_mm9.fa ./
+    fi
+    popd
+fi
 
 # automated strand detection
 if [ ${STRANDEDNESS} -eq 3 ]; then
@@ -125,28 +146,15 @@ cp ${SCRIPT_DIR}/Chrom_Sizes/mm9.chrom.sizes .
 #Initialize variable:
 CHROMSIZE_FILE=mm9.chrom.sizes
 
-# # STORAGE_DIR=${DATASET_DIR}/${SAMPLE_ID}
-# STORAGE_DIR=${DATASET_DIR}
-
-#Create UCSC_BigWig output folder to store files:
-# OUTPUT_DIR="${PROJECT_DIR}/UCSC_TRACKS"
-# mkdir -p $OUTPUT_DIR
-
 ls -alh
 
 echo
 echo 'Starting samtools sort and index'
 echo
 
-
-# samtools sort ${INPUT_BAM} ${SAMPLE_ID}'_sorted'
-samtools sort -@ ${NSLOTS} -o "${SAMPLE_ID}_sorted.bam" ${INPUT_BAM}
-
-# samtools sort only takes file name with extension
-samtools index -@ ${NSLOTS} "${SAMPLE_ID}_sorted.bam"
-
-#Initilize variable:
-INPUT_FILE=${SAMPLE_ID}'_sorted.bam'
+# Initilize variable:
+# This file will be produced below inside the if condition
+SORTED_INPUT_BAM="${SAMPLE_ID}_sorted.bam"
 
 
 echo 'Starting bam2wig.py command'
@@ -176,20 +184,24 @@ TOTAL_WIGSUM=1000000000
 if [ "${STRAND_RULE}" == "none" ];
 then
     #If the data is unstranded, then don't specify --strand option (default=none)
-    bam2wig_options="--input-file=$INPUT_FILE --chromSize=$CHROMSIZE_FILE --out-prefix=${SAMPLE_ID} --wigsum=${TOTAL_WIGSUM}"
+    bam2wig_options="--input-file=${SORTED_INPUT_BAM} --chromSize=${CHROMSIZE_FILE} --out-prefix=${SAMPLE_ID} --wigsum=${TOTAL_WIGSUM}"
 else
-    bam2wig_options="--input-file=$INPUT_FILE --chromSize=$CHROMSIZE_FILE --out-prefix=${SAMPLE_ID} --wigsum=${TOTAL_WIGSUM} --strand=${STRAND_RULE}"
+    bam2wig_options="--input-file=${SORTED_INPUT_BAM} --chromSize=${CHROMSIZE_FILE} --out-prefix=${SAMPLE_ID} --wigsum=${TOTAL_WIGSUM} --strand=${STRAND_RULE}"
 fi
 
 #------------------------------------------
 echo 'Printing command:'
 echo "bam2wig.py "${bam2wig_options}
 
-# TODO: if file is already created do not recalculate it
 # Before run we should check existence of the bw files on server
-COMMON_DIR="${VM_DIR_UCSC}/COMMON"
+# This check is not required anymore, because we made it in
+# TODO: Run_Jobs.sh, so the following condition will be removed in the future
+if [ ! -f "${OUTPUT_DIR}/${SAMPLE_ID}.Forward.bw" -o ! -f "${OUTPUT_DIR}/${SAMPLE_ID}.Reverse.bw" ]; then
 
-if [ ! -f "${COMMON_DIR}/${SAMPLE_ID}.Forward.bw" -o ! -f "${COMMON_DIR}/${SAMPLE_ID}.Reverse.bw" ]; then
+    # samtools sort ${INPUT_BAM} --> ${SAMPLE_ID}_sorted
+    samtools sort -@ ${NSLOTS} -o ${SORTED_INPUT_BAM} ${INPUT_BAM}
+    samtools index -@ ${NSLOTS} ${SORTED_INPUT_BAM}
+
     echo "Generate bigwig files..."
     # if one or both files do not exist - recalculate both of them
     bam2wig.py ${bam2wig_options}
@@ -212,18 +224,18 @@ CRAM_OUT="${SAMPLE_ID}_primary_unique.cram"
 GENOME=${FASTA_DIR}/genome_mm9.fa
 
 # convert to CRAM
-if [ ! -f "${COMMON_DIR}/${CRAM_OUT}" ]; then
+if [ ! -f "${OUTPUT_DIR}/${CRAM_OUT}" ]; then
     echo "Generate CRAM files..."
     samtools view -@ ${NSLOTS} -b  -T ${GENOME} -C -o ${CRAM_OUT} ${BAM_IN}
     samtools index ${CRAM_OUT}
 fi
 
 echo 'Copy output to storage dir'
-# cp *.bw *.cra* ${OUTPUT_DIR}
 
 set +eu
 echo "copy files if it is required"
-cp *.bw *.cra* ${COMMON_DIR}
+cp *.bw ${OUTPUT_DIR}
+cp *.cra* ${OUTPUT_DIR}
 set -ue
 
 echo "List files in scratch"

@@ -59,14 +59,33 @@ samples=($("${SETUP_PIPELINE_DIR}"/01_Pipeline_Setup.py --samples))
 # loop over all samples
 for ((i=0;i< ${#samples[@]} ;i+=3));
 do
-    Sample_DIR=${samples[i]}
-    Sample_ID=${samples[i+1]}
-    Description=${samples[i+2]}
-    (set -x; qsub -N "${job_name}_${Sample_ID}" -P "${PROJECT}" -l h_rt="${TIME_LIMIT}" Individual_BigWig.qsub ${Sample_ID})
+    sample_dir=${samples[i]}
+    sample_id=${samples[i+1]}
+    description=${samples[i+2]}
 
+    # check if sample in db
+    sample_info=($("${SETUP_PIPELINE_DIR}"/01_Pipeline_Setup.py --get_sample_info ${sample_id}))
+    # get path to sample, if sample in db - indexed path, if not then check the non-indexed dir
+    if [ "${sample_info[0]}" = "SAMPLE_NOT_FOUND" ]; then
+	path_to_sample="${VM_DIR_UCSC}/NON-INDEXED/"
+    else
+	path_to_sample="${VM_DIR_UCSC}/INDEXED_PROJECTS/${sample_info[0]}/"
+    fi
+
+    # if Forward or Backward bigwig files do not exist - start calculation
+    if [ ! -f "${path_to_sample}/${sample_id}.Forward.bw" -o ! -f "${path_to_sample}/${sample_id}.Reverse.bw" ]; then
+	echo "start calc for ${sample_id}"
+        (set -x; qsub -N "${job_name}_${sample_id}" -P "${PROJECT}" -l h_rt="${TIME_LIMIT}" Individual_BigWig.qsub ${sample_id})
+    fi
 done
 
 # waiting for competion of previous jobs and starting combining files creation
+
+# 1. we suppose that all individual bigwig files already located on server
+# 2. we suppose that all combined files are from one project and have same
+# name notations; for example group from two files G186_M1 and G186_M2
+# will be combined to file G186_M1M2
+
 qsub -hold_jid "${job_name}*" -N "${job_name}_Combined" -P "${PROJECT}" -l h_rt="${TIME_LIMIT}" Combined_BigWig.qsub
 
 #Remove the temp file:
