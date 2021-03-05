@@ -16,6 +16,7 @@ import fileinput
 import argparse
 import glob
 import shutil
+import sys
 
 PIPELINE_CONFIG = "Pipeline_Setup.conf"
 SAMPLES_CONFIG = "Sample_Labels.txt"
@@ -144,7 +145,7 @@ STARINDEX_DIR=/projectnb/wax-es/routines/starindex_EC76K
 # experiments. You can extract information about sample using the
 # following command: ./01_Pipeline_Setup.py --get_sample_info
 # SAMPLE_ID. Each SAMPLE_ID should be unique in this file.
-FASTQ_GLOBAL_INDEX=/projectnb/wax-es/routines/index.csv
+FASTQ_DEFAULT_INDEX=/projectnb/wax-es/routines/index.csv
 
 # special directory which will contain FASTQC reports
 VM_DIR_FASTQC=/net/waxman-server/mnt/data/waxmanlabvm_home/${USER:BU_USER}/FASTQC/${USER:DATASET_LABEL}
@@ -574,7 +575,8 @@ def generate_example(config_path, default_config):
 # function which parse FASTQ index files
 # INPUT: index_file - file with FASTQ indexes
 # INPUT: sample_id (ex. G186_M1)
-# OUTPUT: None (if found nothing) otherwise (PROJECT_NAME, READ1, READ2)
+# OUTPUT: None (if found nothing) otherwise (PROJECT_NAME, READ1,
+# READ2), can produce exception
 # FASTQ index simple text format allows to store information about
 # sample:
 # PRJ,PROJECT_NAME1,/PROJECT_PATH1
@@ -609,6 +611,15 @@ def find_in_index(index_file, sample_id_param):
             # if sample line
             sample = list(filter(lambda y: y != '', map(lambda x: x.strip(), line.strip().split(','))))
             sample_id, read1, read2 = sample[0],sample[1],sample[2]
+
+            # set some boundaries for the sample_id
+            # only one underscore for sample id (ex. G186_M1)
+            if len(sample_id.split("_")) != 2:
+                raise ValueError(f"ERROR: {sample_id} sample name should contain only one underscore character, like G186_M1 (PROJECT_SHORTNAME)")
+            
+            # only unique sample_id in dict
+            if sample_id in sample_dict:
+                raise ValueError(f"ERROR: {sample_id} already in the index file ({index_file}). All SAMPLE_IDs should be unique")
             sample_dict[sample_id] = [project_name, project_path+read1, project_path+read2]
 
     if sample_id_param not in sample_dict:
@@ -630,25 +641,28 @@ def find_in_index(index_file, sample_id_param):
 # INPUT: sample_id
 # INPUT: local index file path
 # INPUT: global index file path
-# OUTPUT: (PROJECT_NAME, /PATH/TO/READ1.f*q.gz, /PATH/TO/READ2.f*q.gz)
+# OUTPUT: (PROJECT_NAME, /PATH/TO/READ1.f*q.gz, /PATH/TO/READ2.f*q.gz) or exception
 
-def get_sample_info(SAMPLE_ID, LOCAL_INDEX, GLOBAL_INDEX):
+def get_sample_info(SAMPLE_ID, USER_DEFINED_INDEX, DEFAULT_INDEX):
 
-    # if LOCAL_INDEX exist try to find SAMPLE_ID otherwise continue
-    if os.path.exists(LOCAL_INDEX):
-        result = find_in_index(LOCAL_INDEX, SAMPLE_ID)
+    # if USER_DEFINED_INDEX exist try to find SAMPLE_ID otherwise continue
+    if USER_DEFINED_INDEX is not None and os.path.exists(USER_DEFINED_INDEX):
+        result = find_in_index(USER_DEFINED_INDEX, SAMPLE_ID)
+        # return result only if sample in local index
         if result is not None:
+            sys.stderr.write(f"INFO: {SAMPLE_ID} found in {USER_DEFINED_INDEX}\n")
             return result
         
-    # if GLOBAL_INDEX exist try to find SAMPLE_ID otherwise generate error 
-    if os.path.exists(GLOBAL_INDEX):
-        result = find_in_index(GLOBAL_INDEX, SAMPLE_ID)
+    # if DEFAULT_INDEX exist try to find SAMPLE_ID otherwise generate error 
+    if os.path.exists(DEFAULT_INDEX):
+        result = find_in_index(DEFAULT_INDEX, SAMPLE_ID)
         if result is not None:
+            sys.stderr.write(f"INFO: {SAMPLE_ID} found in {DEFAULT_INDEX}\n")
             return result
         else:
-            raise ValueError(f"ERROR: cannot find {SAMPLE_ID} sample in GLOBAL_INDEX")
+            raise ValueError(f"ERROR: cannot find {SAMPLE_ID} sample in {DEFAULT_INDEX}")
     else:
-        raise ValueError(f"ERROR: {GLOBAL_INDEX} file does not exist")
+        raise ValueError(f"ERROR: {DEFAULT_INDEX} file does not exist")
     
             
 if __name__ == "__main__":
@@ -710,7 +724,7 @@ if __name__ == "__main__":
     parser.add_argument("--get_sample_info",
                         nargs=1,
                         metavar=('SAMPLE_ID'),
-                        help="return (PROJECT, READ1, READ2) by SAMPLE_ID from index files")
+                        help="return (PROJECT, READ1, READ2) or SAMPLE_NOT_FOUND by SAMPLE_ID from index files")
     
     # gtf_by_annotation_and_counter
     args = parser.parse_args()
@@ -802,11 +816,26 @@ if __name__ == "__main__":
 
     elif args.get_sample_info:
         sample_id = args.get_sample_info[0]
-        local_index = current_path+"/index.csv"
-        global_index = system_config.config["SYSTEM"]["FASTQ_GLOBAL_INDEX"]
-        print(" ".join(get_sample_info(sample_id, local_index, global_index)))
+
+        # check how many indexes
+        from glob import glob
+        any_index = glob(current_path+"/*index.csv")
+        user_defined_index = None
+        if len(any_index) == 1:
+            user_defined_index = any_index[0]
+        elif len(any_index) > 1:
+            import os.path as p
+            fnames = list(map(lambda x: p.basename(x)), any_index)
+            raise ValueError(f"ERROR: too many index files in the setup directory: {fnames}, only 0 or 1 should be provided")
+        else:
+            user_defined_index = None
+            
+        default_index = system_config.config["SYSTEM"]["FASTQ_DEFAULT_INDEX"]
+        sample_info = get_sample_info(sample_id, user_defined_index, default_index)
+
+        print(" ".join(sample_info))
         # try:
-        #     res = " ".join(get_sample_info(sample_id, local_index, global_index))
+        #     res = " ".join(get_sample_info(sample_id, user_defined_index, default_index))
         # except Exception as e:
         #     print(e)
         #     raise e
@@ -814,7 +843,6 @@ if __name__ == "__main__":
         # print(res)
         exit(0)
     else:
-        # TODO: print only information that configuration files were generated
         # parser.print_help()
         print("All config files are created!")
 
