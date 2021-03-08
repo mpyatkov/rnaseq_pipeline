@@ -189,7 +189,7 @@ echo 'Starting spliced_read_counts'
 pushd "${output_dir}"
 ######################
 
-output_file=$output_dir/${SAMPLE_ID}'_spliced_read_counts.txt'
+output_file="${output_dir}/${SAMPLE_ID}_spliced_read_counts.txt"
 rm -rf ${output_file} && touch ${output_file}
 
 # It would be useful to know the number of mapped reads that have skipped regions
@@ -223,6 +223,50 @@ echo 'Ending spliced_read_counts'
 # copy the output files to users storage dir
 cp *.txt ${output_dir}
 cp -r ${output_dir} ${storage_dir}
+
+# generate cram files and move them to the waxmanlabvm project
+# directory
+function cram_creating(){
+    local sample_id=$1
+
+    # get project name
+    sample_info=($("${SETUP_PIPELINE_DIR}"/01_Pipeline_Setup.py --get_sample_info ${sample_id}))
+    project_dir=${sample_info[0]}
+    server_dir="${VM_DIR_UCSC}/INDEXED_PROJECTS/${project_dir}/"
+
+    # go to the aligner dir
+    pushd "${DATASET_DIR}/${sample_id}/aligner"
+
+    bam_in="${sample_id}_primary_unique.bam"
+    cram_out="${sample_id}_primary_unique.cram"
+    genome="${FASTA_DIR}/genome_mm9.fa"
+
+    # create server/project dir if it was not created before
+    mkdir -p ${server_dir}
+
+    # convert to CRAM if file is not created
+    if [ ! -f "${server_dir}/${cram_out}" ]; then
+	echo "Generate CRAM files..."
+	samtools view -@ ${NSLOTS} -b  -T ${genome} -C -o ${cram_out} ${bam_in}
+	samtools index ${cram_out}
+
+	# mv cram files to server
+	echo "copy files if it is required"
+	mv *.cra* ${server_dir}
+    fi
+
+    pushd ${server_dir}
+    # if link to genome is not created then we need to make it to display CRAM files
+    if [ ! -L "genome_mm9.fa" ]; then
+	ln -s ../../genome_mm9.fa ./
+    fi
+    popd
+    
+    popd
+}
+
+## Create CRAM file
+cram_creating ${SAMPLE_ID}
 
 echo "List files in scratch"
 ls -alh
