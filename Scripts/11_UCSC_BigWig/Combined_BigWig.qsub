@@ -12,7 +12,7 @@
 # groups of previously obtained Forward and Reverse bigwig files
 
 # At this step that all required Forward and Reverse bigwig files are located
-# in the /net/waxman-server/mnt/data/waxmanlabvm_home/TRACKS/{INDEXED_PROJECTS,NON-INDEXED}
+# in the /net/waxman-server/mnt/data/waxmanlabvm_home/TRACKS/{INDEXED_PROJECTS}
 # directories.
 
 # set strict options
@@ -24,19 +24,27 @@ set -o nounset
 # This procedure works only if your sample folders called as "PROJECTNAME_SAMPLEID",
 # because here we extract all SAMPLEIDs and combine them as one line.
 # Will work for combining samples from different projects like: G184_M1M2_G186_M1M2 (sorted lexicograhically)
-samples_line(){
+get_samples_line(){
+    # parse line: SAMPLE_ID PROJECTNAME
     local fname=$1
-    a=$(tail -n+2 $fname | cut -f2 | cut -d "_" -f 1 | sort | uniq)
+    groups=$(cat $fname | cat tmpfile| cut -d" " -f1 | cut -d "_" -f1 | sort | uniq)
 
     res=""
-    for i in $a
+    for i in $groups
     do
-	group="${i}_$(grep ${i} $fname | cut -f 2 | cut -d "_" -f 2 | paste -s -d '')_"
+	group="${i}_$(grep ${i} $fname | cut -f 1 -d" " | cut -d "_" -f 2 | paste -s -d '')_"
 	res+=$group
-	# res+="_"
     done
 
     echo ${res%_}
+}
+
+# get project name, can be combined ex. G186_G184
+get_project_name(){
+    # parse line: SAMPLE_ID PROJECTNAME
+    local fname=$1
+    combined_name=$(cat $fname | cut -f 2 -d" " | sort | uniq | paste -s -d '_')
+    echo ${combined_name}
 }
 
 # export all variables from Pipeline_Setup.conf
@@ -59,8 +67,8 @@ groups=($("${SETUP_PIPELINE_DIR}"/01_Pipeline_Setup.py --groups))
 # for each group
 for group in "${groups[@]}"; do
 
-    # get samples array (triples of sample_dir sample_id description for each sample)
-    samples=($("${SETUP_PIPELINE_DIR}"/01_Pipeline_Setup.py --samples_by_group ${group}))
+    # get samples array (triples of sample_dir, sample_id, description, color for each sample)
+    samples=($("${SETUP_PIPELINE_DIR}"/01_Pipeline_Setup.py --samples_by_group ${group} "color_enable"))
 
     # create new array contains path to Forward and Reverse bigwig files
     forward=()
@@ -69,26 +77,18 @@ for group in "${groups[@]}"; do
     suffix=()
 
     group_name=""
-    for ((i=0;i< ${#samples[@]} ;i+=3));
+    for ((i=0;i< ${#samples[@]} ;i+=4));
     do
 	SAMPLE_ID=${samples[i+1]}
-
+	# color for combined track should be the same for all samples
+	COLOR=${samples[i+3]}
+	
 	# check if sample in db
 	sample_info=($("${SETUP_PIPELINE_DIR}"/01_Pipeline_Setup.py --get_sample_info ${SAMPLE_ID}))
 
 	# project name should be the same for all combined samples
 	project_name=${sample_info[0]}
-	
-	# get path to sample, if sample in db - indexed path, if not then check the non-indexed dir
-	# path will be common for all samples
-	if [ "${sample_info[0]}" = "SAMPLE_NOT_FOUND" ]; then
-	    PATH_TO_SAMPLE="${VM_DIR_UCSC}/NON-INDEXED/"
-	    SERVER_DIR_NAME="NON-INDEXED"
-	else
-	    PATH_TO_SAMPLE="${VM_DIR_UCSC}/INDEXED_PROJECTS/${project_name}/"
-	    SERVER_DIR_NAME="INDEXED_PROJECTS/${project_name}"
-	fi
-	
+
 	# because we use --samples_by_group with a group name
 	# 01_Pipeline_Setup.py give us condition_name column instead
 	# of description column. Condition_name should be the same for all
@@ -104,15 +104,28 @@ for group in "${groups[@]}"; do
 	# forward+=("${DATASET_DIR}/${SAMPLE_ID}/${UCSC_SAMPLE}/${SAMPLE_ID}.Forward.bw")
 	# reverse+=("${DATASET_DIR}/${SAMPLE_ID}/${UCSC_SAMPLE}/${SAMPLE_ID}.Reverse.bw")
 
-	forward+=("${PATH_TO_SAMPLE}/${SAMPLE_ID}.Forward.bw")
-	reverse+=("${PATH_TO_SAMPLE}/${SAMPLE_ID}.Reverse.bw")
+	forward+=("${VM_DIR_UCSC}/INDEXED_PROJECTS/${project_name}/${SAMPLE_ID}.Forward.bw")
+	reverse+=("${VM_DIR_UCSC}/INDEXED_PROJECTS/${project_name}/${SAMPLE_ID}.Reverse.bw")
 	
-	suffix+=("${SAMPLE_ID}")
+	# suffix+=("${SAMPLE_ID}")
+	printf "%s %s\n" "${SAMPLE_ID}" "${project_name}" >> tmpfile
     done
 
     # make tmp file for names (it is easy to work with file than array)
-    printf "%s\n" "${suffix[@]}" > tmpfile
-    suffix_combined=$(samples_line tmpfile)
+    # printf "%s\n" "${suffix[@]}" > tmpfile
+    suffix_combined=$(get_samples_line tmpfile)
+
+    # resulted project name (usually single project, but can be combined like ex. G186_G184)
+    output_project_name=$(get_project_name tmpfile)
+
+    # path will be common for all samples
+    PATH_ON_SERVER="${VM_DIR_UCSC}/INDEXED_PROJECTS/${output_project_name}/"
+
+    # create PATH_ON_SERVER if not exists
+    mkdir -p ${PATH_ON_SERVER} 
+    
+    SERVER_DIR_NAME="INDEXED_PROJECTS/${output_project_name}"
+
     rm tmpfile
 
     # skip the rest if combined file already exist in ${VM_DIR_UCSC}/COMMON/
@@ -120,7 +133,10 @@ for group in "${groups[@]}"; do
     REVERSE_BW="${suffix_combined}.Reverse.combined.bw"
 
     # if both files created skip calculation
-    if [ ! -f "${PATH_TO_SAMPLE}/${FORWARD_BW}" -o ! -f "${PATH_TO_SAMPLE}/${REVERSE_BW}" ]; then
+    if [ ! -f "${PATH_ON_SERVER}/${FORWARD_BW}" -o ! -f "${PATH_ON_SERVER}/${REVERSE_BW}" ]; then
+	echo "${PATH_ON_SERVER}/${FORWARD_BW}"
+	echo "${PATH_ON_SERVER}/${REVERSE_BW}"
+	echo "processing ${SAMPLE_ID}"
 	# run wiggletools to calculate average for bigwig files and
 	# convert them back to bigwig again
 	echo "Forward reads ${suffix_combined}"
@@ -138,13 +154,13 @@ for group in "${groups[@]}"; do
     # add filename to COMBINED_PAIRS.txt (this file is required for track lines(next step))
     
     # print "filename \t group_name for forward reads"
-    printf "%s\t%s\t%s\n" "${FORWARD_BW}" "${group_name}" "${SERVER_DIR_NAME}" >> COMBINED_PAIRS.txt
+    printf "%s\t%s\t%s\t%s\n" "${FORWARD_BW}" "${group_name}" "${SERVER_DIR_NAME}" "${COLOR}" >> COMBINED_PAIRS.txt
 
     # print "filename \t group_name for reverse reads"
-    printf "%s\t%s\t%s\n" "${REVERSE_BW}" "${group_name}" "${SERVER_DIR_NAME}" >> COMBINED_PAIRS.txt
+    printf "%s\t%s\t%s\t%s\n" "${REVERSE_BW}" "${group_name}" "${SERVER_DIR_NAME}" "${COLOR}">> COMBINED_PAIRS.txt
 
     set +eu
-    mv ${FORWARD_BW} ${REVERSE_BW} ${PATH_TO_SAMPLE}/
+    mv ${FORWARD_BW} ${REVERSE_BW} ${PATH_ON_SERVER}/
     set -eu
 done
 

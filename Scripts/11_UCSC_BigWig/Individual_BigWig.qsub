@@ -51,25 +51,7 @@ SCRIPT_DIR="$(pwd)"
 # check if sample in db
 sample_info=($("${SETUP_PIPELINE_DIR}"/01_Pipeline_Setup.py --get_sample_info ${SAMPLE_ID}))
 PROJECT_DIR=${sample_info[0]}
-if [ "${PROJECT_DIR}" = "SAMPLE_NOT_FOUND" ]; then
-    echo "${SAMPLE_ID} sample is not indexed"
-    OUTPUT_DIR="${VM_DIR_UCSC}/NON-INDEXED/"
-else
-    echo "${SAMPLE_ID} sample is not indexed"
-    OUTPUT_DIR="${VM_DIR_UCSC}/INDEXED_PROJECTS/${PROJECT_DIR}/"
-    mkdir -p ${OUTPUT_DIR}
-    
-    set +eu
-    chmod g+w ${OUTPUT_DIR}
-    set -eu
-    
-    pushd ${OUTPUT_DIR}
-    # if link to genome is not created then we need to make it for CRAM files
-    if [ ! -L "genome_mm9.fa" ]; then
-	ln -s ../../genome_mm9.fa ./
-    fi
-    popd
-fi
+OUTPUT_DIR="${VM_DIR_UCSC}/INDEXED_PROJECTS/${PROJECT_DIR}/"
 
 # automated strand detection
 if [ ${STRANDEDNESS} -eq 3 ]; then
@@ -130,9 +112,15 @@ echo "=========================================================="
 
 cd ${TMPDIR}
 
-cp ${DATASET_DIR}/${SAMPLE_ID}/aligner/"${SAMPLE_ID}_primary_unique.bam" .
-#Initialize INPUT_BAM:
+INPUT_BAM_PATH="${DATASET_DIR}/${SAMPLE_ID}/aligner/${SAMPLE_ID}_primary_unique.bam"
+if [ ! -f ${INPUT_BAM_PATH} ]; then
+    echo "ERROR: cannot find BAM file: ${INPUT_BAM_PATH}"
+    exit 1
+fi
 
+cp ${BAM_PATH} ./
+
+#Initialize INPUT_BAM:
 INPUT_BAM="${SAMPLE_ID}_primary_unique.bam"
 
 echo
@@ -141,7 +129,7 @@ echo ${INPUT_BAM}
 echo
 
 #Copy UCSC_BigWig required files:
-cp ${SCRIPT_DIR}/Chrom_Sizes/mm9.chrom.sizes .
+cp ${SCRIPT_DIR}/Chrom_Sizes/mm9.chrom.sizes ./
 
 #Initialize variable:
 CHROMSIZE_FILE=mm9.chrom.sizes
@@ -152,13 +140,11 @@ echo
 echo 'Starting samtools sort and index'
 echo
 
-# Initilize variable:
-# This file will be produced below inside the if condition
+
+# This file will be calculated below
 SORTED_INPUT_BAM="${SAMPLE_ID}_sorted.bam"
 
-
 echo 'Starting bam2wig.py command'
-
 #--------------------------------------------------------------------------------
 #http://rseqc.sourceforge.net/#infer-experiment-py
 #1. bam2wig.py converts all types of RNA-seq data from BAM format into wiggle format.
@@ -194,7 +180,7 @@ echo 'Printing command:'
 echo "bam2wig.py "${bam2wig_options}
 
 # Before run we should check existence of the bw files on server
-# This check is not required anymore, because we made it in
+# UPDATE: This check is not required anymore, because we made it in the Run_Jobs
 # TODO: Run_Jobs.sh, so the following condition will be removed in the future
 if [ ! -f "${OUTPUT_DIR}/${SAMPLE_ID}.Forward.bw" -o ! -f "${OUTPUT_DIR}/${SAMPLE_ID}.Reverse.bw" ]; then
 
@@ -205,41 +191,19 @@ if [ ! -f "${OUTPUT_DIR}/${SAMPLE_ID}.Forward.bw" -o ! -f "${OUTPUT_DIR}/${SAMPL
     echo "Generate bigwig files..."
     # if one or both files do not exist - recalculate both of them
     bam2wig.py ${bam2wig_options}
+
+    echo "Copy output to storage dir"
+    # at this moment we suppose that bigwig files for this sampe is not created
+    mv *.bw ${OUTPUT_DIR}
+
+    ls -l
 fi
-
-#--------------------------------------------------------------------------------
-
-ls -l
 
 # As mentioned above:
 # 2. If UCSC wigToBigWig tool was found, output wiggle file will be converted into bigwig format automatically.
 # For some reason when bam2wig.py calls the wigToBigWig tool it may return an error
 # Better to call the wigToBigWig tool directly
-
 # TODO: use bamCoverage instead of bam2wig.py + wigToBigWig
-
-# Convert sorted bam to cram to keep space in waxmanlabvm
-BAM_IN="${SAMPLE_ID}_primary_unique.bam"
-CRAM_OUT="${SAMPLE_ID}_primary_unique.cram"
-GENOME=${FASTA_DIR}/genome_mm9.fa
-
-# convert to CRAM
-if [ ! -f "${OUTPUT_DIR}/${CRAM_OUT}" ]; then
-    echo "Generate CRAM files..."
-    samtools view -@ ${NSLOTS} -b  -T ${GENOME} -C -o ${CRAM_OUT} ${BAM_IN}
-    samtools index ${CRAM_OUT}
-fi
-
-echo 'Copy output to storage dir'
-
-set +eu
-echo "copy files if it is required"
-cp *.bw ${OUTPUT_DIR}
-cp *.cra* ${OUTPUT_DIR}
-set -ue
-
-echo "List files in scratch"
-ls -alh
 
 echo "=========================================================="
 echo "Finished on : $(date)"

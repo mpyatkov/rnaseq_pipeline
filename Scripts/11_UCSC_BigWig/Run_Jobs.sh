@@ -65,12 +65,8 @@ do
 
     # check if sample in db
     sample_info=($("${SETUP_PIPELINE_DIR}"/01_Pipeline_Setup.py --get_sample_info ${sample_id}))
-    # get path to sample, if sample in db - indexed path, if not then check the non-indexed dir
-    if [ "${sample_info[0]}" = "SAMPLE_NOT_FOUND" ]; then
-	path_to_sample="${VM_DIR_UCSC}/NON-INDEXED/"
-    else
-	path_to_sample="${VM_DIR_UCSC}/INDEXED_PROJECTS/${sample_info[0]}/"
-    fi
+    # get path to the sample
+    path_to_sample="${VM_DIR_UCSC}/INDEXED_PROJECTS/${sample_info[0]}/"
 
     # if Forward or Backward bigwig files do not exist - start calculation
     if [ ! -f "${path_to_sample}/${sample_id}.Forward.bw" -o ! -f "${path_to_sample}/${sample_id}.Reverse.bw" ]; then

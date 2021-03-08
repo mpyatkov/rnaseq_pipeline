@@ -11,10 +11,11 @@
 set -o errexit
 set -o pipefail
 set -o nounset
-
+# set -x
 # export all variables from Pipeline_Setup.conf
 eval "$(../00_Setup_Pipeline/01_Pipeline_Setup.py --export)"
 
+## check the strandedness and export it to the global scope
 function get_strand_rule() {
     local STRANDEDNESS=$1
     local DDIR=$2
@@ -27,8 +28,9 @@ function get_strand_rule() {
 	    source ${export_file}
 	    # echo "Auto: $STRANDEDNESS"
 	else
-	    echo "Error: cannot find file: ${export_file}"
-	    echo "To use automatic strand detection, you must complete step 01_Read_Strandness"
+	    echo "ERROR: cannot find file: ${export_file}" >&2
+	    echo "To use automatic strand detection, you must complete step 02_Read_Strandness" >&2
+	    
 	    exit 1
 	fi
     fi
@@ -67,6 +69,7 @@ echo "-----------------------"
 OUTPUT_DIR=${SCRIPT_DIR}/UCSC_Track_Lines
 rm -rf ${OUTPUT_DIR} && mkdir -p ${OUTPUT_DIR}
 
+## print legacy tracks
 function print_header() {
     local FNAME=$1
 
@@ -123,7 +126,7 @@ function print_header() {
     echo 'Add BAM and BigWig file tracks'
 }
 
-
+## generate tracks 
 function generate_tracks() {
     local FNAME=$1
     local BWVISUAL=$2 # dense/full/pack
@@ -131,7 +134,13 @@ function generate_tracks() {
     local BAMVISUAL=$4 # 0/full/dense,...
     local LEFTLIMIT=$5 # float number
     local RIGHTLIMIT=$6 # float number
+    local WITH_HEADER=$7 # 0/1
     echo $FNAME
+
+    if [ ${WITH_HEADER} -eq 1 ]; then
+	print_header ${FNAME}
+    fi
+    
     # samples contains array of (sample_dir, sample_id, description, color) for each sample
     samples=($("${SETUP_PIPELINE_DIR}"/01_Pipeline_Setup.py --samples_with_color))
 
@@ -146,17 +155,9 @@ function generate_tracks() {
 
 	# check if sample in db
 	sample_info=($("${SETUP_PIPELINE_DIR}"/01_Pipeline_Setup.py --get_sample_info ${Sample_ID}))
-
-	# project name should be the same for all combined samples
 	project_name=${sample_info[0]}
 
-	# get path to sample, if sample in db - indexed path, if not then check the non-indexed dir
-	# path will be common for all samples
-	if [ "${sample_info[0]}" = "SAMPLE_NOT_FOUND" ]; then
-	    SERVER_DIR_NAME="NON-INDEXED"
-	else
-	    SERVER_DIR_NAME="INDEXED_PROJECTS/${project_name}"
-	fi
+	SERVER_DIR_NAME="INDEXED_PROJECTS/${project_name}"
 	
 	STRAND_RULE=$(get_strand_rule $STRANDEDNESS ${DATASET_DIR} ${Sample_ID})
 	
@@ -171,7 +172,6 @@ function generate_tracks() {
 	    #---------------------------------------------------------------------------------
 	    #For un-stranded data we get a single *.bw file
 	    #---------------------------------------------------------------------------------
-
 	    
             echo "track type=bigWig name='${Sample_ID}_norm' description='${Description}' db=mm9 visibility=${BWVISUAL} autoScale=${AUTOSCALE} viewLimits=${LEFTLIMIT}:${RIGHTLIMIT} color='${Color}' yLineOnOff=off windowingFunction=mean smoothingWindow=3 maxHeightPixels=100:45:8 bigDataUrl=http://waxmanlabvm.bu.edu/TRACKS/${SERVER_DIR_NAME}/${Sample_ID}.bw"
 	fi
@@ -182,6 +182,30 @@ function generate_tracks() {
 	fi
 	
     done >> ${FNAME}
+
+    ## COMBINED TRACKS
+    ##
+    COMBINED_OUTPUT=${FNAME%.txt}
+    COMBINED_OUTPUT="${COMBINED_OUTPUT}_Combined.txt"
+    
+    if [ ${WITH_HEADER} -eq 1 ]; then
+	print_header ${COMBINED_OUTPUT}
+    fi
+    
+    while IFS=$'\t' read -r -a comb
+    do
+	fname=${comb[0]}
+	group_name=${comb[1]}
+	server_dir_name=${comb[2]}
+	combined_color=${comb[3]}
+	if [[ $fname == *"Forward"* ]]; then
+	    echo "track type=bigWig name='${fname}' description='${group_name}' db=mm9 visibility=${BWVISUAL} autoScale=${AUTOSCALE} viewLimits=${LEFTLIMIT}:${RIGHTLIMIT} color='${combined_color}' yLineOnOff=off windowingFunction=mean smoothingWindow=3 maxHeightPixels=100:45:8 bigDataUrl=http://waxmanlabvm.bu.edu/TRACKS/${server_dir_name}/${fname}"
+	else
+	    echo "track type=bigWig name='${fname}' description='${group_name}' db=mm9 visibility=${BWVISUAL} autoScale=${AUTOSCALE} viewLimits=-${RIGHTLIMIT}:${LEFTLIMIT} color='${combined_color}' yLineOnOff=off windowingFunction=mean smoothingWindow=3 maxHeightPixels=100:45:8 bigDataUrl=http://waxmanlabvm.bu.edu/TRACKS/${server_dir_name}/${fname}"
+	fi
+	
+    done < COMBINED_PAIRS.txt >> ${COMBINED_OUTPUT}
+    
 }
 
 ###############################
@@ -191,7 +215,7 @@ rm -rf ${OUTPUT_FILE_PileUp}
 
 echo 'Start *_Tracks_PileUp.txt'
 
-print_header ${OUTPUT_FILE_PileUp}
+# print_header ${OUTPUT_FILE_PileUp}
 
 fname=${OUTPUT_FILE_PileUp}
 bwvisual=dense # dense/full/pack
@@ -199,18 +223,18 @@ autoscale=on # on/off
 bamvisual=pack # 0/full/dense,...
 leftlimit=0.0 # float number
 rightlimit=100.0 # float number
-
+with_header=1
 # forward=leftlimit:rightlimit; reverse=-rightlimit:leftlimit
 
-generate_tracks $fname $bwvisual $autoscale $bamvisual $leftlimit $rightlimit
+generate_tracks $fname $bwvisual $autoscale $bamvisual $leftlimit $rightlimit ${with_header}
 
 ##################################################################################
-OUTPUT_FILE_Wiggle=${OUTPUT_DIR}/${DATASET_LABEL}'_Tracks_Wiggle.txt'
+OUTPUT_FILE_Wiggle=${OUTPUT_DIR}/${DATASET_LABEL}'_Tracks_Wiggle_100.txt'
 rm -rf ${OUTPUT_FILE_Wiggle}
 
 echo 'Start *_Tracks_Wiggle_100.txt'
 
-print_header ${OUTPUT_FILE_Wiggle}
+# print_header ${OUTPUT_FILE_Wiggle}
 
 fname=${OUTPUT_FILE_Wiggle}
 bwvisual=full # dense/full/pack
@@ -218,11 +242,10 @@ autoscale=off # on/off
 bamvisual=0 # 0/full/dense,...
 leftlimit=0.0 # float number
 rightlimit=100.0 # float number
-
+with_header=1
 # forward=leftlimit:rightlimit; reverse=-rightlimit:leftlimit
 
-generate_tracks $fname $bwvisual $autoscale $bamvisual $leftlimit $rightlimit
-
+generate_tracks $fname $bwvisual $autoscale $bamvisual $leftlimit $rightlimit ${with_header}
 
 ############# additional wiggle tracks with different limits
 echo 'Start *_Tracks_Wiggle_4.txt'
@@ -236,16 +259,17 @@ output60="${OUTPUT_DIR}/${DATASET_LABEL}_Tracks_Wiggle_60.txt"
 bwvisual=full # dense/full/pack
 autoscale=off # on/off
 bamvisual=0 # 0/full/dense,...
+with_header=1
 # left and right limits are (+/-4, +/-12, +/-60)
-generate_tracks $output4 $bwvisual $autoscale $bamvisual 0.0 4.0
-generate_tracks $output12 $bwvisual $autoscale $bamvisual 0.0 12.0
-generate_tracks $output60 $bwvisual $autoscale $bamvisual 0.0 60.0
+generate_tracks $output4 $bwvisual $autoscale $bamvisual 0.0 4.0 ${with_header}
+generate_tracks $output12 $bwvisual $autoscale $bamvisual 0.0 12.0 ${with_header}
+generate_tracks $output60 $bwvisual $autoscale $bamvisual 0.0 60.0 ${with_header}
 
 #---------------------------
 
 echo 'Start *_Tracks_Wiggle_autoON.txt'
 OUTPUT_FILE_Wiggle_autoON="${OUTPUT_DIR}/${DATASET_LABEL}_Tracks_Wiggle_autoON.txt"
-print_header ${OUTPUT_FILE_Wiggle_autoON}
+# print_header ${OUTPUT_FILE_Wiggle_autoON}
 
 fname=${OUTPUT_FILE_Wiggle_autoON}
 bwvisual=full # dense/full/pack
@@ -253,31 +277,11 @@ autoscale=on # on/off
 bamvisual=0 # 0/full/dense,..., 0 - means bam track is not required
 leftlimit=0.0 # float number
 rightlimit=100.0 # float number
-
+with_header=1
 # forward=leftlimit:rightlimit; reverse=-rightlimit:leftlimit
 
-generate_tracks $fname $bwvisual $autoscale $bamvisual $leftlimit $rightlimit
+generate_tracks $fname $bwvisual $autoscale $bamvisual $leftlimit $rightlimit ${with_header}
 
-
-################Generate combined tracks
-while IFS=$'\t' read -r -a comb
-do
-    fname=${comb[0]}
-    group_name=${comb[1]}
-    server_dir_name=${comb[2]}
-
-    if [[ $fname == *"Forward"* ]]; then
-	echo "track type=bigWig name='${fname}' description='${group_name}' db=mm9 visibility=full autoScale=on viewLimits=0.0:100.0 color='255,0,0' yLineOnOff=off windowingFunction=mean smoothingWindow=3 maxHeightPixels=100:45:8 bigDataUrl=http://waxmanlabvm.bu.edu/TRACKS/${server_dir_name}/${fname}" >> "${OUTPUT_DIR}/${DATASET_LABEL}_Combined_Tracks_Wiggle_autoON.txt"
-    else
-	echo "track type=bigWig name='${fname}' description='${group_name}' db=mm9 visibility=full autoScale=on viewLimits=-100.0:0.0 color='255,0,0' yLineOnOff=off windowingFunction=mean smoothingWindow=3 maxHeightPixels=100:45:8 bigDataUrl=http://waxmanlabvm.bu.edu/TRACKS/${server_dir_name}/${fname}" >> "${OUTPUT_DIR}/${DATASET_LABEL}_Combined_Tracks_Wiggle_autoON.txt"
-    fi
-
-    
-    #echo "track type=bigWig name='${fname}' description='${group_name}' db=mm9 visibility=full autoScale=on viewLimits=-100.0:100.0 color='255,0,0' yLineOnOff=off windowingFunction=mean smoothingWindow=3 maxHeightPixels=100:45:8 bigDataUrl=http://waxmanlabvm.bu.edu/TRACKS/COMMON/${fname}"
-    
-done < COMBINED_PAIRS.txt
-
-# rm COMBINED_PAIRS.txt
 ##################################################################################
 #Remove the temp file:
 rm -rf *.temp
