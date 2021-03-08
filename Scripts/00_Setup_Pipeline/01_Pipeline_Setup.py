@@ -195,7 +195,7 @@ class SampleConfig:
     # def groupsToBash(self):
     #     return " ".join(self.groups())
     
-    def samplesToBash(self, group=None):
+    def samplesToBash(self, group=None, color=False):
         # only Sample_DIR, Sample_ID, Description
         result = []
         if group:
@@ -210,6 +210,8 @@ class SampleConfig:
                 result.append(sample.Condition_Name)
             else:
                 result.append(sample.Description)
+            if color:
+                result.append(sample.Color)
         return " ".join(result)
 
     def samplesWithColorToBash(self):
@@ -681,9 +683,9 @@ if __name__ == "__main__":
                         action="store_true")
 
     parser.add_argument("--samples_by_group",
-                        nargs=1,
-                        metavar=('group'),
-                        help="return bash array of samples by group name (ex. A, B, ..)")
+                        nargs='+',
+                        metavar=('group', 'color_enable'),
+                        help="returns bash array of samples by group name (ex. A, B, ..), if specify second parameter like 'color_enable' the function returns 4-element bash array per sample with color in the last column - (DIR,ID,DESCR,COLOR)")
     
     parser.add_argument("-c", "--samples_with_color",
                         help="return bash array of (DIR,ID,DESCR,COLOR)",
@@ -779,9 +781,13 @@ if __name__ == "__main__":
         exit(0)
 
     elif args.samples_by_group:
-        print(sample_config.samplesToBash(args.samples_by_group[0]))
-        # sample_config.samplesByGroup(args.samples_by_group[0])
-        # print(" ".join(sample_config.samplesByGroup(args.samples_by_group[0])))
+        if len(args.samples_by_group) == 1:
+            group = args.samples_by_group[0]
+            color = False
+        else:
+            group = args.samples_by_group[0]
+            color = True
+        print(sample_config.samplesToBash(group, color))
         exit(0)
 
     elif args.samples_with_color:
