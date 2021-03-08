@@ -5,7 +5,7 @@ set -o pipefail
 set -o nounset
 
 # FULL_RECALC=1 by default if nothing provided (default=full recalculatin)
-FULL_RECALC=${1:-1}
+FULL_RECALC=${1:-0}
 
 rm -rf ./logs && mkdir -p ./logs
 

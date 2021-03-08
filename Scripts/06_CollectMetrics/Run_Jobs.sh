@@ -9,7 +9,7 @@ set -o nounset
 # ./Run_Jobs.sh 0 -- allows to reuse previously calculated resutls
 
 # FULL_RECALC=1 by default if nothing provided
-FULL_RECALC=${1:-1}
+FULL_RECALC=${1:-0}
 
 # Skip this step if recalculation flag set to 0
 if [ ${FULL_RECALC} -eq 0 ]; then

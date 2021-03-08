@@ -16,7 +16,7 @@ set -o nounset
 ##################################################################################
 
 # FULL_RECALC=1 by default if nothing provided
-FULL_RECALC=${1:-1}
+FULL_RECALC=${1:-0}
 
 # export all variables from Pipeline_Setup.conf
 eval "$(../00_Setup_Pipeline/01_Pipeline_Setup.py --export)"
