@@ -59,7 +59,7 @@ samples=($("${SETUP_PIPELINE_DIR}"/01_Pipeline_Setup.py --samples))
 # loop over all samples
 for ((i=0;i< ${#samples[@]} ;i+=3));
 do
-    sample_dir=${samples[i]}
+    # sample_dir=${samples[i]}
     sample_id=${samples[i+1]}
     description=${samples[i+2]}
 

@@ -57,7 +57,7 @@ do
     
     for ((j=0;j<${#samples[@]} ;j+=3));
     do
-        sample_dir=${samples[j]}
+        # sample_dir=${samples[j]}
         sample_id=${samples[j+1]}
         description=${samples[j+2]}
 
@@ -92,7 +92,7 @@ do
 
     for ((j=0; j<${#samples[@]} ;j+=3));
     do
-        sample_dir=${samples[j]}
+        # sample_dir=${samples[j]}
         sample_id=${samples[j+1]}
         description=${samples[j+2]}
 

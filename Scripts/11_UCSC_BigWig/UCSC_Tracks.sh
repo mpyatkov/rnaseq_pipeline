@@ -148,7 +148,7 @@ function generate_tracks() {
     for ((i=0;i< ${#samples[@]} ;i+=4))
     do
 
-	Sample_DIR=${samples[i]}
+	# Sample_DIR=${samples[i]}
 	Sample_ID=${samples[i+1]}
 	Description=${samples[i+2]}
 	Color=${samples[i+3]}

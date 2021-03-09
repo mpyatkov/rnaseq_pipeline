@@ -143,7 +143,7 @@ copy_files() {
     #Use a while loop to run jobs
     while IFS=$'\t' read -r -a myArray
     do
-	Sample_DIR=${myArray[0]}
+	# Sample_DIR=${myArray[0]}
 	Sample_ID=${myArray[1]}
 	Description=${myArray[2]}
 
