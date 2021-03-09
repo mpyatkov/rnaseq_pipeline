@@ -21,10 +21,10 @@ groups=($("${SETUP_PIPELINE_DIR}"/01_Pipeline_Setup.py --groups))
 for group in "${groups[@]}"; do
     # get samples array (triples of sample_dir sample_id description for each sample)
     samples=($("${SETUP_PIPELINE_DIR}"/01_Pipeline_Setup.py --samples_by_group ${group}))
-    for ((i=0;i< ${#samples[@]} ;i+=3));
+    for ((i=0;i< ${#samples[@]} ;i+=2));
     do
-	SAMPLE_ID=${samples[i+1]}
-	CONDNAME=${samples[i+2]}
+	SAMPLE_ID=${samples[i]}
+	CONDNAME=${samples[i+1]}
 	printf "%s\t%s\t%s\n" "${SAMPLE_ID}" "${CONDNAME}" "${CONDNAME}_${SAMPLE_ID}" >> ${SAMPLE_FILE}
     done
 done

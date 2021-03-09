@@ -100,23 +100,23 @@ cp ${SCRIPT_DIR}/Scripts/Venn_Diff_Genes.R .
 # list of samples for each condition
 samples_line(){
     local fname=$1
-    a=$(tail -n+2 $fname | cut -f2 | cut -d "_" -f 1 | sort | uniq)
+    a=$(tail -n+2 $fname | cut -f1 | cut -d "_" -f 1 | sort | uniq)
 
     res=""
     for i in $a
     do
-	group="${i}_$(grep ${i} $fname | cut -f 2 | cut -d "_" -f 2 | paste -s -d '')_"
+	group="${i}_$(grep ${i} $fname | cut -f1 | cut -d "_" -f 2 | paste -s -d '')_"
 	res+=$group
 	# res+="_"
     done
 
-    echo $res
+    echo ${res%\_}
 }
 
 M_Num_Cond1_List=$(samples_line Condition_1.txt)
-M_Num_Cond1_List=${M_Num_Cond1_List%\_}
+# M_Num_Cond1_List=${M_Num_Cond1_List%\_}
 M_Num_Cond2_List=$(samples_line Condition_2.txt)
-M_Num_Cond2_List=${M_Num_Cond2_List%\_}
+# M_Num_Cond2_List=${M_Num_Cond2_List%\_}
 
 # M_Num_Cond1_List=$(tail -n+2 Condition_1.txt | cut -f 2| cut -d "_" -f2 | paste -s -d "")
 # M_Num_Cond2_List=$(tail -n+2 Condition_2.txt | cut -f 2| cut -d "_" -f2 | paste -s -d "")
@@ -127,10 +127,10 @@ NUM_REP_CONDITION2=$(tail -n+2 Condition_2.txt | wc -l)
 
 #Need to preprocess the Condition_*.txt files to make sure they will work:
 #This will guarantee that only tabs exists between columns:
-awk '{print $1"\t"$2"\t"$3}' Condition_1.txt > Condition_1.temp1
+awk '{print $1"\t"$2}' Condition_1.txt > Condition_1.temp1
 mv Condition_1.temp1 Condition_1.txt
 
-awk '{print $1"\t"$2"\t"$3}' Condition_2.txt > Condition_2.temp1
+awk '{print $1"\t"$2}' Condition_2.txt > Condition_2.temp1
 mv Condition_2.temp1 Condition_2.txt
 
 # ex: copy_files Condition_1 CONDITION_1_NAME
@@ -143,9 +143,8 @@ copy_files() {
     #Use a while loop to run jobs
     while IFS=$'\t' read -r -a myArray
     do
-	# Sample_DIR=${myArray[0]}
-	Sample_ID=${myArray[1]}
-	Description=${myArray[2]}
+	Sample_ID=${myArray[0]}
+	Description=${myArray[1]}
 
 	echo 'Copy ${condfile} sample count files to Condition_1 folder'
 	(set +x; cp "${Dataset_DIR}/${Sample_ID}/${COUNT_PROGRAM}/${COUNT_DIR}/${Sample_ID}_${COUNT_PROGRAM}.out" ./Input/${condfile}/${condname}_${Sample_ID})

@@ -22,11 +22,11 @@ samples=($("${SETUP_PIPELINE_DIR}"/01_Pipeline_Setup.py --samples))
 gtflist=($("${SETUP_PIPELINE_DIR}"/01_Pipeline_Setup.py --gtf_annotation_and_counter))
 
 # loop over all samples
-for ((i=0;i< ${#samples[@]} ;i+=3))
+for ((i=0;i< ${#samples[@]} ;i+=2))
 do
     # sample_dir=${samples[i]}
-    sample_id=${samples[i+1]}
-    description=${samples[i+2]}
+    sample_id=${samples[i]}
+    description=${samples[i+1]}
     
     for ((j=0; j< ${#gtflist[@]} ;j+=2))
     do

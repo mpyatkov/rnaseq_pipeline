@@ -40,11 +40,10 @@ job_name="Step_${step_num}"
 samples=($("${SETUP_PIPELINE_DIR}"/01_Pipeline_Setup.py --samples))
 
 # rename directories from sample_dir to sample_id
-for ((i=0;i< ${#samples[@]} ;i+=3));
+for ((i=0;i< ${#samples[@]} ;i+=2));
 do
-    # sample_dir=${samples[i]}
-    sample_id=${samples[i+1]}
-    # description=${samples[i+2]}
+    sample_id=${samples[i]}
+    # description=${samples[i+1]}
 
     ## skip this step if BAM file exists
     result_path="${DATASET_DIR}/${sample_id}/aligner/${sample_id}_primary_unique.bam"

@@ -45,11 +45,10 @@ rm -rf "${output_dir}" && mkdir -p "${output_dir}"
 samples=($("${SETUP_PIPELINE_DIR}"/01_Pipeline_Setup.py --samples))
 
 # rename directories from sample_dir to sample_id
-for ((i=0;i< ${#samples[@]} ;i+=3));
+for ((i=0;i< ${#samples[@]} ;i+=2));
 do
-    # sample_dir=${samples[i]}
-    sample_id=${samples[i+1]}
-    # description=${samples[i+2]}
+    sample_id=${samples[i]}
+    # description=${samples[i+1]}
 
     (set -x; qsub -N "${job_name}_${sample_id}" -P "${PROJECT}" -l h_rt="${TIME_LIMIT}" FASTQC.qsub "${sample_id}" "${output_dir}")
 done

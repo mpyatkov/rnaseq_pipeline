@@ -34,10 +34,10 @@ step_num=$(echo ${dir_name} | cut -d'_' -f 1)
 job_name="Step_${step_num}"
 
 # rename directories from sample_dir to sample_id
-for ((i=0;i< ${#samples[@]} ;i+=3));
+for ((i=0;i< ${#samples[@]} ;i+=2));
 do
     # sample_dir=${samples[i]}
-    sample_id=${samples[i+1]}
+    sample_id=${samples[i]}
     # description=${samples[i+2]}
 
     # skip recalculation if FULL_RECALC=0

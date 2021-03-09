@@ -56,11 +56,10 @@ else
 fi
 set -eu
 
-for ((i=0;i< ${#samples[@]} ;i+=3));
+for ((i=0;i< ${#samples[@]} ;i+=2));
 do
-    # sample_dir=${samples[i]}
-    sample_id=${samples[i+1]}
-    # description=${samples[i+2]}
+    sample_id=${samples[i]}
+    # description=${samples[i+1]}
 
     # combine all sample in one file (from step 03_Read_Length)
     cat "${output_dir}/${sample_id}_read_length.txt" >> $output_file

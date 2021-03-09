@@ -67,11 +67,10 @@ echo 'SAMPLE_ID' $'\t''DESCRIPTION' $'\t''Aligned_Pairs' $'\t''Concordant_pair_a
 samples=($("${SETUP_PIPELINE_DIR}"/01_Pipeline_Setup.py --samples))
 
 # rename directories from sample_dir to sample_id
-for ((i=0;i< ${#samples[@]} ;i+=3));
+for ((i=0;i< ${#samples[@]} ;i+=2));
 do
-    # sample_dir=${samples[i]}
-    sample_id=${samples[i+1]}
-    description=${samples[i+2]}
+    sample_id=${samples[i]}
+    description=${samples[i+1]}
 
     pushd "${DATASET_DIR}/${sample_id}/aligner"
 

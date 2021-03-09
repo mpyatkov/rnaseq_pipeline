@@ -67,7 +67,7 @@ groups=($("${SETUP_PIPELINE_DIR}"/01_Pipeline_Setup.py --groups))
 # for each group
 for group in "${groups[@]}"; do
 
-    # get samples array (triples of sample_dir, sample_id, description, color for each sample)
+    # get samples array (triples of sample_id, description, color for each sample)
     samples=($("${SETUP_PIPELINE_DIR}"/01_Pipeline_Setup.py --samples_by_group ${group} "color_enable"))
 
     # create new array contains path to Forward and Reverse bigwig files
@@ -77,11 +77,12 @@ for group in "${groups[@]}"; do
     suffix=()
 
     group_name=""
-    for ((i=0;i< ${#samples[@]} ;i+=4));
+    for ((i=0;i< ${#samples[@]} ;i+=3));
     do
-	SAMPLE_ID=${samples[i+1]}
+	SAMPLE_ID=${samples[i]}
+	CONDNAME=${samples[i+1]}
 	# color for combined track should be the same for all samples
-	COLOR=${samples[i+3]}
+	COLOR=${samples[i+2]}
 	
 	# check if sample in db
 	sample_info=($("${SETUP_PIPELINE_DIR}"/01_Pipeline_Setup.py --get_sample_info ${SAMPLE_ID}))
@@ -93,7 +94,7 @@ for group in "${groups[@]}"; do
 	# 01_Pipeline_Setup.py give us condition_name column instead
 	# of description column. Condition_name should be the same for all
 	# members of one group
-	CONDNAME=${samples[i+2]}
+	
 	group_name=$CONDNAME
 	
 	forward+=("${VM_DIR_UCSC}/INDEXED_PROJECTS/${project_name}/${SAMPLE_ID}.Forward.bw")

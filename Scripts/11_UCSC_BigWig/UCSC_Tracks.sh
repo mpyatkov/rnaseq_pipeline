@@ -145,13 +145,13 @@ function generate_tracks() {
     samples=($("${SETUP_PIPELINE_DIR}"/01_Pipeline_Setup.py --samples_with_color))
 
 
-    for ((i=0;i< ${#samples[@]} ;i+=4))
+    for ((i=0;i< ${#samples[@]} ;i+=3))
     do
 
 	# Sample_DIR=${samples[i]}
-	Sample_ID=${samples[i+1]}
-	Description=${samples[i+2]}
-	Color=${samples[i+3]}
+	Sample_ID=${samples[i]}
+	Description=${samples[i+1]}
+	Color=${samples[i+2]}
 
 	# check if sample in db
 	sample_info=($("${SETUP_PIPELINE_DIR}"/01_Pipeline_Setup.py --get_sample_info ${Sample_ID}))

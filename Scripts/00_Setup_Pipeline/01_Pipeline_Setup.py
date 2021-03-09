@@ -34,16 +34,16 @@ Comparison_Number; Condition_1; Condition_2
 """.strip()
 
 DEFAULT_SAMPLES_CONFIG = """
-Group;  Condition_Name;      Sample_DIR;  Sample_ID;  Description;                 Color
-A;      E0771_Untreated_T72; G180_M1;     G180_M1;    E0771_Untreated_72h;         255,0,0
-A;      E0771_Untreated_T72; G180_M2;     G180_M2;    E0771_Untreated_72h;         255,0,0
-A;      E0771_Untreated_T72; G180_M3;     G180_M3;    E0771_Untreated_72h;         255,0,0
-B;      E0771_4HC_T72;       G180_M4;     G180_M4;    E0771_5uM_4HC_72h;           0,255,0
-B;      E0771_4HC_T72;       G180_M5;     G180_M5;    E0771_5uM_4HC_72h;           0,255,0
-B;      E0771_4HC_T72;       G180_M6;     G180_M6;    E0771_5uM_4HC_72h;           0,255,0
-C;      E0771_4HC_Ab_T72;    G180_M7;     G180_M7;    E0771_5uM_4HC_AntiIFNAR_72h; 0,0,255
-C;      E0771_4HC_Ab_T72;    G180_M8;     G180_M8;    E0771_5uM_4HC_AntiIFNAR_72h; 0,0,255
-C;      E0771_4HC_Ab_T72;    G180_M9;     G180_M9;    E0771_5uM_4HC_AntiIFNAR_72h; 0,0,255
+Group;  Condition_Name;      Sample_ID;  Description;                 Color
+A;      E0771_Untreated_T72; G180_M1;    E0771_Untreated_72h;         255,0,0
+A;      E0771_Untreated_T72; G180_M2;    E0771_Untreated_72h;         255,0,0
+A;      E0771_Untreated_T72; G180_M3;    E0771_Untreated_72h;         255,0,0
+B;      E0771_4HC_T72;       G180_M4;    E0771_5uM_4HC_72h;           0,255,0
+B;      E0771_4HC_T72;       G180_M5;    E0771_5uM_4HC_72h;           0,255,0
+B;      E0771_4HC_T72;       G180_M6;    E0771_5uM_4HC_72h;           0,255,0
+C;      E0771_4HC_Ab_T72;    G180_M7;    E0771_5uM_4HC_AntiIFNAR_72h; 0,0,255
+C;      E0771_4HC_Ab_T72;    G180_M8;    E0771_5uM_4HC_AntiIFNAR_72h; 0,0,255
+C;      E0771_4HC_Ab_T72;    G180_M9;    E0771_5uM_4HC_AntiIFNAR_72h; 0,0,255
 """.strip()
 
 DEFAULT_PIPELINE_CONFIG = """
@@ -196,7 +196,7 @@ class SampleConfig:
     #     return " ".join(self.groups())
     
     def samplesToBash(self, group=None, color=False):
-        # only Sample_DIR, Sample_ID, Description
+        # Sample_ID, Description
         result = []
         if group:
             SAMPLES = self.samplesByGroup(group)
@@ -204,7 +204,7 @@ class SampleConfig:
             SAMPLES=self.samples
             
         for sample in SAMPLES:
-            result.append(sample.Sample_DIR)
+            # result.append(sample.Sample_DIR)
             result.append(sample.Sample_ID)
             if group:
                 result.append(sample.Condition_Name)
@@ -215,10 +215,10 @@ class SampleConfig:
         return " ".join(result)
 
     def samplesWithColorToBash(self):
-        #only Sample_DIR, Sample_ID, Description, Color
+        #only Sample_ID, Description, Color
         result = []
         for sample in self.samples:
-            result.append(sample.Sample_DIR)
+            # result.append(sample.Sample_DIR)
             result.append(sample.Sample_ID)
             result.append(sample.Description)
             result.append(sample.Color)
@@ -461,9 +461,9 @@ class DiffExpression():
         condition_name = cond_samples[0].Condition_Name
         
         with open(path+"/"+condition_num+".txt", "w") as Condition:
-            header = "Sample_DIR\tSample_ID\tDescription\n"
+            header = "Sample_ID\tDescription\n"
             Condition.write(header)
-            samples = [f"{s.Sample_DIR}\t{s.Sample_ID}\t{s.Condition_Name}" for s in cond_samples]
+            samples = [f"{s.Sample_ID}\t{s.Condition_Name}" for s in cond_samples]
             samples = "\n".join(samples)+"\n"
             Condition.write(samples)
         return condition_name

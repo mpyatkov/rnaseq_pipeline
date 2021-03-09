@@ -35,10 +35,9 @@ rm -rf "${output_file}" && touch "${output_file}"
 samples=($("${SETUP_PIPELINE_DIR}"/01_Pipeline_Setup.py --samples))
 
 # loop over samples
-for ((i=0;i< ${#samples[@]} ;i+=3));
+for ((i=0;i< ${#samples[@]} ;i+=2));
 do
-    # sample_dir=${samples[i]}
-    sample_id=${samples[i+1]}
+    sample_id=${samples[i]}
     # description=${samples[i+2]}
 
     # change directory, save location

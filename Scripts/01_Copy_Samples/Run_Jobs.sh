@@ -24,10 +24,10 @@ job_name="Step_${step_num}"
 SCRIPT_DIR=$(pwd)
 
 ## loop over the all samples
-for ((i=0;i< ${#samples[@]} ;i+=3));
+for ((i=0;i< ${#samples[@]} ;i+=2));
 do
     
-    SAMPLE_ID=${samples[i+1]}
+    SAMPLE_ID=${samples[i]}
     SAMPLE_DIR="${DATASET_DIR}/${SAMPLE_ID}"
 
     # get_sample_info return (PRJ_NAME, READ1, READ2) or EXCEPTION

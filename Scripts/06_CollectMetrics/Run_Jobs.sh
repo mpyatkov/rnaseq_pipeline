@@ -33,11 +33,10 @@ job_name="Step_${step_num}"
 samples=($("${SETUP_PIPELINE_DIR}"/01_Pipeline_Setup.py --samples))
 
 # loop over all samples
-for ((i=0;i< ${#samples[@]} ;i+=3));
+for ((i=0;i< ${#samples[@]} ;i+=2));
 do
-    # sample_dir=${samples[i]}
-    sample_id=${samples[i+1]}
-    # description=${samples[i+2]}
+    sample_id=${samples[i]}
+    # description=${samples[i+1]}
 
     (set -x; qsub -N "${job_name}_${sample_id}" -P "${PROJECT}" -l h_rt="${TIME_LIMIT}" CollectMetrics.qsub "${sample_id}")
 
