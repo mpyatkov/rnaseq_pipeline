@@ -96,18 +96,10 @@ for group in "${groups[@]}"; do
 	CONDNAME=${samples[i+2]}
 	group_name=$CONDNAME
 	
-	# TODO: at the moment this procedure supposes that we make
-	# calculations for all groups, thus for all samples should be
-	# created bigwig files. It is required to check if these files
-	# are exist (forward and reverse). 
-	
-	# forward+=("${DATASET_DIR}/${SAMPLE_ID}/${UCSC_SAMPLE}/${SAMPLE_ID}.Forward.bw")
-	# reverse+=("${DATASET_DIR}/${SAMPLE_ID}/${UCSC_SAMPLE}/${SAMPLE_ID}.Reverse.bw")
-
 	forward+=("${VM_DIR_UCSC}/INDEXED_PROJECTS/${project_name}/${SAMPLE_ID}.Forward.bw")
 	reverse+=("${VM_DIR_UCSC}/INDEXED_PROJECTS/${project_name}/${SAMPLE_ID}.Reverse.bw")
-	
-	# suffix+=("${SAMPLE_ID}")
+
+	# create tmp file to extract info about sampleid and project name for combined files
 	printf "%s %s\n" "${SAMPLE_ID}" "${project_name}" >> tmpfile
     done
 
