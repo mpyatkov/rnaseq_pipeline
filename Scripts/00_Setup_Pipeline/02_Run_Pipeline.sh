@@ -31,9 +31,10 @@ if [[ $# -ne 1 ]]
 then
     echo "Usage: ./02_Run_Pipeline.sh <option>"
     echo "<option> = FULL - full pipeline run"
-    echo "<option> = start_step (example. 05) start from specific step"
+    echo "<option> = REFRESH - recalculate only new samples"
     echo "<option> = DEONLY recalculate DE and summary directories (09abcd,12,13,14)"
-    echo "<option> = VENNONLY recalculate VENN (12)"
+    echo "<option> = TRACKS creates UCSC tracks (01,02,04 and 11 without full recalculation if that possible)"
+    echo "<option> = start_step (example. 05) start from specific step"
     echo "See 02_Run_Pipeline.sh for details."	
     exit 0
 fi
@@ -58,25 +59,26 @@ STEPS_DIR=$(pwd)
 # INLCUDE: STRING list of steps which will be executed separated by "\|" 
 # FULL_RECALC: 1/0 - if set to 0 that means that some steps
 # can reuse already calculated results (ex. BAM files, Counts, Strandedness)
-FULL_RECALC=1
+
+FULL_RECALC=0
 
 if [[ "${START_STEP}" == "FULL" ]]; then
     GENERATE=1
     RESUME=0
     INCLUDE="ALL"
-if [[ "${START_STEP}" == "REFRESH" ]]; then
+    FULL_RECALC=1
+elif [[ "${START_STEP}" == "REFRESH" ]]; then
     GENERATE=1
     RESUME=0
     INCLUDE="ALL"
-    FULL_RECALC=0
 elif [[ "${START_STEP}" == "DEONLY" ]]; then
     GENERATE=1
     RESUME=0
     INCLUDE="09\|12\|13\|14"
-elif [[ "${START_STEP}" == "VENNONLY" ]]; then
+elif [[ "${START_STEP}" == "TRACKS" ]]; then
     GENERATE=0
     RESUME=0
-    INCLUDE="12"
+    INCLUDE="01\|02\|04\|11"
 else
     # resume from step $START_STEP
     GENERATE=0
@@ -223,6 +225,3 @@ END_TIME=$(date +"%s")
 DIFF=$((END_TIME-START_TIME))
 echo "$(($DIFF / 3600)) hours, $(((DIFF / 60) % 60)) minutes and $((DIFF % 60)) seconds elapsed."
 echo "$((DIFF / 3600)) hours, $(((DIFF / 60) % 60)) minutes and $((DIFF % 60)) seconds elapsed." >> "${OUTPUT_FILE}"
-
-
-
