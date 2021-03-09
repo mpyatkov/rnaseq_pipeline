@@ -152,15 +152,15 @@ copy_files() {
 	
 	pushd ./Input/${condfile}/
 
-	# by default we using summary file from samtools
-	cat "${Dataset_DIR}/${Sample_ID}/aligner/${Sample_ID}_statistics_for_primary_unique_reads.txt" | \
-	    grep "total" | \
-	    awk '{print $1}' > "${condname}_${Sample_ID}_summary"
-	
 	ls -la
 	
 	if [[ ${COUNT_PROGRAM} == "htseq" ]]
 	then
+	    # by default for htseq we using summary file from samtools
+	    cat "${Dataset_DIR}/${Sample_ID}/aligner/${Sample_ID}_statistics_for_primary_unique_reads.txt" | \
+	    grep "total" | \
+	    awk '{print $1}' > "${condname}_${Sample_ID}_summary"
+	    
 	    # trim tail for htseq file
 	    head -n -5 "${condname}_${Sample_ID}" > "${condname}_${Sample_ID}.temp1"
             mv "${condname}_${Sample_ID}.temp1" "${condname}_${Sample_ID}"
