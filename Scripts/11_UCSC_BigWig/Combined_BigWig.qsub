@@ -158,6 +158,9 @@ for group in "${groups[@]}"; do
 done
 
 # generate track lines
+# even if bw files already were created, it is necessary to restart
+# the creation of tracks for cases when we change group names in config
+# files
 ./UCSC_Tracks.sh
 
 
