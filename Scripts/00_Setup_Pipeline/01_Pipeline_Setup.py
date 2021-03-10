@@ -91,7 +91,7 @@ MODE=2
 
 # if you need tracks for samples and BigWig files use BIGWIG_ENABLE=1 in the
 # option below
-BIGWIG_ENABLE=0
+BIGWIG_ENABLE=1
 
 # This configuration file contains all specific settings for GTF files
 # used in the pipeline, like: name, enable/disable double counting,
@@ -143,12 +143,12 @@ STARINDEX_DIR=/projectnb/wax-es/routines/starindex_EC76K
 
 # The location of the global FASTQ index for all laboratory
 # experiments. You can extract information about sample using the
-# following command: ./01_Pipeline_Setup.py --get_sample_info
-# SAMPLE_ID. Each SAMPLE_ID should be unique in this file.
+# following command: ./01_Pipeline_Setup.py --get_sample_info SAMPLE_ID
+# Each SAMPLE_ID should be unique in this file.
 FASTQ_DEFAULT_INDEX=/projectnb/wax-es/routines/index.csv
 
 # special directory which will contain FASTQC reports
-VM_DIR_FASTQC=/net/waxman-server/mnt/data/waxmanlabvm_home/${USER:BU_USER}/FASTQC/${USER:DATASET_LABEL}
+VM_DIR_FASTQC=/net/waxman-server/mnt/data/waxmanlabvm_home/TRACKS/PERSONAL/${USER:BU_USER}/${USER:DATASET_LABEL}/FASTQC
 
 # special directory which will contain BIGWIG files
 # subdirectory $VM_DIR_UCSC/COMMON for cram/bw/combined bw
@@ -563,11 +563,13 @@ def generate_example(config_path, default_config):
         default_config=default_config.replace("CHANGE_USER_NAME", getpass.getuser())
 
         # change DATASET_DIR in Pipeline_Setup.conf
-        PROJPATH=op.abspath(op.join(__file__, op.pardir, op.pardir, op.pardir))
+        PROJPATH_BASE=op.abspath(op.join(__file__, op.pardir, op.pardir, op.pardir))
+        # add SAMPLES subdir for BAM files
+        PROJPATH=PROJPATH_BASE+"/SAMPLES"
         default_config = default_config.replace("PATH_TO_PROJECT", PROJPATH)
 
         # change project name
-        PROJECT_LABEL=os.path.basename(PROJPATH)
+        PROJECT_LABEL=os.path.basename(PROJPATH_BASE)
         default_config = default_config.replace("DEFAULT_LABEL", PROJECT_LABEL)
         
         with open(config_path, "w") as conf:

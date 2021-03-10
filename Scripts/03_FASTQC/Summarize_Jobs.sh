@@ -41,6 +41,8 @@ samples=($("${SETUP_PIPELINE_DIR}"/01_Pipeline_Setup.py --samples))
 
 # checking existing VM_DIR_FASTQC
 # do not exit if an error occurs
+echo ${VM_DIR_FASTQC}
+
 set +eu
 if [[ -d ${VM_DIR_FASTQC} ]]
 then
@@ -79,6 +81,6 @@ echo '#-------------------------------------------------------------------------
 echo 'Check the URL for the waxmanlabvm HTML files!'
 echo 'Load the following link:'
 echo 'Note: use full paths (instead of using tilde notation)'
-echo 'http://waxmanlabvm.bu.edu/waxmanlab/FASTQC/'
+echo 'http://waxmanlabvm.bu.edu/TRACKS/PERSONAL/'
 echo '#--------------------------------------------------------------------------'
 ##################################################################################
