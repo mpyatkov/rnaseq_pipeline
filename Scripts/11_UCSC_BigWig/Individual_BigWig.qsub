@@ -112,13 +112,13 @@ echo "=========================================================="
 
 cd ${TMPDIR}
 
-INPUT_BAM_PATH="${DATASET_DIR}/${SAMPLE_ID}/aligner/${SAMPLE_ID}_primary_unique.bam"
-if [ ! -f ${INPUT_BAM_PATH} ]; then
-    echo "ERROR: cannot find BAM file: ${INPUT_BAM_PATH}"
+INPUT_BAM="${DATASET_DIR}/${SAMPLE_ID}/aligner/${SAMPLE_ID}_primary_unique.bam"
+if [ ! -f ${INPUT_BAM} ]; then
+    echo "ERROR: cannot find BAM file: ${INPUT_BAM}"
     exit 1
 fi
 
-cp ${BAM_PATH} ./
+cp ${INPUT_BAM} ./
 
 #Initialize INPUT_BAM:
 INPUT_BAM="${SAMPLE_ID}_primary_unique.bam"
