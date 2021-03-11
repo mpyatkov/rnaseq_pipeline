@@ -30,8 +30,8 @@ set -o errexit
 if [[ $# -ne 1 ]]
 then
     echo "Usage: ./02_Run_Pipeline.sh <option>"
-    echo "<option> = FULL - full pipeline run"
-    echo "<option> = REFRESH - recalculate only new samples"
+    echo "<option> = START - light version of FULL without recalculation already existed samples"
+    echo "<option> = FULL - full pipeline run with recalculation of all steps"
     echo "<option> = DEONLY recalculate DE and summary directories (09abcd,12,13,14)"
     echo "<option> = TRACKS creates UCSC tracks (01,02,04 and 11 without full recalculation if that possible)"
     echo "<option> = start_step (example. 05) start from specific step"
@@ -67,7 +67,7 @@ if [[ "${START_STEP}" == "FULL" ]]; then
     RESUME=0
     INCLUDE="ALL"
     FULL_RECALC=1
-elif [[ "${START_STEP}" == "REFRESH" ]]; then
+elif [[ "${START_STEP}" == "START" ]]; then
     GENERATE=1
     RESUME=0
     INCLUDE="ALL"
