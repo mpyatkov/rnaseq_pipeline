@@ -1,0 +1,19 @@
+## [4.1] - 2021-03-10
+
+### Added
+- script make_cleanup.sh for removing BAM files
+- script make_archive.sh for making archive of Scripts directory
+- support of index files which contain information about project and
+  fastq files for each sample
+- option START for ./02_Run_Pipeline.sh which allows to reuse
+  precalculated results
+- automatic creation of sample directories
+
+### Changed
+- by default all samples temporary files will be located in SAMPLES
+  subdirectory
+- Sample_DIR column was removed from Sample_Labels.txt file
+- default directory for all new bigwig files is
+  waxmanlabvm.bu.edu/TRACKS/INDEXED_PROJECTS/PROJECT_NAME/
+- CRAM files will be created on mapping step (Step 04)
+- fixing small bugs in all steps
