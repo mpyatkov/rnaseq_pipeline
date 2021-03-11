@@ -48,17 +48,18 @@ C;      E0771_4HC_Ab_T72;    G180_M9;    E0771_5uM_4HC_AntiIFNAR_72h; 0,0,255
 
 DEFAULT_PIPELINE_CONFIG = """
 [USER]
-# Setup dataset directory
-DATASET_DIR=PATH_TO_PROJECT
-
-# Setup dataset label
-DATASET_LABEL=DEFAULT_LABEL
-
 # Setup BU login user name
 BU_USER=CHANGE_USER_NAME
 
 # Setup project name. Choices: (wax-dk,waxmanlab,wax-es)
 PROJECT=wax-es
+
+# Setup dataset label
+DATASET_LABEL=DEFAULT_LABEL
+
+# The location for temporary files (BAM, counts, fastq) 
+# In 99% you do not need to change it, the default is already the optimal value 
+DATASET_DIR=PATH_TO_PROJECT
 
 [STEPS]
 # Bioanalyzer length (from Bioanalyzer tracings)
