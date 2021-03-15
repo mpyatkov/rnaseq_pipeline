@@ -21,69 +21,73 @@ _________________
   This and all other steps assume that users are using *scc1* or *scc4*
   clusters
 
-  Run the following command in the directory that users are going to use
-  for RNAseq analysis:
+  Run the following command in the directory that you are going to use
+  for the RNAseq analysis:
 
   ,----
   | git clone https://github.com/mpyatkov/rnaseq_pipeline.git PROJECT_NAME
   `----
 
-  PROJECT_NAME can be any, but it would be better if the name was
-  associated with the project
+  This command creates the PROJECT_NAME directory. PROJECT_NAME can be
+  anything, but providing a sensible name will help you find old results
+  in the future.
+
+  Inside the *PROJECT_NAME* directory users will find several files and
+  a directory *Scripts*
+
+  - make_cleanup.sh - script removes large files that are no longer
+    needed (BAM files)
+  - make_archive.sh - script compresses directory with results for
+    future analysis, it also asks users about the directory cleaning
+  - README.txt - this file
+  - VERSIONS_# - file which contains the pipeline change log
+  - Scripts - directory with all scripts required for analysis
 
 
 1.2 Generate config files
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
-  inside the *PROJECT_NAME* directory users will find several files and
-  a directory *Scripts*
-
-  - make_cleanup.sh - a script that allows users to free a directory
-    from large files that are no longer needed
-  - make_archive.sh - a script that allows users to compress directory
-    with results for future analysis
-  - README.txt - this file
-  - VERSIONS_# - file which contains the pipeline change log
-  - Scripts - directory with all scripts required for analysis
-
   To start the pipeline first of all users need to configure it.
 
-  Go to the Scripts/00_Setup_Pipeline Inside this directory users will
-  find 2 files (01_Pipeline_Setup.py, 02_Run_Pipeline.sh)
+  Go to the Scripts/00_Setup_Pipeline directory There are two files
+  inside this directory (01_Pipeline_Setup.py, 02_Run_Pipeline.sh)
 
-  - 01_Pipeline_Setup.py - a script that allows to work with
-    configuration files
-  - 02_Run_Pipeline.sh - a script for starting the pipeline with
-    different options
+  - 01_Pipeline_Setup.py - script facilitates work with configuration
+    files. The pipeline usually uses it inside the bash scripts.
+  - 02_Run_Pipeline.sh - script starts the pipeline with different
+    options
 
   First of all, users need to run the following command to get the
   configuration files:
 
   ,----
-  | ./01_Pipeline_Setup.py
+  | ./01_Pipeline_Setup.py # or equivalent ./01_Pipeline_Setup.py --generate
   `----
 
   The command produces 4 config files:
 
-  1) *Pipeline_Setup.conf* - contains all information about locations of
-      samples, project, and other specific details. To run the pipeline
-      it will be enough to check out only [USER] section, because in 99%
-      config generator already set correct values for all variables.
+  1) *Pipeline_Setup.conf* - contains all information about specific
+      configuration details of the pipeline. To run the pipeline it will
+      be enough to check out only [USER] section, because in 99% config
+      generator set optimal values for all variables.
 
   2) *Sample_Labels.txt* - The most important file in the pipeline. This
-      file contains information about how to configure samples. The main
+      file contains information about sample specific options. The main
       columns are:
      - *Group* - each sample should be associated with only one group
      - *Condition_Name* - should be considered as a long name for the
         *Group*. Samples from one group should have same
         *Condition_Name*
-     - *Sample_ID* - ID for sample. The new version of the pipeline uses
-        index files. Each index file contains a set of unique sample_ids
-        that are associated with the corresponding fastq files. Before
-        start the pipeline users should know which index files are
-        created and what set of samples their contain. There are
-        situtations when users need to create their own subset of
-        samples, for that just read section about index files below.
+     - *Sample_ID* - unique ID for each sample. In the pipeline, sets of
+        samples are combined into projects. There are special files
+        called "index" files to organize information about samples and
+        projects. Within these files, the samples are uniquely
+        associated with a pair of FASTQ files for left and right
+        reads. Before running the pipeline, users need to know which
+        index files are created and what set of samples inside. For
+        external public data users should provide their own index
+        files. All information how to create index files is presented in
+        the section below.
      - *Description* - the full description of the sample
      - *Color* - the color to be used in the UCSC browser
 
