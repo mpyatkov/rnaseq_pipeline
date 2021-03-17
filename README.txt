@@ -49,8 +49,9 @@ _________________
 
   To start the pipeline first of all users need to configure it.
 
-  Go to the Scripts/00_Setup_Pipeline directory There are two files
-  inside this directory (01_Pipeline_Setup.py, 02_Run_Pipeline.sh)
+  Go to inside the PROJECT_NAME/Scripts/00_Setup_Pipeline/ directory
+  There are two files inside this directory (01_Pipeline_Setup.py,
+  02_Run_Pipeline.sh)
 
   - 01_Pipeline_Setup.py - script facilitates work with configuration
     files. The pipeline usually uses it inside the bash scripts.
