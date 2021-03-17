@@ -194,7 +194,17 @@ if [ ! -f "${OUTPUT_DIR}/${SAMPLE_ID}.Forward.bw" -o ! -f "${OUTPUT_DIR}/${SAMPL
 
     echo "Copy output to storage dir"
     # at this moment we suppose that bigwig files for this sampe is not created
-    mv *.bw ${OUTPUT_DIR}
+
+    for f in *.bw; do
+	set +eu
+	cp $f ${OUTPUT_DIR}
+
+	if [ $? -ne 0 ]; then
+	    echo "WARNING: cannot copy BIGWIG file $f to the ${OUTPUT_DIR}. Probably file was already created by other user"
+	fi
+	rm $f
+	set -eu
+    done
 
     ls -l
 fi

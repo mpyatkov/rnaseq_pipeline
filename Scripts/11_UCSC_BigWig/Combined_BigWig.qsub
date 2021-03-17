@@ -142,6 +142,20 @@ for group in "${groups[@]}"; do
 	wiggletools mean ${reverse[@]} > tmp_reverse.wig
 	wigToBigWig tmp_reverse.wig "./Chrom_Sizes/mm9.chrom.sizes" ${REVERSE_BW}
 	rm tmp_reverse.wig
+
+	set +eu
+	echo "Trying to copy combined forward bigwig"
+	cp ${FORWARD_BW} ${PATH_ON_SERVER}/
+	if [ $? -ne 0 ]; then
+	    echo "WARNING: cannot copy Forward combined BIGWIG files to the ${PATH_ON_SERVER}."
+	fi
+	echo "Trying to copy combined reverse bigwig"
+	cp ${REVERSE_BW} ${PATH_ON_SERVER}/
+	if [ $? -ne 0 ]; then
+	    echo "WARNING: cannot copy Reverse combined BIGWIG files to the ${PATH_ON_SERVER}."
+	fi
+	rm ${FORWARD_BW} ${REVERSE_BW}
+	set -eu
     fi
 
     # add filename to COMBINED_PAIRS.txt (this file is required for track lines(next step))
@@ -151,10 +165,7 @@ for group in "${groups[@]}"; do
 
     # print "filename \t group_name for reverse reads"
     printf "%s\t%s\t%s\t%s\n" "${REVERSE_BW}" "${group_name}" "${SERVER_DIR_NAME}" "${COLOR}">> COMBINED_PAIRS.txt
-
-    set +eu
-    mv ${FORWARD_BW} ${REVERSE_BW} ${PATH_ON_SERVER}/
-    set -eu
+    
 done
 
 # generate track lines
