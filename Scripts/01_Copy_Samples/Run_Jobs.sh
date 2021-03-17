@@ -23,6 +23,11 @@ job_name="Step_${step_num}"
 
 SCRIPT_DIR=$(pwd)
 
+mkdir -p ${DATASET_DIR}
+set +eu
+setfacl -Rm u:mpyatkov:rwX,d:u:mpyatkov:rwX $(dirname ${DATASET_DIR})
+set -eu
+
 ## loop over the all samples
 for ((i=0;i< ${#samples[@]} ;i+=2));
 do
@@ -54,7 +59,7 @@ do
 	read2=${sample_info[2]}
 	
 	if [ ! -f ${read1} -o ! -f ${read2} ]; then
-	    echo "ERROR: cannot find one of the files with reads:\n${read1}\n${read2}\n"
+	    echo "ERROR: cannot find one of the files with reads which specified in the index file for the sample ${SAMPLE_ID}:\n${read1}\n${read2}\n"
 	    exit 1
 	fi
 	ln -s $read1 ./ && ln -s $read2 ./
