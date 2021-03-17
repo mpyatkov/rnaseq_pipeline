@@ -17,6 +17,7 @@ import argparse
 import glob
 import shutil
 import sys
+import string
 
 PIPELINE_CONFIG = "Pipeline_Setup.conf"
 SAMPLES_CONFIG = "Sample_Labels.txt"
@@ -25,6 +26,8 @@ VENN_CONFIG = "venn_comparisons.txt"
 
 DEFAULT_VENN_CONFIG = """
 venn_comparisons
+# Example1 of format 1;2
+# Example2 of format 1;2;4;5
 """.strip()
 
 DEFAULT_COMPARISON_CONFIG = """
@@ -34,16 +37,20 @@ Comparison_Number; Condition_1; Condition_2
 """.strip()
 
 DEFAULT_SAMPLES_CONFIG = """
-Group;  Condition_Name;      Sample_ID;  Description;                 Color
-A;      E0771_Untreated_T72; G180_M1;    E0771_Untreated_72h;         255,0,0
-A;      E0771_Untreated_T72; G180_M2;    E0771_Untreated_72h;         255,0,0
-A;      E0771_Untreated_T72; G180_M3;    E0771_Untreated_72h;         255,0,0
-B;      E0771_4HC_T72;       G180_M4;    E0771_5uM_4HC_72h;           0,255,0
-B;      E0771_4HC_T72;       G180_M5;    E0771_5uM_4HC_72h;           0,255,0
-B;      E0771_4HC_T72;       G180_M6;    E0771_5uM_4HC_72h;           0,255,0
-C;      E0771_4HC_Ab_T72;    G180_M7;    E0771_5uM_4HC_AntiIFNAR_72h; 0,0,255
-C;      E0771_4HC_Ab_T72;    G180_M8;    E0771_5uM_4HC_AntiIFNAR_72h; 0,0,255
-C;      E0771_4HC_Ab_T72;    G180_M9;    E0771_5uM_4HC_AntiIFNAR_72h; 0,0,255
+Group;  Condition_Name; Sample_ID;  Description;                 Color
+A;      Male;           G186_M1;    Male_Liver_4wk_Control;      255,0,0
+A;      Male;           G186_M2;    Male_Liver_4wk_Control;      255,0,0
+A;      Male;           G186_M3;    Male_Liver_6wk_Control;      255,0,0
+A;      Male;           G186_M4;    Male_Liver_6wk_Control;      255,0,0
+B;      Male_STAT5ca;   G186_M5;    Male_Liver_4wk_STAT5ca_AAV;  0,255,0
+B;      Male_STAT5ca;   G186_M6;    Male_Liver_4wk_STAT5ca_AAV;  0,255,0
+B;      Male_STAT5ca;   G186_M7;    Male_Liver_6wk_STAT5ca_AAV;  0,255,0
+B;      Male_STAT5ca;   G186_M8;    Male_Liver_6wk_STAT5ca_AAV;  0,255,0
+B;      Male_STAT5ca;   G186_M9;    Male_Liver_6wk_STAT5ca_AAV;  0,255,0
+C;      Male_TCPO_2wk;  G186_M10;   Male_Liver_2wk_TCPO;         0,0,255
+C;      Male_TCPO_2wk;  G186_M11;   Male_Liver_2wk_TCPO;         0,0,255
+C;      Male_TCPO_2wk;  G186_M12;   Male_Liver_2wk_TCPO;         0,0,255
+C;      Male_TCPO_2wk;  G186_M13;   Male_Liver_2wk_TCPO;         0,0,255
 """.strip()
 
 DEFAULT_PIPELINE_CONFIG = """
@@ -57,8 +64,9 @@ PROJECT=wax-es
 # Setup dataset label
 DATASET_LABEL=DEFAULT_LABEL
 
-# The location for temporary files (BAM, counts, fastq) 
-# In 99% you do not need to change it, the default is already the optimal value 
+# The location for temporary files (BAM, counts, fastq) In 99% of
+# cases you do not need to change it, the default is already the
+# optimal value
 DATASET_DIR=PATH_TO_PROJECT
 
 [STEPS]
@@ -69,13 +77,14 @@ ADAPTOR_LEN=60
 # Input the adaptor length (bp) for one end
 READ_LEN=150
 
-# Depending on the library type, we can take into account information about
-# specific strands. At the moment, the laboratory uses the dUTP preparation
-# method, which corresponds to "fr-firststrand". Previous researchs could use
-# other types of libraries, thus if you are unsure about library type just select
-# STRANDEDNESS = 3. It will perform step 01 _..., which uses RSEQC
-# (infer_experiment.py) and HISAT to detect a read strandedness from the small
-# subset of reads for each sample.
+# Depending on the library type, we can take into account information
+# about specific strands. At the moment, the laboratory uses the dUTP
+# preparation method, which corresponds to "fr-firststrand". Previous
+# researchs could use other types of libraries, thus if you are unsure
+# about library type just select STRANDEDNESS = 3. It will perform
+# step 01 _..., which uses RSEQC (infer_experiment.py) and HISAT to
+# detect a read strandedness from the small subset of reads for each
+# sample.
 # possible values:
 # 0 - "unstranded"
 # 1 - "firststrand"
@@ -83,22 +92,25 @@ READ_LEN=150
 # 3 - "auto" (default)
 STRANDEDNESS=3
 
-# htseq only feature which allows to count different intersections for reads
+# HTSeq only feature which allows to count different intersections for
+# reads it will be used only for step 09a
 # https://htseq.readthedocs.io/en/master/count.html
 # 0="union"
 # 1="intersection-strict"
 # 2="intersection-nonempty"
 MODE=2
 
-# if you need tracks for samples and BigWig files use BIGWIG_ENABLE=1 in the
-# option below
+# if you need tracks for samples and BigWig files use BIGWIG_ENABLE
+# option
+# 1 - enable bigwig files and tracks
+# 0 - disable bigwig files and tracks
 BIGWIG_ENABLE=1
 
 # This configuration file contains all specific settings for GTF files
 # used in the pipeline, like: name, enable/disable double counting,
-# etc. For all options please visit GTF_FILES_DIR directory and check
-# 9abcd.csv default config. The GTF_FILES_CONFIG parameter below
-# combines GTF_FILES_DIR and DEFAULT_GTF_CONFIG
+# etc. For all options please visit GTF_FILES_DIR directory (see
+# below) and check 9abcd.csv default config. The GTF_FILES_CONFIG
+# parameter below combines GTF_FILES_DIR and DEFAULT_GTF_CONFIG
 # Options: 9d.csv, 9abcd.csv
 DEFAULT_GTF_CONFIG=9d.csv
 
@@ -107,53 +119,57 @@ DEFAULT_GTF_CONFIG=9d.csv
 # 1 - STAR
 DEFAULT_ALIGNER=1
 
-# DEFAULT_FC and DEFAULT_FDR options below impact only on PCA/correllation
-# plots (Step 13)
+# DEFAULT_FC and DEFAULT_FDR options below impact only on
+# PCA/correllation plots (Step 13)
 DEFAULT_FC=2
 DEFAULT_FDR=0.05
 
 [SYSTEM]
-
-# The location of the GTF files (by default you should have access to wax-es)
+# The location of the GTF files (you will need to have access to
+# wax-es to run pipeline)
 GTF_FILES_DIR=/projectnb/wax-es/routines/GTF_Files_default
 
-# GTF configuration file which contains all information and options for GTF
-# files used in this pipeline. If you would like to use custom configuration
-# file just copy the default file in the current directory and assign the path
-# to this file. Example: GTF_FILES_CONFIG=custom.csv
+# GTF configuration file which contains all information and options
+# for GTF files used in this pipeline. If you would like to use custom
+# configuration file, just copy the default file in the current
+# directory and assign the path to the custom file. Example:
+# GTF_FILES_CONFIG=custom.csv
 GTF_FILES_CONFIG=${SYSTEM:GTF_FILES_DIR}/${STEPS:DEFAULT_GTF_CONFIG}
 
-# The location of the Bowtie2 indexes, at the moment it is only indexes for mouse mm9
-# assembly
+# The location of the Bowtie2 indexes, at present time, this only
+# includes indexes for mouse mm9 assembly
 BOWTIE2INDEX_DIR=/projectnb/wax-es/routines/BowtieIndex
 
-# Directory with full genomes
+# Directory with full genomes, at present time, this only
+# includes indexes for mouse mm9 assembly
 FASTA_DIR=/projectnb2/wax-es/routines/FASTA
 
-# The location of the conda packages. This directory also contains scripts and
-# configs and qsub file for setting up environments
+# The location of the conda packages. This directory also contains
+# scripts and configs and qsub file for setting up environments
 CONDA_DIR=/projectnb/wax-es/routines/condaenv
 
-# The location of the HISAT indexes, at the moment it is only indexes for mouse mm9
+# The location of the HISAT indexes, used to detect STRANDEDNESS in
+# STEP 02, at present time, this only includes indexes for mouse mm9
 # assembly
 HISAT2INDEX_DIR=/projectnb/wax-es/routines/hisat2index
 
-# The location of the STAR indexes, at the moment it is only indexes for mouse mm9
-# assembly (ExonCollapsed_76k GTF file)
+# The location of the STAR indexes, at present time, this only
+# includes indexes for mouse mm9 assembly (ExonCollapsed_76k GTF file)
 STARINDEX_DIR=/projectnb/wax-es/routines/starindex_EC76K
 
-# The location of the global FASTQ index for all laboratory
+# The location of the global FASTQ file index for all laboratory NGS
 # experiments. You can extract information about sample using the
-# following command: ./01_Pipeline_Setup.py --get_sample_info SAMPLE_ID
-# Each SAMPLE_ID should be unique in this file.
+# following command: ./01_Pipeline_Setup.py --get_sample_info
+# SAMPLE_ID Each SAMPLE_ID should be unique in this file.  User should
+# check index.csv to make sure that the required files are
+# listed. User may add their own index file as specified in
+# README.txt, to override use of FASTQ_DEFAULT_INDEX
 FASTQ_DEFAULT_INDEX=/projectnb/wax-es/routines/index.csv
 
-# special directory which will contain FASTQC reports
-VM_DIR_FASTQC=/net/waxman-server/mnt/data/waxmanlabvm_home/TRACKS/PERSONAL/${USER:BU_USER}/${USER:DATASET_LABEL}/FASTQC
-
-# special directory which will contain BIGWIG files
-# subdirectory $VM_DIR_UCSC/COMMON for cram/bw/combined bw
-# subdirectory $VM_DIR_UCSC/PERSONAL/USERNAME/DATASET_LABEL for track lines
+# special directory which will contain BIGWIG files. 
+# $VM_DIR_UCSC/INDEXED_PROJECTS subdirectory for cram/bigwig/combined_bigwig
+# $VM_DIR_UCSC/PERSONAL/USERNAME/DATASET_LABEL subdirectory for track
+# lines
 VM_DIR_UCSC=/net/waxman-server/mnt/data/waxmanlabvm_home/TRACKS/
 
 # default time limit
@@ -178,11 +194,31 @@ class SampleConfig:
             Sample = namedtuple('Sample', header)
             result = []
             for sample in header_and_data[1:]:
-                sample = sample.split(separator)
-                sample = list(map(lambda s: s.strip(), sample))
+                if sample.startswith("#"):
+                    continue
+                sample = self.check_number_of_columns(sample.split(separator))
+                sample = list(map(lambda s: self.check(s.strip()), sample))
                 result.append(Sample(*sample))
             return result
 
+
+    # return value or raise error
+    def check(self,w):
+        if w[0] in string.digits and ',' not in w:
+            raise ValueError(f"ERROR: all values in Sample_Labels.txt should start from character not from digit: {w}")
+
+        pattern=string.ascii_letters+string.digits+"_,"
+        for c in w:
+            if c not in pattern:
+                raise ValueError(f"ERROR: Sample_Labels.txt value contains unexpected character '{c}' in word '{w}'. Only '_' can be use for separation")
+        
+        return w
+
+    def check_number_of_columns(self,l):
+        if len(list(l)) != 5:
+            raise ValueError(f"ERROR: incorrect number of columns in line: {';'.join(l)}")
+        return l
+        
     def samplesByGroup(self,group):
         result = []
         for sample in self.samples:
@@ -247,6 +283,8 @@ class ComparisonsConfig:
             Comparison = namedtuple('Comparison', header)
             result = []
             for comparison in header_and_data[1:]:
+                if comparison.startswith('#'):
+                    continue
                 comparison = comparison.split(separator)
 
                 # TODO: too hart 
@@ -288,6 +326,9 @@ class VennConfig:
             VennLine = namedtuple('VennLine', header)
             result = []
             for vennline in header_and_data[1:]:
+                if vennline.startswith("#"):
+                    continue
+
                 vennline = vennline.split(separator)
 
                 # strip trailing spaces
@@ -631,7 +672,6 @@ def find_in_index(index_file, sample_id_param):
         return None
     else:
         # return values, but strip before
-        import string
         def only_printable(w):
             return "".join(list(filter(lambda x: x in string.ascii_letters + string.digits+"-_/.()", w)))
         return list(map(lambda x: only_printable(x), sample_dict[sample_id_param]))
