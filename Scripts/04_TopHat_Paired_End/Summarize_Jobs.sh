@@ -11,7 +11,10 @@ set -o errexit
 set -o pipefail
 set -o nounset
 
-# FULL_RECALC=1 by default if nothing provided
+# ./Summarize_Jobs.sh 0 -- allows to reuse previously calculated results
+# ./Summarize_Jobs.sh 1 -- recalculate all
+
+# FULL_RECALC equal to number after ':-' if parameter was not provided
 FULL_RECALC=${1:-0}
 
 # Skip this step if recalculation flag set to 0

@@ -7,12 +7,9 @@ set -o nounset
 ##################################################################################
 #Andy Rampersaud, 02.16.16
 #This script would be used to summarize CollectInsertSizeMetrics statistics 
-#Way to run script:
-#Usage: 
-#./CollectInsertSizeMetrics_Summary.sh
 ##################################################################################
 
-# FULL_RECALC=1 by default if nothing provided
+# FULL_RECALC equal to number after ':-' if parameter was not provided
 FULL_RECALC=${1:-0}
 
 # Skip this step if recalculation flag set to 0

@@ -4,11 +4,10 @@ set -o errexit
 set -o pipefail
 set -o nounset
 
-# ./Run_Jobs.sh has one parameter - FULL_RECALC, if specify nothing by
-# default will be used FULL_RECALC=1 (full recalculation)
-# ./Run_Jobs.sh 0 -- allows to reuse previously calculated resutls
+# ./Run_Jobs.sh 0 -- allows to reuse previously calculated results
+# ./Run_Jobs.sh 1 -- recalculate all
 
-# FULL_RECALC=1 by default if nothing provided
+# FULL_RECALC equal to number after ':-' if parameter was not provided
 FULL_RECALC=${1:-0}
 
 # Skip this step if recalculation flag set to 0
