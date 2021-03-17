@@ -252,7 +252,19 @@ function cram_creating(){
 
 	# mv cram files to server
 	echo "copy files if it is required"
-	mv *.cra* ${server_dir}
+
+	# copy file by one in case if cram is created but crai not
+	for f in *.cra*; do
+	    set +eu
+	    cp $f ${server_dir}
+
+	    if [ $? -ne 0 ]; then
+		echo "WARNING: cannot copy CRAM/CRAI file $f to the ${server_dir}. Probably file was already created by other user"
+	    fi
+	    
+	    rm $f
+	    set -eu
+	done
     fi
 
     pushd ${server_dir}
