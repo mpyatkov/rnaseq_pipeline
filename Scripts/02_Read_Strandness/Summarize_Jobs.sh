@@ -7,12 +7,12 @@ set -o nounset
 ##################################################################################
 #Andy Rampersaud, 02.23.16
 #This script would be used to summarize Read_Strandness statistics 
-#Way to run script:
-#Usage: 
-#./Read_Strandness_Summary.sh
 ##################################################################################
 
-# FULL_RECALC=1 by default if nothing provided
+# ./Summarize_Jobs.sh 0 -- allows to reuse previously calculated results
+# ./Summarize_Jobs.sh 1 -- recalculate all
+
+# FULL_RECALC equal to number after ':-' if parameter was not provided
 FULL_RECALC=${1:-0}
 
 # Skip this step if recalculation flag set to 0
