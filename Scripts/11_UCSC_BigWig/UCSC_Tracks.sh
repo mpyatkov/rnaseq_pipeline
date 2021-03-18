@@ -222,17 +222,17 @@ bwvisual=dense # dense/full/pack
 autoscale=on # on/off
 bamvisual=pack # 0/full/dense,...
 leftlimit=0.0 # float number
-rightlimit=100.0 # float number
+rightlimit=240.0 # float number
 with_header=1
 # forward=leftlimit:rightlimit; reverse=-rightlimit:leftlimit
 
 generate_tracks $fname $bwvisual $autoscale $bamvisual $leftlimit $rightlimit ${with_header}
 
 ##################################################################################
-OUTPUT_FILE_Wiggle=${OUTPUT_DIR}/${DATASET_LABEL}'_Tracks_Wiggle_100.txt'
+OUTPUT_FILE_Wiggle=${OUTPUT_DIR}/${DATASET_LABEL}'_Tracks_Wiggle_240.txt'
 rm -rf ${OUTPUT_FILE_Wiggle}
 
-echo 'Start *_Tracks_Wiggle_100.txt'
+echo 'Start *_Tracks_Wiggle_240.txt'
 
 # print_header ${OUTPUT_FILE_Wiggle}
 
@@ -241,7 +241,7 @@ bwvisual=full # dense/full/pack
 autoscale=off # on/off
 bamvisual=0 # 0/full/dense,...
 leftlimit=0.0 # float number
-rightlimit=100.0 # float number
+rightlimit=240.0 # float number
 with_header=1
 # forward=leftlimit:rightlimit; reverse=-rightlimit:leftlimit
 
@@ -276,11 +276,32 @@ bwvisual=full # dense/full/pack
 autoscale=on # on/off
 bamvisual=0 # 0/full/dense,..., 0 - means bam track is not required
 leftlimit=0.0 # float number
-rightlimit=100.0 # float number
+rightlimit=240.0 # float number
 with_header=1
 # forward=leftlimit:rightlimit; reverse=-rightlimit:leftlimit
 
 generate_tracks $fname $bwvisual $autoscale $bamvisual $leftlimit $rightlimit ${with_header}
+
+# combine all combined tracks to one txt file
+# get header only from one
+pushd ${OUTPUT_DIR}
+
+files=(*Combined*)
+combined_output="${DATASET_LABEL}_Tracks_All_Combined.txt"
+
+for ((i=0;i< ${#files[@]} ;i+=1));
+do
+    combfile=${files[i]}
+
+    # get header only from first one
+    if [ ${i} -eq 0 ]; then
+	cat ${combfile} > ${combined_output}
+    else
+	cat ${combfile} | grep -i bigwig >> ${combined_output}
+    fi
+done
+
+popd
 
 ##################################################################################
 #Remove the temp file:
