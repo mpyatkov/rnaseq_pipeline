@@ -19,6 +19,7 @@ import shutil
 import sys
 import string
 
+# hide tracebacks
 sys.tracebacklimit = 0
 
 PIPELINE_CONFIG = "Pipeline_Setup.conf"
@@ -190,14 +191,12 @@ class SampleConfig:
 
         with open(configpath, "r") as config:
             header_and_data = map(lambda x: x.strip(), config.readlines())
-            header_and_data = list(filter(lambda x: len(x) != 0, header_and_data))
+            header_and_data = list(filter(lambda x: len(x.strip()) != 0 and not x.strip().startswith("#"), header_and_data))
             # print(header_and_data)
             header = header_and_data[0].replace(separator, ",")
             Sample = namedtuple('Sample', header)
             result = []
             for sample in header_and_data[1:]:
-                if sample.startswith("#"):
-                    continue
                 sample = self.check_number_of_columns(sample.split(separator))
                 sample = list(map(lambda s: self.check(s.strip()), sample))
                 result.append(Sample(*sample))
@@ -279,14 +278,12 @@ class ComparisonsConfig:
             header_and_data = map(lambda x: x.strip(), config.readlines())
 
             # ignore empty lines
-            header_and_data = list(filter(lambda s: len(s) > 0, header_and_data))
+            header_and_data = list(filter(lambda s: len(s.strip()) > 0 and not s.strip().startswith("#"), header_and_data))
 
             header = header_and_data[0].replace(separator, ",")
             Comparison = namedtuple('Comparison', header)
             result = []
             for comparison in header_and_data[1:]:
-                if comparison.startswith('#'):
-                    continue
                 comparison = comparison.split(separator)
 
                 # TODO: too hart 
@@ -323,13 +320,11 @@ class VennConfig:
         with open(configpath, "r") as config:
             header_and_data = map(lambda x: x.strip(), config.readlines())
             # ignore empty lines
-            header_and_data = list(filter(lambda s: len(s) > 0, header_and_data))
+            header_and_data = list(filter(lambda s: len(s.strip()) > 0 and not s.strip().startswith("#"), header_and_data))
             header = header_and_data[0].replace(separator, ",")
             VennLine = namedtuple('VennLine', header)
             result = []
             for vennline in header_and_data[1:]:
-                if vennline.startswith("#"):
-                    continue
 
                 vennline = vennline.split(separator)
 
@@ -371,7 +366,7 @@ class GTFconfig():
             header_and_data = map(lambda x: x.strip(), config.readlines())
 
             # ignore empty lines
-            header_and_data = list(filter(lambda s: len(s) > 0, header_and_data))
+            header_and_data = list(filter(lambda s: len(s.strip()) > 0 and not s.strip().startswith("#"), header_and_data))
             
             header = header_and_data[0].replace(separator,",")
             GTFLine = namedtuple('GTFline', header)
