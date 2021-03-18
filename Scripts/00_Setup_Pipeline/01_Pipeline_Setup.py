@@ -206,7 +206,7 @@ class SampleConfig:
     # return value or raise error
     def check(self,w):
         if w[0] in string.digits and ',' not in w:
-            raise ValueError(f"ERROR: all values in Sample_Labels.txt should start from character not from digit: {w}")
+            raise ValueError(f"ERROR: all values in Sample_Labels.txt must start with a character, not a number: {w}")
 
         pattern=string.ascii_letters+string.digits+"_,"
         for c in w:
