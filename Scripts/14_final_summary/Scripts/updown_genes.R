@@ -24,7 +24,7 @@ updown_one <- function(f, FCparam, FDRparam, Dataset_label) {
   comparison <- as.numeric(str_extract(f, "(\\d)+"))
   feature <- str_extract(f, "ExonCollapsed|FullGeneBody|ExonOnly|ExonicOnly|IntronOnly|IntronicOnly")
   package <- ifelse(str_detect(str_to_lower(f), "deseq"),"DESeq","edgeR")
-  df <- read_tsv(f, col_names = T) %>% 
+  df <- read_tsv(f, col_names = T, trim_ws = T, comment = "#") %>% 
     select(FC = 3, FDR = 6) %>% 
     filter(abs(FC) > FCparam, FDR < FDRparam) %>% 
     mutate(Up_genes = ifelse(FC>FCparam,1,0),
@@ -57,7 +57,7 @@ up.down.genes <- dplyr::bind_rows(up.down.genes)
 ##   select(Dataset_label, comparison, feature, package, Up_genes = X4, Down_genes = X5)
 
 # comparison df
-cmp <- read_delim(comparisons, delim = ";", col_names = T, trim_ws = T) %>% 
+cmp <- read_delim(comparisons, delim = ";", col_names = T, trim_ws = T, comment = "#") %>% 
   select(comparison = Comparison_Number, Condition_1, Condition_2)
 
 # combine samples by dataset_id and samples_id
@@ -72,7 +72,7 @@ get_samples_line <- function(smpl){
 }
 
 # samples df
-samples <- read_delim(samples_file, delim=";", col_names = T, trim_ws = T) %>% 
+samples <- read_delim(samples_file, delim=";", col_names = T, trim_ws = T, comment="#") %>% 
   select(Group, Condition_Name, Sample_ID) %>% 
   group_by(Group) %>% 
   mutate(Samples=get_samples_line(Sample_ID)) %>% 

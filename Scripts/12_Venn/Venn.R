@@ -25,10 +25,10 @@ suppressPackageStartupMessages({
 # convert file names to correct titles for venn diagrams
 get_correct_names <- function(comparisons, samples, names) {
   library(tidyr)
-  cmp <- read_delim(comparisons, delim = ";", col_names = T, trim_ws = T) %>%
+  cmp <- read_delim(comparisons, delim = ";", col_names = T, trim_ws = T, comment = "#") %>%
     select(comparison = Comparison_Number, Condition_1, Condition_2)
   
-  samples <- read_delim(samples, delim=";", col_names = T, trim_ws = T) %>%
+  samples <- read_delim(samples, delim=";", col_names = T, trim_ws = T, comment = "#") %>%
     select(Group, Condition_Name) %>%
     distinct(Group, Condition_Name)
   
