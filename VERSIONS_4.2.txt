@@ -1,3 +1,16 @@
+## [4.2] - 2021-03-17
+
+### Added
+- support of commentaries in config files using # character
+- ACL rw permissions
+- new documentation in README.txt
+
+### Changed
+- default directory for FASTQC now is PROJECT_DIR
+- pipeline inform if user try to rewrite existed bw/cram file without
+  permissions
+- improved error messages if format of config file is not correct
+
 ## [4.1] - 2021-03-10
 
 ### Added
@@ -19,3 +32,4 @@
   waxmanlabvm.bu.edu/TRACKS/INDEXED_PROJECTS/PROJECT_NAME/
 - CRAM files will be created on mapping step (Step 04)
 - fixing small bugs in all steps
+
