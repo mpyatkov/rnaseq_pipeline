@@ -19,6 +19,8 @@ import shutil
 import sys
 import string
 
+sys.tracebacklimit = 0
+
 PIPELINE_CONFIG = "Pipeline_Setup.conf"
 SAMPLES_CONFIG = "Sample_Labels.txt"
 COMPARISON_CONFIG = "Comparisons.txt"
