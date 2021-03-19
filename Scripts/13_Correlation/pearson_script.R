@@ -20,7 +20,6 @@ wd <- getwd()
 if(!is.null(wd)) {setwd(wd)}
 
 require(stringr)
-require(reshape2)
 require(ggplot2)
 require(MASS)
 library(tools)
@@ -29,7 +28,6 @@ library(ggfortify)
 library(tidyverse)
 require(dplyr)
 library(miscTools)
- library(caret)
 library(Rtsne)
 library(ggrepel)
 library(tidyr)
@@ -130,7 +128,9 @@ plot_pca <- function(df_pca, title, out_names) {
          theme_bw()+
          theme(text = element_text(size=14),
                legend.title = element_text(size=15),
-               legend.text=element_text(size=15))
+               legend.text=element_text(size=15),
+               axis.title.x = element_text(size=20),
+               axis.title.y = element_text(size=20))
    }
    ggsave(paste0(out_names,".pdf"),plot= pca, device = "pdf",path= wd, width = 50, height =30, units = "cm")   
    
@@ -147,11 +147,11 @@ get_conditions <- function(filenames_prefix, extargs) {
       listFC[i] <- paste(filenames_prefix[i],"_edgeRlogFC", sep="")
       listFDR[i] <- paste(filenames_prefix[i],"_edgeRFDR",sep="")
       cond[i] <-  paste("((","abs(",listFC[i],")",">",log2(extargs$CUSTOM_FC),")","&","(", listFDR[i],"<",extargs$CUSTOM_FDR,"))", sep=" ")
-      cond1[i] <-  paste("((",listFC[i],")","<0.263034","&(","(",listFC[i],")",">","-0.263)","&","(", listFDR[i],">0.1))", sep=" ")
+      cond1[i] <-  paste("((",listFC[i],")","<0.263","&(","(",listFC[i],")",">","-0.263)","&","(", listFDR[i],">0.1))", sep=" ")
    }
    
-   list_data_cond <- (paste(cond, collapse = "|") )                     # merge the list into string
-   list_data_cond1 <- (paste(cond1, collapse = "|") )                     # merge the list into string
+   list_data_cond <- (paste(cond, collapse = "&") )                     # merge the list into string
+   list_data_cond1 <- (paste(cond1, collapse = "&") )                     # merge the list into string
    
    list(signif=list(name="signif", cond=list_data_cond), nonsignif=list(name="nonsignif", cond=list_data_cond1))
 }
@@ -175,9 +175,9 @@ read_dataset <- function(filenames, group_names, filter_condition = NULL, meanon
    # choose only required columns (dataset for pca)
    dataset_grep_filter <- dataset %>%
       select(matches("_edgeRFDR|_edgeRlogFC|rpkm")) 
-   # %>% 
-   #    select(-contains("_mean_")) 
-   # 
+   
+   # assign the gene names to rownames
+   rownames(dataset_grep_filter) <- dataset$id
    
    # filter conditions
    if (!is.null(filter_condition)) {
@@ -188,6 +188,9 @@ read_dataset <- function(filenames, group_names, filter_condition = NULL, meanon
       }
    }
    
+   # get gene names
+   gene_names <- rownames(dataset_grep_filter)
+
    # dataset for correlation
    dataset_grep_filter <- dataset_grep_filter %>% 
       select(matches("rpkm_")) 
@@ -217,7 +220,7 @@ read_dataset <- function(filenames, group_names, filter_condition = NULL, meanon
    df_pca <- as.data.frame(df_pca)
    df_pca$group <- groups
    
-   list(df_pca=df_pca, df_cor=for_cor)
+   list(df_pca=df_pca, df_cor=for_cor, gene_names = gene_names)
 }
 
 # plot PCA for significant, nonsignificant, and all conditions
@@ -235,19 +238,20 @@ pca_3plot <- function(filename, group_names, extargs, number, meanonly = F) {
    # dataset without condition
    ds <- read_dataset(filename, group_names, meanonly = meanonly)
    out_fname <- paste0(number, "_PCA_All_",out_names)
-   header <- paste0(extargs$dataset_label, ", ", out_fname, ", ", "\nAll genes (without filter), ",extargs$detitle,"_Genes: ", dim(ds$df_pca)[[2]])
+   header <- paste0(extargs$dataset_label, ", ", out_fname, ", ", "\nAll genes (without filter), ",extargs$detitle,"_Genes: ", length(ds$gene_names))
    plot_pca(ds$df_pca, header, out_fname)
    
    # dataset with significant genes
    ds <- read_dataset(filename, group_names, filter_condition = cond$signif, meanonly = meanonly)
    out_fname <- paste0(number, "_PCA_Significant_",out_names)
-   header <- paste0(extargs$dataset_label, ", ", out_fname, ", ", "\nSignificant genes (|FC|>",extargs$CUSTOM_FC," and FDR<", extargs$CUSTOM_FDR,"), ",extargs$detitle,"_Genes: ", dim(ds$df_pca)[[2]])
+   header <- paste0(extargs$dataset_label, ", ", out_fname, ", ", "\nSignificant genes (|FC|>",extargs$CUSTOM_FC," and FDR<", extargs$CUSTOM_FDR,"), ",extargs$detitle,"_Genes: ", length(ds$gene_names))
    plot_pca(ds$df_pca, header, out_fname)
    
    # dataset with non-significant genes
    ds <- read_dataset(filename, group_names, filter_condition = cond$nonsignif, meanonly = meanonly)
    out_fname <- paste0(number, "_PCA_Non-significant_", out_names)
-   header <- paste0(extargs$dataset_label, ", ",  out_fname, ", ", "\nNon-significant genes (1.2 < |FC| < 1/|1.2|  and FDR >0.1, RPKM >1), ",extargs$detitle,"_Genes: ", dim(ds$df_pca)[[2]])
+   header <- paste0(extargs$dataset_label, ", ",  out_fname, ", ", "\nNon-significant genes (1.2 < |FC| < 1/|1.2|  and FDR >0.1, RPKM >1), ",extargs$detitle,"_Genes: ", length(ds$gene_names))
+   write_csv(tibble(id = ds$gene_names), paste0(out_fname,"_GeneNames",".csv"))
    plot_pca(ds$df_pca, header, out_fname)
 }
 
@@ -296,6 +300,36 @@ cor_3plot <- function(filename, group_names, method, extargs, number, meanonly =
    plot_cor(ds$df_cor, header, method, out_fname)
 }
 
+tsne_plot <- function(filenames, dt) {
+   # if files > 2 than perplexity = 2 else perplexity = 1
+   perplexity = ifelse(length(as.vector(filenames)) > 1, 2, 1)	
+   
+   set.seed(42)
+   #tsne_model_1 <- Rtsne(as.matrix(dataset$df_pca), check_duplicates=FALSE, pca=TRUE, perplexity=perplexity, theta=0.5, dims=3, set.seed=TRUE)
+   tsne_model_1 <- Rtsne(as.matrix(subset(dt$df_pca, select = -c(group))), check_duplicates=FALSE, pca=TRUE, perplexity=perplexity, theta=0.5, dims=3, set.seed=TRUE)
+   
+   ## getting the two dimension matrix
+   
+   d_tsne_1 <- as.data.frame(tsne_model_1$Y)  
+   
+   tsneplot <- ggplot(d_tsne_1, aes(x=V1, y=V2, z=V3), colour="green") +  
+      geom_point(size=1) + 
+      guides(colour=guide_legend(override.aes=list(size=3))) +
+      xlab("") + ylab("") +
+      ggtitle("t-SNE for all genes ") +
+      theme_light(base_size=20) +
+      theme(axis.text.x=element_blank(),
+            axis.text.y=element_blank()) +
+      scale_colour_brewer(palette = "Set2")
+   
+   
+   tsneplot <- tsneplot + geom_label_repel(aes(label = rownames(dt$df_pca)),
+                                           box.padding   = 0.35, 
+                                           point.padding = 0.5,
+                                           segment.color = 'grey50') +
+      theme_classic()
+   ggsave("tSNE_All_Merge.pdf",plot= tsneplot, device = "pdf",path= wd, width = 80, height =40, units = "cm")   
+}
 ####################################### FUNCTION ENDS ###################################
 
 # list all txt files from the current directory
@@ -314,35 +348,8 @@ if(!is.na(list.filenames.HT[1])){
    #cor_3plot(list.filenames.HT, "pearson", EXTARGS, 0, meanonly = F)
 
    ## tSNE   
-  
-   # if files > 2 than perplexity = 2 else perplexity = 1
-   perplexity = ifelse(length(as.vector(list.filenames.HT)) > 1, 2, 1)	
-
-   set.seed(42)
-   #tsne_model_1 <- Rtsne(as.matrix(dataset$df_pca), check_duplicates=FALSE, pca=TRUE, perplexity=perplexity, theta=0.5, dims=3, set.seed=TRUE)
-   tsne_model_1 <- Rtsne(as.matrix(subset(dataset$df_pca, select = -c(group))), check_duplicates=FALSE, pca=TRUE, perplexity=perplexity, theta=0.5, dims=3, set.seed=TRUE)
+  tsne_plot(list.filenames.HT, dataset)
    
-   ## getting the two dimension matrix
-   
-   d_tsne_1 <- as.data.frame(tsne_model_1$Y)  
-   
-   tsneplot <- ggplot(d_tsne_1, aes(x=V1, y=V2, z=V3), colour="green") +  
-      geom_point(size=1) + 
-      guides(colour=guide_legend(override.aes=list(size=3))) +
-      xlab("") + ylab("") +
-      ggtitle("t-SNE for all genes ") +
-      theme_light(base_size=20) +
-      theme(axis.text.x=element_blank(),
-            axis.text.y=element_blank()) +
-      scale_colour_brewer(palette = "Set2")
-   
-   
-   tsneplot <- tsneplot + geom_label_repel(aes(label = rownames(dataset$df_pca)),
-                                           box.padding   = 0.35, 
-                                           point.padding = 0.5,
-                                           segment.color = 'grey50') +
-      theme_classic()
-   ggsave("tSNE_All_Merge.pdf",plot= tsneplot, device = "pdf",path= wd, width = 80, height =40, units = "cm")   
    
    tic("total")
 
