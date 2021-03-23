@@ -2,11 +2,12 @@ Table of Contents
 _________________
 
 1. Quick start
-.. 1. Install the last version of pipeline
-.. 2. Generate config files
+.. 1. Install the most recent version of the pipeline
+.. 2. Generating config files
 .. 3. Index files
-.. 4. Before start the pipeline
-.. 5. Start the pipeline
+.. 4. Before starting the pipeline
+.. 5. Starting the pipeline
+.. 6. Checking the pipeline status
 
 
 
@@ -15,93 +16,106 @@ _________________
 1 Quick start
 =============
 
-1.1 Install the last version of pipeline
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+1.1 Install the most recent version of the pipeline
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-  This and all other steps assume that users are using *scc1* or *scc4*
-  clusters
+  This and all other steps assume that users are using the *scc1* or
+  *scc4* clusters on the SCC.
 
-  Run the following command in the directory that you are going to use
-  for the RNAseq analysis:
+  Run the following command inside the directory that you are going to
+  use for the RNAseq analysis:
 
   ,----
   | git clone https://github.com/mpyatkov/rnaseq_pipeline.git PROJECT_NAME
   `----
 
   This command creates the PROJECT_NAME directory. PROJECT_NAME can be
-  anything, but providing a sensible name will help you find old results
-  in the future.
+  anything, but providing a sensible name will help you know which
+  analyses are included in your output folders.
 
   Inside the *PROJECT_NAME* directory users will find several files and
-  a directory *Scripts*
+  a directory named *Scripts*
 
-  - make_cleanup.sh - script removes large files that are no longer
+  - make_cleanup.sh - this script removes large files that are no longer
     needed (BAM files)
-  - make_archive.sh - script compresses directory with results for
-    future analysis, it also asks users about the directory cleaning
-  - README.txt - this file
+  - make_archive.sh - this script compresses the directory with pipeline
+    analysis results for future use; it also asks users about the
+    directory cleaning
+  - README.txt - this file, with pipeline instructions
   - VERSIONS_# - file which contains the pipeline change log
   - Scripts - directory with all scripts required for analysis
 
 
-1.2 Generate config files
-~~~~~~~~~~~~~~~~~~~~~~~~~
+1.2 Generating config files
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-  To start the pipeline first of all users need to configure it.
+  Before starting the pipeline, the user needs to configure it.
 
-  Go to inside the PROJECT_NAME/Scripts/00_Setup_Pipeline/ directory
-  There are two files inside this directory (01_Pipeline_Setup.py,
-  02_Run_Pipeline.sh)
+  *WARNING: DO NOT USE QUOTES WHEN MAKING ENTRIES IN THE CONFIG FILES*
+  *WARNING: DO NOT USE SPACES IN VARIABLES IN CONFIG FILES, USE "_"
+  *INSTEAD*
 
-  - 01_Pipeline_Setup.py - script facilitates work with configuration
-    files. The pipeline usually uses it inside the bash scripts.
-  - 02_Run_Pipeline.sh - script starts the pipeline with different
-    options
+  Go to inside the PROJECT_NAME/Scripts/00_Setup_Pipeline/
+  directory. There are two files inside this directory
+  (01_Pipeline_Setup.py, 02_Run_Pipeline.sh)
 
-  First of all, users need to run the following command to get the
-  configuration files:
+  - 01_Pipeline_Setup.py - this script facilitates work with the
+    configuration files. The pipeline usually uses it inside the bash
+    scripts.
+  - 02_Run_Pipeline.sh - the script gives the user several options for
+    starting the pipeline.
 
+  First of all, the user needs to run the following command to obtain a
+  set of configuration files specific to the user and the user's
+  folders:
   ,----
   | ./01_Pipeline_Setup.py # or equivalent ./01_Pipeline_Setup.py --generate
   `----
 
-  The command produces 4 config files:
+  The above command produces 4 config files:
 
   1) *Pipeline_Setup.conf* - contains all information about specific
-      configuration details of the pipeline. To run the pipeline it will
-      be enough to check out only [USER] section, because in 99% config
-      generator set optimal values for all variables.
+      configuration details of the pipeline; it includes optimal values
+      for many variables, which do not usually need to be changed for
+      routine runs of the pipeline. However, the user should check the
+      [USER] section, because in 99% of cases the config generator sets
+      optimal values for all variables.
 
-  2) *Sample_Labels.txt* - The most important file in the pipeline. This
-      file contains information about sample specific options. The main
-      columns are:
-     - *Group* - each sample should be associated with only one group
-     - *Condition_Name* - should be considered as a long name for the
-        *Group*. Samples from one group should have same
-        *Condition_Name*
+  2) *Sample_Labels.txt* - This is the most important setup file in the
+     pipeline. This file contains information about sample specific
+     options. The main columns are:
+     - *Group* - each sample must be associated with only one group
+     - *Condition_Name* - this serves as a longer, more descriptive name
+       *for the group Group*. All samples in a group should have the
+       *same *Condition_Name*
      - *Sample_ID* - unique ID for each sample. In the pipeline, sets of
-        samples are combined into projects. There are special files
-        called "index" files to organize information about samples and
-        projects. Within these files, the samples are uniquely
+        samples are combined into projects. Special files, called
+        "index" files, are used to organize information about samples
+        and projects. Within these files, the samples are uniquely
         associated with a pair of FASTQ files for left and right
-        reads. Before running the pipeline, users need to know which
-        index files are created and what set of samples inside. For
-        external public data users should provide their own index
-        files. All information how to create index files is presented in
-        the section below.
-     - *Description* - the full description of the sample
+        sequence reads. Before running the pipeline, the user needs to
+        know which index files have already been created and what set of
+        samples they refer to. For external public datasets, the user
+        needs to provide their own index files. All information about
+        how to create index files is presented in the section below.
+     - *Description* - a longer, more complete text description of the
+        sample
      - *Color* - the color to be used in the UCSC browser
 
-  3) *Comparisons.txt* - contains information about which groups should
-      be compared. The main rule here:
+     IMPORTANT NOTE: None of the values in *Sample_Labels.txt* may begin
+     with a number, except for *Color*
+
+  3) *Comparisons.txt* - contains information about which groups are to
+      be compared for identification of DEGs (differentially expressed
+      genes). The main rule here is:
       *Condition_2(Treatment)/Condition_1(Control)*. Information from
       this step is required to generate directories for Differential
       Expression analysis.
 
-  4) *venn_comparisons.txt* (Optional) - Allows to specify which groups
-      of samples will be subject to different venn comparisons. By
-      default this file contains only header, but the format of this
-      file pretty straightforward, example:
+  4) *venn_comparisons.txt* (Optional) - Allows the user to specify
+     which groups of samples will be analyzed to generate different Venn
+     comparisons. The format of this file pretty straightforward,
+     example:
 
   ,----
   | venn_comparisons
@@ -114,12 +128,11 @@ _________________
 
   Where "1;2" means compare the DE output and build Venn diagrams for
   comparisons 1 and 2 (numbers correspond to Comparison_Number column
-  from the Comparison.txt configuration file), "1;2;3" - compare the DE
-  output for comparisons 1,2,3 etc. The maximum number of DE comparisons
-  that can be compared with each other is 4.
-
-  *WARNING: DO NOT USE QUOTES IN CONFIG FILES* WARNING: DO NOT USE
-  *SPACES IN VARIABLES IN CONFIG FILES, USE "_" INSTEAD*
+  from the *Comparison.txt* configuration file), "1;2;3" - compare the
+  DE output for comparisons 1,2,3 etc. The maximum number of DE
+  comparisons that can be compared with each other is four (as in
+  1;2;3;4). There is no limit to the number of lines entered in
+  *venn_comparisons.txt*
 
   To start the pipeline, in most cases, users only need to fill in
   *Sample_Labels.txt* and *Comparisons.txt*. Complete these
@@ -129,50 +142,53 @@ _________________
 1.3 Index files
 ~~~~~~~~~~~~~~~
 
-  To analyze the public data, sometimes you will need to create a
-  special file that will associate unique SAMPLE_ID with a pair of FASTQ
-  files. Such unique SAMPLE_IDs allow us to organize and reuse already
-  calculated results as follows: after the first analysis, the FASTQ
-  files will be mapped to a genome, resulting in a BAM file. The
-  resulting BAM will be compressed to CRAM file and stored on the
-  server. Next time the pipeline can skip the step of mapping reads to
-  the reference genome and reuse the already computed BAM file by
-  unpacking it from the CRAM file.
+  To analyze public RNA-SEQ DATASETS, sometimes you will need to create
+  a special file that will associate unique SAMPLE_ID with a pair of
+  FASTQ files. Such unique SAMPLE_IDs allow us to organize and reuse
+  already calculated results as follows: after the first analysis, the
+  FASTQ files will be mapped to a genome, resulting in a BAM file. The
+  resulting BAM FILE will be compressed to A CRAM file and stored on the
+  WaxmanLab server. The next time the pipeline is run to re-analyze
+  these same samples, it will skip the step of mapping reads to the
+  reference genome and reuse the already computed BAM files by unpacking
+  them from the corresponding CRAM files.
 
-  The files contained information about SAMPLE_ID and FASTQ files aka
-  'index files' are usual csv files which have special structure.  By
-  default, the pipeline already uses at least one index file specified
-  in the FASTQ_DEFAULT_INDEX variable inside the Pipeline_Setup.conf.
-  To use their own index the users should put index file inside the
-  Scripts/00_Setup_Pipeline/ directory with name suffixed as follows
-  "index.csv" (ex. G186_index.csv), in this case the pipeline
-  automatically detect index file and override FASTQ_DEFAULT_INDEX. The
-  overriding means that the pipeline will try to find info about
-  SAMPLE_ID inside the user defined index first.
+  Index files contain information about each SAMPLE_ID and FASTQ file,
+  and are usually csv files in a special file structure.  By default,
+  the pipeline already uses at least one index file, specified in the
+  FASTQ_DEFAULT_INDEX variable inside the Pipeline_Setup.conf.  Use who
+  needs to use their own index file should put a copy of that index file
+  inside the Scripts/00_Setup_Pipeline/ directory, with name suffixed as
+  follows "index.csv" (ex. G186_index.csv). When the pipeline detects an
+  index file in the 00_Setup_Pipeline/ directory, it will use that index
+  file, overriding the FASTQ_DEFAULT_INDEX. Thus, the pipeline will
+  first try to find info about each SAMPLE_ID inside the user defined
+  index file, before it goes to FASTQ_DEFAULT_INDEX.
 
-  The format for index files is pretty simple:
+  The format for index files is as follows:
 
   1. First line contains three columns separated by commas:
-     - keyword PRJ separate projects to each other
+     - keyword PRJ separates projects from each other
      - PROJECT_NAME
      - PROJECT_PATH - maximal full path to the directory with fastq
        files
-  2. Other lines contains also three columns to represent the SAMPLE_ID,
+  2. Other lines also contain three columns to represent the SAMPLE_ID,
      RELATIVE_PATH_TO_READS1 and RELATIVE_PATH_TO_READS2
      - SAMPLE_ID - unique identifier which contains info about project
-       and short ID after the "_" character. The pipeline raises error
-       if identifier has more than one "_" character. Example of good
-       name for sample id is 'G186_M1' or something similar.
+       and short ID after the "_" character. The pipeline generates an
+       error if the identifier has more than one "_" character. Example
+       of a good name for sample id is 'G186_M1' or something similar.
      - PATH to the file with first reads. Path should be relative to the
-       PROJECT_PATH. If all users FASTQ files located in one directory
-       the paths to the reads will be just file names. If FASTQ files
-       already separated by pairs and stored in different directories,
-       users need to add info about relative location to the reads file
-       name (see examples below).
+       PROJECT_PATH. If all users FASTQ files are located in one
+       directory, the paths to the reads will be just the file names. If
+       FASTQ files are already separated by pairs and stored in
+       different directories, then the user will need to add info about
+       relative location to the reads file name (see examples below).
+
   To separate the projects each project should start with a PRJ keyword:
 
-  Index files can keep as many projects as you wish, the main rule here
-  all SAMPLE_ID should be unique.
+  Index files can contain as many projects as you wish, the main rule
+  here is that all SAMPLE_ID must be unique.
 
   ,----
   | PRJ, PROJECT_NAME1, PROJECT_PATH1
@@ -187,9 +203,9 @@ _________________
   | SAMPLE_ID6, FASTQ_WITH_READS1, FASTQ_WITH_READS2
   `----
 
-  In this example each pair of FASTQ files is stored in its own
-  directory, so we add the each directory to relative path when
-  specifying read names:
+  In the example below, each pair of FASTQ files is stored in its own
+  directory, so we need to add the directory to identify the relative
+  path when specifying read names:
 
   ,----
   | PRJ, G186, /net/waxman-server/mnt/data/volume2/Waxman_Illumina_HiSeq_Raw_Data_02/G186/usftp21.novogene.com/raw_data
@@ -200,23 +216,23 @@ _________________
   `----
 
 
-1.4 Before start the pipeline
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+1.4 Before starting the pipeline
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-  In the case of *scc4*, the session will be interrupted after 15
-  minutes of inactivity. But for the pipeline it is required to have
-  active session for several hours. To prevent unexpected interruption
-  user should use the *screen* or *tmux* - terminal multiplexers which
-  will keep session alive. The following set of commands is enough for
-  the successful pipeline run.
+  When running the pipeline on *scc4*, the session will be interrupted
+  after 15 minutes of inactivity, which will cause a problem when the
+  pipeline needs several hours to finish running. To prevent unexpected
+  interruption, the user should use the *screen* or *tmux* - terminal
+  multiplexers which will keep session alive. The following set of
+  commands is enough to insure a successful pipeline run:
 
   1. tmux (run tmux session and connect to it)
   2. tmux attach (connect to tmux session if not connected)
   3. inside the tmux session press "Ctrl-B D" to detach from session
 
 
-1.5 Start the pipeline
-~~~~~~~~~~~~~~~~~~~~~~
+1.5 Starting the pipeline
+~~~~~~~~~~~~~~~~~~~~~~~~~
 
   There are several options for starting the pipeline, to check all of
   them, run the following command:
@@ -228,21 +244,21 @@ _________________
   The output will contain the following lines:
 
   ,----
-  | <option> = START - light version of FULL without recalculation already existed samples
+  | <option> = START - light version of FULL, without recalculation of output for samples that already exist
   | <option> = FULL - full pipeline run with recalculation of all steps
   | <option> = DEONLY recalculate DE and summary directories (09abcd,12,13,14)
-  | <option> = TRACKS creates UCSC tracks (01,02,04 and 11 without full recalculation if that possible)
-  | <option> = start_step (example. 05) start from specific step
+  | <option> = TRACKS creates UCSC tracks (steps 01,02,04 and 11 without full recalculation if that possible)
+  | <option> = start_step (example. 05) start to run pipeline from specific step
   `----
 
-  In the most cases START option is optimal way how to start the
-  pipeline, because it allows to reuse already precalculated BAM files
-  obtained from previous pipeline users.  But if users are going to work
-  with fairly new data and need information about quality checks such as
-  (FASTQ, Picard RnaSeqMetrics, etc.), then the FULL option would be a
-  possible choice. The FULL option informs the pipeline that all
-  intermediate files (BAM, counts, etc) should be recalculated from
-  FASTQ sources with all quality control checks.
+  In the most cases START option is the optimal way how to start the
+  pipeline, because it allows you to reuse already precalculated BAM
+  files obtained from previous pipeline users.  But when the user is
+  working with new Fastq files, and needs information about quality
+  checks (such as FASTQ, Picard RnaSeqMetrics, etc.), then the FULL
+  option would be a Better choice. The FULL option informs the pipeline
+  that all intermediate files (BAM, counts, etc) should be recalculated
+  from the FASTQ source files, including all quality control checks.
 
   To start the pipeline users should run the following command:
 
@@ -252,6 +268,10 @@ _________________
   | Press "Ctrl-B D" to detach from current tmux session
   `----
 
+
+1.6 Checking the pipeline status
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
   Next time when users need to check the pipeline status they need to
   attach to the last tmux session using the next command:
 
@@ -259,9 +279,16 @@ _________________
   | tmux attach
   `----
 
-  In addition users can check the cluster queue to get information about
-  current execution step of the pipeline:
+  In addition, users can check the cluster queue to get information
+  about current execution step of the pipeline:
 
   ,----
   | qstat -u BU_USER_NAME
   `----
+
+  Finally, after the pipeline run is completed, the user can enter the
+  Terminal View mode, with the command (right) Control + b, followed by
+  the use of Page Up and page Down, to view all of the pipeline notes
+  output to the screen.
+
+  To exit the Command View mode, enter Escape.
