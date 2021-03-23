@@ -805,8 +805,7 @@ if __name__ == "__main__":
 
         # checking groups consistency, exit if not
         if not diffex.check_consistency():
-            print(f"Groups in config files ({DEFAULT_SAMPLES_CONFIG} and {DEFAULT_COMPARISON_CONFIG}) are not consistent")
-            exit(1)
+            raise ValueError(f"Groups in config files ({SAMPLES_CONFIG} and {COMPARISON_CONFIG}) are not consistent. Please check the group settings in both files.")
         
         # Remove DE directories before generation
         diffex.clean(DE_DIR_PATH)
