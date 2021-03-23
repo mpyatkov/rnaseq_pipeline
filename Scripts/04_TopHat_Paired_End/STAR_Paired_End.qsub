@@ -117,6 +117,7 @@ echo 'Starting STAR'
       --readFilesCommand gunzip -c \
       --readFilesIn ${left_list} ${right_list} \
       --outSAMtype BAM SortedByCoordinate \
+      --outSAMstrandField intronMotif \
       --outFileNamePrefix ./"${SAMPLE_ID}_"
 )
 echo 'Ending STAR'
@@ -245,27 +246,28 @@ function cram_creating(){
     mkdir -p ${server_dir}
 
     # convert to CRAM if file is not created
-    if [ ! -f "${server_dir}/${cram_out}" ]; then
-	echo "Generate CRAM files..."
-	samtools view -@ ${NSLOTS} -b  -T ${genome} -C -o ${cram_out} ${bam_in}
-	samtools index ${cram_out}
+    # if [ ! -f "${server_dir}/${cram_out}" ]; then
+    echo "Generate CRAM files..."
+    samtools view -@ ${NSLOTS} -b  -T ${genome} -C -o ${cram_out} ${bam_in}
+    samtools index ${cram_out}
 
-	# mv cram files to server
-	echo "copy files if it is required"
+    # mv cram files to server
+    echo "copy files if it is required"
 
-	# copy file by one in case if cram is created but crai not
-	for f in *.cra*; do
-	    set +eu
-	    cp $f ${server_dir}
+    # copy file by one in case if cram is created but crai not
+    for f in *.cra*; do
+	set +eu
 
-	    if [ $? -ne 0 ]; then
-		echo "WARNING: cannot copy CRAM/CRAI file $f to the ${server_dir}. Probably file was already created by other user"
-	    fi
-	    
-	    rm $f
-	    set -eu
-	done
-    fi
+	cp $f ${server_dir}
+	
+	if [ $? -ne 0 ]; then
+	    echo "WARNING: cannot copy CRAM/CRAI file $f to the ${server_dir}. Probably file was already created by other user"
+	fi
+	
+	rm $f
+	set -eu
+    done
+    # fi
 
     pushd ${server_dir}
     # if link to genome is not created then we need to make it to display CRAM files
