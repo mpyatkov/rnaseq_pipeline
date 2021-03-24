@@ -330,6 +330,9 @@ class VennConfig:
 
                 # strip trailing spaces
                 vennline = list(map(lambda s: s.strip(), vennline))
+                # number of elements should be from 2 to 4
+                if len(vennline) < 2 or len(vennline) > 4:
+                    raise ValueError(f"ERROR: each line of {VENN_CONFIG} should contain from 2 to 4 comparison numbers separated by '{separator}'.\n Your line {';'.join(vennline)} is not correct.")
                 result.append(VennLine(vennline))
 
             return result
@@ -525,7 +528,7 @@ class DiffExpression():
                 if not found:
                     print(line,  end='')
 
-    # checking that the groups in the comparisons are a subset of sample_labels.txt
+    # checking that the groups in the comparisons are subset of sample_labels.txt
     def check_consistency(self):
         return self.comp_config.groups().issubset(self.sample_config.groups())
                     
@@ -706,7 +709,16 @@ def get_sample_info(SAMPLE_ID, USER_DEFINED_INDEX, DEFAULT_INDEX):
     else:
         raise ValueError(f"ERROR: {DEFAULT_INDEX} file does not exist")
     
-            
+
+def venn_comparisons_consistency(venn, comparisons):
+    # set of unique venn comparisons (flattening list of list)
+    import itertools
+    all_venns=set(itertools.chain(*map(lambda x: x.venn_comparisons, venn.venn)))
+
+    # set of unique comparisons
+    all_comparisons=set([item.Comparison_Number for item in comparisons.comparisons])
+    return all_venns.issubset(all_comparisons)
+    
 if __name__ == "__main__":
 
     parser = argparse.ArgumentParser()
@@ -787,6 +799,9 @@ if __name__ == "__main__":
     
     gtf_config = GTFconfig(DEFAULT_GTF_CONFIG, current_path)
 
+    if not venn_comparisons_consistency(venn_config, comparison_config):
+        raise ValueError(f"ERROR: Comparison_Numbers in {COMPARISON_CONFIG} and {VENN_CONFIG} are not consistent. Please revise these two configuration files before run.")
+    
     if args.export:
         print(system_config.setup_env_variables())
         exit(0)
@@ -805,8 +820,8 @@ if __name__ == "__main__":
 
         # checking groups consistency, exit if not
         if not diffex.check_consistency():
-            raise ValueError(f"Groups in config files ({SAMPLES_CONFIG} and {COMPARISON_CONFIG}) are not consistent. Please check the group settings in both files.")
-        
+            raise ValueError(f"ERROR: Groups in config files ({SAMPLES_CONFIG} and {COMPARISON_CONFIG}) are not consistent. Please check the group settings in both files.")
+
         # Remove DE directories before generation
         diffex.clean(DE_DIR_PATH)
 
