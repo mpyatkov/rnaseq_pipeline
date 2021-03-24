@@ -53,6 +53,13 @@ SETUP_DIR=$(pwd)
 cd ..
 STEPS_DIR=$(pwd)
 
+# log file for the whole process (also output to stdout)
+LOG_FILE=${SETUP_DIR}/log.txt
+rm -rf ${LOG_FILE}
+# for explanation visit the following link:
+# https://unix.stackexchange.com/a/145654
+exec &> >(tee -a ${LOG_FILE})
+
 # arguments parsing
 # GENERATE: BOOL generate 09abcd folders 0/1
 # RESUME: BOOL only for case when we need restart from particular step [0/1]
@@ -153,14 +160,12 @@ execute_wait_summarize_job(){
 
     local STEP_NUMBER=$1
     local FULL_RECALC=$2
-    printf "Start: %s\n\n -------------------------" "${STEP_NUMBER}"
+    printf "Start: %s\n\n -------------------------\n" "${STEP_NUMBER}"
 
     search_body="${STEPS_DIR} -maxdepth 1 -name '${STEP_NUMBER}*' -type d"
     sub_steps=$(eval find ${search_body} | xargs -n1 basename)
     
     for sstep in ${sub_steps}; do
-	
-
 	pushd "${STEPS_DIR}/$sstep"
 	./Run_Jobs.sh ${FULL_RECALC}
 	popd
@@ -176,14 +181,21 @@ execute_wait_summarize_job(){
 	pushd "${STEPS_DIR}/$sstep"
 	
 	# checking logs in current directory
-	logs_checking
+	if [ -d "./logs" ]; then 
+	    logs_checking
+	else
+	    echo "WARNING: logs directory does not exist. Analysis of logs will not be produced"
+	fi
 	
 	# summarize if all logs contain the "IAMOK" at the end
 	# prevent immediate exit if ./Summarize_Jobs.sh does not exist
 	set +eu
-	./Summarize_Jobs.sh ${FULL_RECALC}
+	if [ -f Summarize_Jobs.sh ]; then
+	    echo "Summarise results..."
+	    ./Summarize_Jobs.sh ${FULL_RECALC}
+	fi
 	set -eu
-	printf "Done: %s\n\n -------------------------" "${job_name}"
+	printf "Done: %s\n\n -------------------------\n" "${job_name}"
 	popd
     done
 
