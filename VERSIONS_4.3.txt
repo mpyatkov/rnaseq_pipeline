@@ -1,3 +1,18 @@
+## [4.3] - 2021-03-24
+
+### Changed
+- fixed README.txt
+- refactored step 13 (PCA/correlation plots)
+  for plots with multiple comparisons set intersection of genes
+  instead of union
+- added Combined track which contains all combined tracks
+- added file consistency check for Venn config and Comparisons config,
+  throws an error if not consistent
+- added log.txt in 00 directory which contained whole stdout/stderr
+  output
+- added XS tag for STAR output
+- fixed option which allows overwrite CRAM file for owner
+
 ## [4.2] - 2021-03-17
 
 ### Added
