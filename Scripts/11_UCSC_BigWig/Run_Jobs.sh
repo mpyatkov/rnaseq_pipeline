@@ -24,10 +24,9 @@ if [[ ${BIGWIG_ENABLE} == 0 ]]; then
     exit 0
 fi
 
-set +eu
-# remove COMBINED_PAIRS.txt if exists
-rm COMBINED_PAIRS.txt
-set -eu
+if [ -f "./COMBINED_PAIRS.txt" ]; then
+    rm COMBINED_PAIRS.txt
+fi
 
 SCRIPT_DIR="$(pwd)"
 
