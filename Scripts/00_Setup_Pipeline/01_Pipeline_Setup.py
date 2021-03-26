@@ -220,7 +220,7 @@ class SampleConfig:
             raise ValueError(f"ERROR: incorrect number of columns in line: {';'.join(l)}")
         return l
         
-    def samplesByGroup(self,group):
+    def samplesByGroup(self, group):
         result = []
         for sample in self.samples:
             if sample.Group == group:
@@ -230,8 +230,26 @@ class SampleConfig:
     def groups(self):
         return sorted(set(map(lambda s: s.Group, self.samples)))
 
-    # def groupsToBash(self):
-    #     return " ".join(self.groups())
+    def combined_name_by_group(self, group):
+
+        if group not in self.groups():
+            raise ValueError(f"ERROR: group '{group}' does not exist. Please check configuration files.")
+
+        sample_ids = [sample.Sample_ID for sample in self.samples if sample.Group == group]
+        
+        c = [x.split('_') for x in sorted(sample_ids)]
+        d = {}
+        for s in c:
+            prj,ix = s
+            if prj in d:
+                cur = d[prj]
+                d.update({prj:cur+ix})
+            else:
+                d[prj]=ix
+
+        res = "_".join([x[0]+'_'+x[1] for x in list(zip(d.keys(), d.values()))])
+        
+        return res
     
     def samplesToBash(self, group=None, color=False):
         # Sample_ID, Description
@@ -747,6 +765,11 @@ if __name__ == "__main__":
                         help="return bash array of all groups from Sample_Labels.txt",
                         action="store_true")
 
+    parser.add_argument("--combined_name_by_group",
+                        nargs=1,
+                        help="return combined name of all samples by group name (ex. G186_M1M2M3)",
+                        metavar=('group'))
+                       
     parser.add_argument("-f", "--gtf_annotation_and_counter",
                         help="return bash array of pairs (GTF_ANNOTATION_FILE, COUNTER)",
                         action="store_true")
@@ -852,6 +875,11 @@ if __name__ == "__main__":
         print(" ".join(sample_config.groups()))
         exit(0)
 
+    elif args.combined_name_by_group:
+        group = args.combined_name_by_group[0]
+        print(sample_config.combined_name_by_group(group))
+        exit(0)
+                       
     elif args.gtf_annotation_and_counter:
         print(gtf_config.gtfNameCounterToBash())
         exit(0)
