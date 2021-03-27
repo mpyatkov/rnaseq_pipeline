@@ -20,33 +20,6 @@ set -o errexit
 set -o pipefail
 set -o nounset
 
-# Extract samples names and combine them to appropriate lines, ex: G186_M1M2M3
-# This procedure works only if your sample folders called as "PROJECTNAME_SAMPLEID",
-# because here we extract all SAMPLEIDs and combine them as one line.
-# Will work for combining samples from different projects like: G184_M1M2_G186_M1M2 (sorted lexicograhically)
-get_samples_line(){
-    # parse line: SAMPLE_ID PROJECTNAME
-    local fname=$1
-    groups=$(cat $fname | cat tmpfile| cut -d" " -f1 | cut -d "_" -f1 | sort | uniq)
-
-    res=""
-    for i in $groups
-    do
-	group="${i}_$(grep ${i} $fname | cut -f 1 -d" " | cut -d "_" -f 2 | paste -s -d '')_"
-	res+=$group
-    done
-
-    echo ${res%_}
-}
-
-# get project name, can be combined ex. G186_G184
-get_project_name(){
-    # parse line: SAMPLE_ID PROJECTNAME
-    local fname=$1
-    combined_name=$(cat $fname | cut -f 2 -d" " | sort | uniq | paste -s -d '_')
-    echo ${combined_name}
-}
-
 # export all variables from Pipeline_Setup.conf
 eval "$(../00_Setup_Pipeline/01_Pipeline_Setup.py --export)"
 
@@ -99,17 +72,11 @@ for group in "${groups[@]}"; do
 	
 	forward+=("${VM_DIR_UCSC}/INDEXED_PROJECTS/${project_name}/${SAMPLE_ID}.Forward.bw")
 	reverse+=("${VM_DIR_UCSC}/INDEXED_PROJECTS/${project_name}/${SAMPLE_ID}.Reverse.bw")
-
-	# create tmp file to extract info about sampleid and project name for combined files
-	printf "%s %s\n" "${SAMPLE_ID}" "${project_name}" >> tmpfile
     done
 
-    # make tmp file for names (it is easy to work with file than array)
-    # printf "%s\n" "${suffix[@]}" > tmpfile
-    suffix_combined=$(get_samples_line tmpfile)
-
-    # resulted project name (usually single project, but can be combined like ex. G186_G184)
-    output_project_name=$(get_project_name tmpfile)
+    combined_name_project=($("${SETUP_PIPELINE_DIR}"/01_Pipeline_Setup.py --combined_name_by_group ${group}))
+    suffix_combined=${combined_name_project[0]}
+    output_project_name=${combined_name_project[1]}
 
     # path will be common for all samples
     PATH_ON_SERVER="${VM_DIR_UCSC}/INDEXED_PROJECTS/${output_project_name}/"
@@ -118,8 +85,6 @@ for group in "${groups[@]}"; do
     mkdir -p ${PATH_ON_SERVER} 
     
     SERVER_DIR_NAME="INDEXED_PROJECTS/${output_project_name}"
-
-    rm tmpfile
 
     # skip the rest if combined file already exist in ${VM_DIR_UCSC}/COMMON/
     FORWARD_BW="${suffix_combined}.Forward.combined.bw"

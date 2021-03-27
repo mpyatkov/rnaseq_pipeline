@@ -30,24 +30,6 @@ fi
 
 SCRIPT_DIR="$(pwd)"
 
-#Check that each variable prints a value to the terminal:
-echo "-----------------------"
-echo "Start of variable list:"
-echo "-----------------------"
-echo "DATASET_DIR:"
-echo ${DATASET_DIR}
-echo "BU_User:"
-echo ${BU_USER}
-echo "VM_DIR_UCSC:"
-echo ${VM_DIR_UCSC}
-echo "SCRIPT_DIR:"
-echo ${SCRIPT_DIR}
-echo "TIME_LIMIT:"
-echo ${TIME_LIMIT}
-echo "-----------------------"
-echo "End of variable list"
-echo "-----------------------"
-
 dir_name=$(basename $(pwd))
 step_num=$(echo ${dir_name} | cut -d'_' -f 1)
 job_name="Step_${step_num}"
@@ -81,9 +63,29 @@ done
 # name notations; for example group from two files G186_M1 and G186_M2
 # will be combined to file G186_M1M2
 
-qsub -hold_jid "${job_name}*" -N "${job_name}_Combined" -P "${PROJECT}" -l h_rt="${TIME_LIMIT}" Combined_BigWig.qsub
+# if at least one of combined does not exist run script which checks
+# and recalculates required combined files
+recalculate_combined=0
 
-#Remove the temp file:
+groups=($("${SETUP_PIPELINE_DIR}"/01_Pipeline_Setup.py --groups))
+for group in "${groups[@]}"; do
+
+    combined_name_project=($("${SETUP_PIPELINE_DIR}"/01_Pipeline_Setup.py --combined_name_by_group ${group}))
+    combined_name=${combined_name_project[0]}
+    project=${combined_name_project[1]}
+    path_on_server="${VM_DIR_UCSC}/INDEXED_PROJECTS/${project}"
+    forward_bw="${combined_name}.Forward.combined.bw"
+    reverse_bw="${combined_name}.Reverse.combined.bw"
+    echo "Checking availability of ${combined_name} combined files inside the ${VM_DIR_UCSC}/INDEXED_PROJECTS/${project}"
+    if [ ! -f "${path_on_server}/${forward_bw}" -o ! -f "${path_on_server}/${reverse_bw}" ]; then
+	recalculate_combined=1
+    fi
+done
+
+if [ ${recalculate_combined} -eq 1 ]; then
+    qsub -hold_jid "${job_name}*" -N "${job_name}_Combined" -P "${PROJECT}" -l h_rt="${TIME_LIMIT}" Combined_BigWig.qsub
+fi
+
 
 echo "End of qsub commands"
 echo "-----------------------"
