@@ -247,9 +247,12 @@ class SampleConfig:
             else:
                 d[prj]=ix
 
-        res = "_".join([x[0]+'_'+x[1] for x in list(zip(d.keys(), d.values()))])
+        d = dict(sorted(d.items()))
         
-        return res
+        combined_name = "_".join([x[0]+'_'+x[1] for x in list(zip(d.keys(), d.values()))])
+        project = "_".join(list(d.keys()))
+        
+        return f"{combined_name} {project}"
     
     def samplesToBash(self, group=None, color=False):
         # Sample_ID, Description
@@ -767,7 +770,7 @@ if __name__ == "__main__":
 
     parser.add_argument("--combined_name_by_group",
                         nargs=1,
-                        help="return combined name of all samples by group name (ex. G186_M1M2M3)",
+                        help="return combined name of all samples and project by group name (ex. 'G186_M1M2M3 G186')",
                         metavar=('group'))
                        
     parser.add_argument("-f", "--gtf_annotation_and_counter",
