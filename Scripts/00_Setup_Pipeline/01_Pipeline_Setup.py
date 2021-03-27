@@ -232,10 +232,13 @@ class SampleConfig:
 
     def combined_name_by_group(self, group):
 
-        if group not in self.groups():
+        if group not in self.groups() and group != "ALL":
             raise ValueError(f"ERROR: group '{group}' does not exist. Please check configuration files.")
 
-        sample_ids = [sample.Sample_ID for sample in self.samples if sample.Group == group]
+        if group == "ALL":
+            sample_ids = [sample.Sample_ID for sample in self.samples]
+        else:
+            sample_ids = [sample.Sample_ID for sample in self.samples if sample.Group == group]
         
         c = [x.split('_') for x in sorted(sample_ids)]
         d = {}
@@ -770,7 +773,7 @@ if __name__ == "__main__":
 
     parser.add_argument("--combined_name_by_group",
                         nargs=1,
-                        help="return combined name of all samples and project by group name (ex. 'G186_M1M2M3 G186')",
+                        help="return combined name of all samples and project by group name (ex. 'G186_M1M2M3 G186'), if 'ALL' specified instead of group name - all samples will be represented as one group",
                         metavar=('group'))
                        
     parser.add_argument("-f", "--gtf_annotation_and_counter",
