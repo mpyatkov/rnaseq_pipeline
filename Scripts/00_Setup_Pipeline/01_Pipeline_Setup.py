@@ -109,6 +109,13 @@ MODE=2
 # 0 - disable bigwig files and tracks
 BIGWIG_ENABLE=1
 
+# create meta-assembly GTF tracks for UCSC genome browser
+# 0 - disable TACO
+# 1 - enable TACO and combine all samples to one meta-assembly
+# 2 - enable TACO by groups, create separate track for each group of
+#     samples
+TACO_MODE=2
+
 # This configuration file contains all specific settings for GTF files
 # used in the pipeline, like: name, enable/disable double counting,
 # etc. For all options please visit GTF_FILES_DIR directory (see
@@ -236,11 +243,12 @@ class SampleConfig:
             raise ValueError(f"ERROR: group '{group}' does not exist. Please check configuration files.")
 
         if group == "ALL":
-            sample_ids = [sample.Sample_ID for sample in self.samples]
+            sample_ids = self.samples
         else:
-            sample_ids = [sample.Sample_ID for sample in self.samples if sample.Group == group]
-        
-        c = [x.split('_') for x in sorted(sample_ids)]
+            sample_ids = [sample for sample in self.samples if sample.Group == group]
+
+        # get project name and combined name
+        c = [x.Sample_ID.split('_') for x in sorted(sample_ids)]
         d = {}
         for s in c:
             prj,ix = s
@@ -254,8 +262,17 @@ class SampleConfig:
         
         combined_name = "_".join([x[0]+'_'+x[1] for x in list(zip(d.keys(), d.values()))])
         project = "_".join(list(d.keys()))
+
+        # get color
+        color = list(set([sample.Color for sample in sample_ids]))[0]
         
-        return f"{combined_name} {project}"
+        # get desc/condname
+        if group == "ALL":
+            desc = "ALL"
+        else:
+            desc = list(set([sample.Condition_Name for sample in sample_ids]))[0]
+            
+        return f"{combined_name} {project} {desc} {color}"
     
     def samplesToBash(self, group=None, color=False):
         # Sample_ID, Description
@@ -773,7 +790,7 @@ if __name__ == "__main__":
 
     parser.add_argument("--combined_name_by_group",
                         nargs=1,
-                        help="return combined name of all samples and project by group name (ex. 'G186_M1M2M3 G186'), if 'ALL' specified instead of group name - all samples will be represented as one group",
+                        help="return (combined name, project, description, color) by group name (ex. 'G186_M1M2M3 G186 Male 255,0,0'), if 'ALL' specified then instead of group name - all samples will be represented as one group (ex. G186_M1M2M3M4... etc), description will contain 'ALL', color will be equal the color of the first sample",
                         metavar=('group'))
                        
     parser.add_argument("-f", "--gtf_annotation_and_counter",
