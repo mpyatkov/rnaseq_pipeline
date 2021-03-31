@@ -211,21 +211,7 @@ do
     execute_wait_summarize_job $STEP ${FULL_RECALC}
 done
 
-echo 'Printing job duration for all steps...'
-OUTPUT_FILE="${SETUP_PIPELINE_DIR}"/Pipeline_Runtime.txt
-
-rm -rf "${OUTPUT_FILE}" && touch "${OUTPUT_FILE}"
-
-# Print header to output file:
-printf "Run time for each submitted job:\n" >> "${OUTPUT_FILE}"
-printf "Job run times that deviate from the average should be inspected for possible errors (check the job log files)\n\n" >> "${OUTPUT_FILE}"
-
 cd "${STEPS_DIR}"
-
-#Also want to print the time to run this script:
-echo '--------------------' >> "${OUTPUT_FILE}"
-echo '02_Run_Pipeline.sh run time:' >> "${OUTPUT_FILE}"
-echo "Check out: ${OUTPUT_FILE}"
 
 echo 'Pipeline is done, check out your results!'
 echo "=========================================================="
@@ -236,4 +222,4 @@ echo "Finished on : $(date)"
 END_TIME=$(date +"%s")
 DIFF=$((END_TIME-START_TIME))
 echo "$(($DIFF / 3600)) hours, $(((DIFF / 60) % 60)) minutes and $((DIFF % 60)) seconds elapsed."
-echo "$((DIFF / 3600)) hours, $(((DIFF / 60) % 60)) minutes and $((DIFF % 60)) seconds elapsed." >> "${OUTPUT_FILE}"
+
