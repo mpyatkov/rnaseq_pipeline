@@ -1,0 +1,112 @@
+#!/bin/bash -l
+
+# run TACO meta-assembler
+
+# Specify which shell to use
+#$ -S /bin/bash
+#$ -cwd
+#$ -j y
+#$ -e ./logs/
+#$ -o ./logs/
+#$ -pe omp 8
+#$ -l mem_per_core=2G
+
+# set strict options
+set -o errexit
+set -o pipefail
+set -o nounset
+
+# arguments
+GROUP=$1
+OUTPUT_PREFIX=$2
+PROJECT_SERVER_DIR=$3
+
+MAIN_DIR="$(pwd)"
+
+# export all variables from Pipeline_Setup.conf
+eval "$(../00_Setup_Pipeline/01_Pipeline_Setup.py --export)"
+
+# activate conda environment
+set +eu
+module load miniconda
+conda activate --stack ${CONDA_DIR}/rlang361
+conda activate --stack ${CONDA_DIR}/isoforms
+conda activate --stack ${CONDA_DIR}/bedtools
+set -eu
+
+mkdir -p ${OUTPUT_PREFIX}
+
+pushd ${OUTPUT_PREFIX}
+
+if [ "${GROUP}" = "ALL" ]; then
+    # all samples with description and color 
+    samples=($("${SETUP_PIPELINE_DIR}"/01_Pipeline_Setup.py --samples_with_color))
+else
+    # group samples with condition name and color 
+    samples=($("${SETUP_PIPELINE_DIR}"/01_Pipeline_Setup.py --samples_by_group ${GROUP} "color_enable"))
+fi
+
+TACO_SAMPLES_INPUT="${OUTPUT_PREFIX}.txt"
+TACO_GTF_OUTPUT="${OUTPUT_PREFIX}"
+
+rm -rf ${TACO_SAMPLES_INPUT}
+for ((i=0;i< ${#samples[@]} ;i+=3)); do
+    sample_id=${samples[i]}
+    condname=${samples[i+1]} # condname/description
+    # color must be the same for all samples
+    color=${samples[i+2]}
+
+    # add sample id to configuration files
+    printf "./%s\n" "${sample_id}.gtf" >> "${TACO_SAMPLES_INPUT}"
+done
+
+taco_run -p ${NSLOTS} --filter-min-length 0 --filter-min-expr 0 --isoform-frac 0 -o TACO_RESULT "${TACO_SAMPLES_INPUT}"
+
+# post-processing assembly.gtf and moving to prev. dir
+pushd TACO_RESULT
+cp ${MAIN_DIR}/Scripts/GTF_processing.R ./
+Rscript GTF_processing.R "assembly" "${TACO_GTF_OUTPUT}"
+mv "${TACO_GTF_OUTPUT}.bed" ../
+mv "${TACO_GTF_OUTPUT}.gtf" ../
+popd
+
+## clean up directory
+rm -rf TACO_RESULT
+rm -rf "${TACO_SAMPLES_INPUT}"
+
+# remove all individual gtf files
+find . -name "*" -type f | grep -v ${OUTPUT_PREFIX} | xargs rm -rf 
+
+## convert bed to bigBed
+cp ${MAIN_DIR}/Scripts/mm9.chrom.sizes ./
+sort -k1,1 -k2,2n ${OUTPUT_PREFIX}.bed > ${OUTPUT_PREFIX}.sorted.bed
+bedToBigBed ${OUTPUT_PREFIX}.sorted.bed mm9.chrom.sizes ${OUTPUT_PREFIX}.bb
+rm ${OUTPUT_PREFIX}.sorted.bed
+rm ${OUTPUT_PREFIX}.bed
+
+## move bigbed and copy description if exist to server
+set +eu
+echo "move bed file to server"
+(set -x; cp ${OUTPUT_PREFIX}.bb "${VM_DIR_UCSC}/INDEXED_PROJECTS/${PROJECT_SERVER_DIR}/")
+(set -x; cp ${OUTPUT_PREFIX}.gtf "${VM_DIR_UCSC}/INDEXED_PROJECTS/${PROJECT_SERVER_DIR}/")
+
+if [ $? -ne 0 ]; then
+    echo "WARNING: cannot copy ${OUTPUT_PREFIX}.bb to server"
+fi
+
+# copy description of hashed file to server
+if [ -f "${OUTPUT_PREFIX}_description.txt" ]; then
+    (set -x; cp "${OUTPUT_PREFIX}_description.txt" "${VM_DIR_UCSC}/INDEXED_PROJECTS/${PROJECT_SERVER_DIR}/")
+fi
+echo "copy description file"
+set -eu
+
+# remove supplementary file
+rm mm9.chrom.sizes
+
+popd
+
+mv ${OUTPUT_PREFIX} ./Job_Summary/
+
+echo "----------"
+echo "IAMOK"
