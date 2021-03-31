@@ -104,9 +104,9 @@ elif [ "${TACO_MODE}" -eq 1 ]; then
 	echo "GTF file:    ${path_on_server}/${combined_name_hash}.gtf"
 	echo "Description of files:"
 	echo "${path_on_server}/${combined_name_hash}_description.txt"
-	echo -e "Tracks will be presented in ${VM_DIR_UCSC}/PERSONAL/${BU_USER}/GTF/\n"
+	echo -e "Tracks will be presented in ${VM_DIR_UCSC}/PERSONAL/${BU_USER}/${DATASET_LABEL}/TACO_Track_Lines/\n"
 
-	echo "Create links to the files:"
+	echo "Copy files from server to Job_Summary directory:"
 	pushd Job_Summary
 	mkdir ${combined_name_hash}
 	pushd ${combined_name_hash}
@@ -155,9 +155,9 @@ else
 	    echo -e "\nTACO meta-assembly files already exist:"
 	    echo "bigBed file: ${path_on_server}/${combined_name}.bb"
 	    echo "GTF file:    ${path_on_server}/${combined_name}.gtf"
-	    echo -e "Tracks will be presented in ${VM_DIR_UCSC}/PERSONAL/${BU_USER}/GTF/\n"
+	    echo -e "Tracks will be presented in ${VM_DIR_UCSC}/PERSONAL/${BU_USER}/${DATASET_LABEL}/TACO_Track_Lines/\n"
 
-	    echo "Create links to the files:"
+	    echo "Copy files from server to Job_Summary directory"
 	    pushd Job_Summary
 	    mkdir ${combined_name}
 	    pushd ${combined_name}
