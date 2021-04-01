@@ -1,3 +1,14 @@
+## [4.4] - 31-03-2021
+
+### Added
+- added step 10_TACO, which allows the pipeline to calculate isoforms
+  for different groups and represent them as tracks for UCSC browser.
+  Please read README.txt in 10_TACO for details.
+
+### Changed
+- Step 11 do not need anymore run Combined.qsub script to check if
+  combined files exist. This checking moved to Run_Jobs.sh
+
 ## [4.3] - 2021-03-24
 
 ### Changed
