@@ -109,10 +109,10 @@ MODE=2
 # 0 - disable bigwig files and tracks
 BIGWIG_ENABLE=1
 
-# create meta-assembly GTF tracks for UCSC genome browser
+# create TACO meta-assembly tracks for UCSC genome browser (Step 10). 
 # 0 - disable TACO
-# 1 - enable TACO and combine all samples to one meta-assembly
-# 2 - enable TACO by groups, create separate track for each group of
+# 1 - enable TACO and combine all samples in one group
+# 2 - enable TACO by groups, create separate tracks for each group of
 #     samples
 TACO_MODE=2
 
