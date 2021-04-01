@@ -46,7 +46,7 @@ function create_track_for_bigbed () {
 
     output_dir="${VM_DIR_UCSC}/PERSONAL/${BU_USER}/${DATASET_LABEL}/TACO_Track_Lines"
     mkdir -p ${output_dir}
-    echo "${trackline}" > "${output_dir}/${description}_${output_prefix}.txt"
+    echo "${trackline}" > "${output_dir}/${output_prefix}.txt"
 }
 
 if [ "${TACO_MODE}" -eq 0 ]; then
