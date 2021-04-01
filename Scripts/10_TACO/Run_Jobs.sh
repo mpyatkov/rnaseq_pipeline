@@ -42,7 +42,7 @@ function create_track_for_bigbed () {
     local color=${3:-'0,0,0'}
     local description=${4:-"All samples together (see ${project}/${output_prefix}_description.txt)"}
 
-    trackline="track type=bigBed name='${output_prefix}' description='${description}' color=${color} visibility=full itemRgb=on bigDataUrl=http://waxmanlabvm.bu.edu/TRACKS/INDEXED_PROJECTS/${project}/${output_prefix}.bb"
+    trackline="track type=bigBed name='${output_prefix}' description='${output_prefix} / ${description}' color=${color} visibility=full itemRgb=on bigDataUrl=http://waxmanlabvm.bu.edu/TRACKS/INDEXED_PROJECTS/${project}/${output_prefix}.bb"
 
     output_dir="${VM_DIR_UCSC}/PERSONAL/${BU_USER}/${DATASET_LABEL}/TACO_Track_Lines"
     mkdir -p ${output_dir}
