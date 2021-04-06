@@ -1,109 +1,113 @@
 Table of Contents
 _________________
 
-1. Common information
-.. 1. Why?
-.. 2. Software
-2. TACO MODE
-.. 1. ALL SAMPLES TOGETHER (TACO_MODE=1)
-.. 2. SAMPLES BY GROUPS (TACO_MODE=2)
-3. Step execution
-4. Tracks creating
+1. Why?
+2. Software
+3. Variables in config file
+4. Step description
+5. Tracks creating
 
 
 
 
 
-1 Common information
-====================
+1 Why?
+======
 
-1.1 Why?
-~~~~~~~~
-
-  TACO produces meta-assembly from GTF files obtained as input. The
+  TACO produces meta-assembly from the GTF files obtained as input. The
   resulted Meta-assembly (GTF and bed files) includes all possible
   isophorms with abundance and FPKM value for each isophorm
   separatelly. For further analysis the GTF as well as the bigBed files
-  will be stored in the Job_Summary directory.
+  will be stored in the Job_Summary directory. In addition the pipeline
+  compares TACO meta-assembly and reference GTF (which can be set by
+  TACO_REFCOMP_REFERENCE variable in the Pipeline_Setup.conf) using
+  *taco_refcomp* program.
 
 
-1.2 Software
-~~~~~~~~~~~~
+2 Software
+==========
 
-  To convert each SAMPLE_ID BAM file to GTF the pipeline will be utilize
-  *StringTie* assembler. If for some reasons you would like to use
-  something different (ex. Cufflinks), please pay attention to
-  *run_assembler.qsub* file, it contains all information what you need.
+  The pipeline will be utilize *StringTie* assembler to convert each
+  SAMPLE_ID BAM file to the GTF file. If, for some reasons, you would
+  like to use something different (ex. Cufflinks), please pay attention
+  to the *run_assembler.qsub* script, it contains all information what
+  you need.
 
-  *TACO* is used for gathering individual transcriptomes. Please look
-   inside the *run_taco.qsub* script to change the default TACO's
+  *TACO* is used for gathering the individual transcriptomes. Please
+   look inside the *run_taco.qsub* script to change the default TACO's
    parameters if it is required.
 
+  *TACO_REFCOMP* is used to compare reference and test GTF files.
 
-2 TACO MODE
-===========
+
+3 Variables in config file
+==========================
 
   Entry point for this step is *Run_Jobs.sh* script, it exports all
-  parameters from Pipeline_Setup.conf. The main parameter is *TACO_MODE*
-  which allows to change assembling behavior of whole step. There are
-  three options:
+  parameters from Pipeline_Setup.conf. TACO step consist of 3 substeps
+  where the outputs of one are inputs to other. The main parameter is
+  *TACO_ENABLE* which allows users to activate/deactivate TACO step. The
+  other options allow to make small adjestments:
+  + *TACO_STRINGTIE_REFERENCE* - path to the reference GTF file for
+     StringTie program, which extract all isoforms from the individual
+     BAM and output them as the GTF file.
+  + *TACO_REFCOMP_REFERENCE* - path to the reference GTF file which will
+     be used as reference for the *taco_refcomp* software.
+  + *TACO_KEEP_GTF* - 0/1 option which allows users to specify if they
+     would like to keep GTF file after taco processing
+  + *TACO_REFCOMP_KEEP_GTF* - 0/1 option which allows users to specify
+     if they would like to keep GTF file after taco_refcomp processing.
 
-  - TACO_MODE=0 # skip this step without any analysis
-  - TACO_MODE=1 # combine all samples together and consider them as one
-    group.
-  - TACO_MODE=2 # consider different groups of samples separately as
-    they are described in Sample_Label.txt in column (Group) and create
-    separate tracks for them.
-
-  Output for option ALL (TACO_MODE=1) and BY_GROUPS (TACO_MODE=2) a
-  little different, because in first case TACO_MODE option can produce
-  long names for output files and I use different ways to fix this
-  problem.
-
-
-2.1 ALL SAMPLES TOGETHER (TACO_MODE=1)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-  When we need to combine samples in one group we use names which look
-  like as follows - G186_M1M2M3 where G186 project name and M1M2M3
-  samples inside the group. But TACO_MODE=1 generates really long names,
-  because we combine all samples together. To prevent such behavior
-  instead of long name I use 7 first characters of md5 *HASH* of this
-  long name. In addition I create description file which shows who
-  created this file, when and real long name.
-
-  Using HASH the pipeline try to detect *BIGBED* on the server
-  (${VM_DIR_UCSC}/INDEXED_PROJECTS/project/...). If the *BIGBED* exist
-  then the pipeline copies all required files from the server (HASH.gtf,
-  HASH.bb, HASH_description.txt) to the *Job_Summary/HASH* directory. If
-  not the pipeline recalculates all required files and put them in the
-  *Job_Summary/HASH* directory.
+  The last two options set by default to 0 (off), because the output GTF
+  files usually HUGE in size.
 
 
-2.2 SAMPLES BY GROUPS (TACO_MODE=2)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+4 Step description
+==================
 
-  In this case the pipeline does absolutely the same job as in previous
-  paragraph, but instead of HASH it uses original combined names for
-  output (ex. G186_M1M2M3M4), because usually one group contains no more
-  the 4-5 samples. The description file will not be created for the same
-  reasons.
-
-
-3 Step execution
-================
-
-  The step consist of two jobs which are dependent to each other. First
-  of all the pipeline calculates individual GTF files
+  The step consist of two 3 jobs which are dependent to each
+  other. First of all the pipeline calculates individual GTF files
   (run_assembler.qsub). Until all individual GTF files are counted we
-  cannot run the TACO meta-assembler. To postpone the TACO job until all
-  jobs are completed the following option of the SGE will be used (qsub
-  -hold_jid).
+  cannot run the TACO meta-assembler.
+
+  On the second step TACO meta-assemble combine all individual GTF files
+  by groups which specified in the Sample_Labels.txt. In addition to
+  exsisting groups the pipeline creates group which contains all samples
+  together, the name for such group is *ALL*. The resulted number of
+  groups will be N + 1, where N is the groups specified in the
+  Samples_Labels.txt + 1 group with all samples together. The output for
+  the TACO meta-assembly step is GTF and bigBed files.
+
+  On the last step *taco_refcomp* produces pairwise comparisons between
+  TACO_REFCOMP_REFERENCE and meta-assemblies for each group which were
+  obtained previosly.
+
+  TACO and TACO_REFCOMP jobs use the "qsub -hold_jid" command to put own
+  execution off until the previous jobs are completed.
+
+  Output for group ALL and groups specified in Samples_Labels.txt is a
+  little different, because in first case TACO can produce long names
+  for output files and I use different ways to fix this problem. When we
+  need to combine samples in one group we use names which look like as
+  follows - G186_M1M2M3 where G186 project name and M1M2M3 samples
+  inside the group. But for group ALL scripts generates really long
+  names, because we combine all samples together. In addition, I create
+  a file with description that includes information about who created
+  the file, when, and what samples were used to create it.
+
+  For the groups which specified in the Sample_Labels.txt the pipeline
+  does absolutely the same job as in previous paragraph, but instead of
+  HASH it uses original combined names for output (ex. G186_M1M2M3M4),
+  because usually one group contains no more the 4-5 samples.
+
+  The TACO step does not copy anything from the server. It copies bigBed
+  file and description file to server if these files do not exist.
 
 
-4 Tracks creating
+5 Tracks creating
 =================
 
-  Tracks for this step will be created before the cluster tasks are
-  completed. The final path for the tracks will be
-  ${VM_DIR_UCSC}/PERSONAL/${BU_USER}/${DATASET_LABEL}/TACO_Track_Lines.
+  In addition TACO step creates tracks
+  (${DATASET_LABEL}-TACO_Tracks.txt) for each bigBed file and copy it to
+  Job_Summary as well as
+  ${VM_DIR_UCSC}/PERSONAL/${BU_USER}/${DATASET_LABEL}/UCSC_Track_Lines/.
