@@ -109,12 +109,33 @@ MODE=2
 # 0 - disable bigwig files and tracks
 BIGWIG_ENABLE=1
 
-# create TACO meta-assembly tracks for UCSC genome browser (Step 10). 
-# 0 - disable TACO
-# 1 - enable TACO and combine all samples in one group
-# 2 - enable TACO by groups, create separate tracks for each group of
-#     samples
-TACO_MODE=2
+# run TACO meta-assembler to find new isoforms
+# 1 - enable
+# 0 - disable
+TACO_ENABLE=0
+
+# the following set of variables started with TACO prefix are only
+# activated when TACO_ENABLE option is set to 1.
+# path to the GTF file which used as a reference when we extract
+# isoforms for individual samples from the BAM files
+TACO_STRINGTIE_REFERENCE=${SYSTEM:GTF_FILES_DIR}/09_RefSeqLncRNA76k_ExonCollapsed.gtf
+
+# path to the GTF file which used as a reference for the taco_refcomp
+# utility which allow us to find the difference between reference and
+# tested GTF files.
+TACO_REFCOMP_REFERENCE=${SYSTEM:GTF_FILES_DIR}/09_RefSeqLncRNA76k_ExonCollapsed.gtf
+
+# keep GTF file after analysis (0 - off, 1 - on)
+# TACO produces HUGE in size GTF files, if you need them for some
+# reasons just activate the following options:
+
+# keep GTF file which is result of combining GTF files for individual
+# samples. Samples represent the particular groups from Sample_Labels.txt
+TACO_KEEP_GTF=0
+
+# keep GTF file which represented comparison between TACO_REFCOMP_REFERENCE
+# and Group
+TACO_REFCOMP_KEEP_GTF=0
 
 # This configuration file contains all specific settings for GTF files
 # used in the pipeline, like: name, enable/disable double counting,
@@ -228,11 +249,16 @@ class SampleConfig:
         return l
         
     def samplesByGroup(self, group):
-        result = []
-        for sample in self.samples:
-            if sample.Group == group:
-                result.append(sample)
-        return result
+
+        if group not in self.groups() and group != "ALL":
+            raise ValueError(f"ERROR: group '{group}' does not exist. Please check configuration files.")
+
+        if group == "ALL":
+            sample_ids = self.samples
+        else:
+            sample_ids = [sample for sample in self.samples if sample.Group == group]
+                
+        return sample_ids
 
     def groups(self):
         return sorted(set(map(lambda s: s.Group, self.samples)))
@@ -265,10 +291,11 @@ class SampleConfig:
 
         # get color
         color = list(set([sample.Color for sample in sample_ids]))[0]
-        
+
         # get desc/condname
         if group == "ALL":
             desc = "ALL"
+            color = "0,0,0"
         else:
             desc = list(set([sample.Condition_Name for sample in sample_ids]))[0]
             
@@ -887,6 +914,7 @@ if __name__ == "__main__":
         else:
             group = args.samples_by_group[0]
             color = True
+            
         print(sample_config.samplesToBash(group, color))
         exit(0)
 
