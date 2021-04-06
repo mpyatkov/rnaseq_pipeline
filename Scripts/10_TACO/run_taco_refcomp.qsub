@@ -1,9 +1,9 @@
 #!/bin/bash -l
 
-# convert set of GTF files to one meta-assembly GTF file using TACO
+# compare TACO_REFCOMP_REFERENCE and GTF file to find new isoforms
 # OUTPUT:
-# combined GTF file with processed isoforms from multiple individual
-# GTF files
+# tsv file with general information about new isoforms
+# gtf (optional) with the same general information
 
 # Specify which shell to use
 #$ -S /bin/bash
@@ -50,40 +50,29 @@ else
     samples=($("${SETUP_PIPELINE_DIR}"/01_Pipeline_Setup.py --samples_by_group ${GROUP}))
 fi
 
-TACO_SAMPLES_INPUT="${OUTPUT_PREFIX}.txt"
-TACO_GTF_OUTPUT="${OUTPUT_PREFIX}"
+TACO_TMP="${OUTPUT_PREFIX}_TMP"
 
-rm -rf ${TACO_SAMPLES_INPUT}
-for ((i=0;i< ${#samples[@]} ;i+=2)); do
+taco_refcomp -p ${NSLOTS} -o "${TACO_TMP}" -r ${TACO_REFCOMP_REFERENCE}  -t ./${OUTPUT_PREFIX}.gtf
 
-    sample_id=${samples[i]}
+# if TACO GTF combined from groups is required
+if [ ${TACO_KEEP_GTF} -eq 0 ]; then
+    rm ./${OUTPUT_PREFIX}.gtf
+fi
 
-    # add sample id to configuration files
-    printf "../%s\n" "${sample_id}.gtf" >> "${TACO_SAMPLES_INPUT}"
-done
+pushd "${TACO_TMP}"
 
-taco_run -p ${NSLOTS} --filter-min-length 0 --filter-min-expr 0 --isoform-frac 0 -o TACO_RESULT "${TACO_SAMPLES_INPUT}"
+# TSV file postprocessing  
+cp ${MAIN_DIR}/Scripts/TSV_processing.R ./
+Rscript TSV_processing.R "assembly.metadata" "REFCOMP_${OUTPUT_PREFIX}"
+mv "REFCOMP_${OUTPUT_PREFIX}.tsv" ../
 
-# post-processing assembly.gtf and moving to prev. dir
-pushd TACO_RESULT
-cp ${MAIN_DIR}/Scripts/GTF_processing.R ./
-Rscript GTF_processing.R "assembly" "${TACO_GTF_OUTPUT}"
-mv "${TACO_GTF_OUTPUT}.bed" ../
-mv "${TACO_GTF_OUTPUT}.gtf" ../
+# if TACO REFCOMPARE output GTF is required
+if [ ${TACO_REFCOMP_KEEP_GTF} -eq 1 ]; then
+    mv "assembly.refcomp.gtf" ../"REFCOMP_${OUTPUT_PREFIX}.gtf"     
+fi
 popd
 
-## clean up directory
-rm -rf TACO_RESULT
-rm -rf "${TACO_SAMPLES_INPUT}"
-
-## convert bed to bigBed
-cp ${MAIN_DIR}/Scripts/mm9.chrom.sizes ./
-sort -k1,1 -k2,2n ${OUTPUT_PREFIX}.bed > ${OUTPUT_PREFIX}.sorted.bed
-bedToBigBed ${OUTPUT_PREFIX}.sorted.bed mm9.chrom.sizes ${OUTPUT_PREFIX}.bb
-rm ${OUTPUT_PREFIX}.sorted.bed
-rm ${OUTPUT_PREFIX}.bed
-rm mm9.chrom.sizes
-
+rm -rf ${TACO_TMP}
 popd
 
 # use to calculate job time:

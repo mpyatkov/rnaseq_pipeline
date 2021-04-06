@@ -1,9 +1,8 @@
 #!/bin/bash -l
 
-# run assembler (StringTie/)
-# INPUT: SAMPLE_ID name
-#        OUTPUT dir
-# OUTPUT: GTF file inside the OUTPUT dir
+# Extract all isophorms from individual BAM file and save them as SAMPLE_ID.gtf
+# OUTPUT:
+# GTF file for individual sample
 
 # Specify which shell to use
 #$ -S /bin/bash
@@ -32,6 +31,8 @@ conda activate --stack ${CONDA_DIR}/rlang361
 conda activate --stack ${CONDA_DIR}/isoforms
 set -eu
 
+start_time=$(date +"%s")
+
 # automated strand detection
 if [ ${STRANDEDNESS} -eq 3 ]; then
     export_file="${DATASET_DIR}/${SAMPLE_ID}/Read_Strandness/${SAMPLE_ID}_export.sh"
@@ -59,10 +60,13 @@ then
 fi
 
 mkdir -p ${OUTPUT_DIR}
-
 pushd ${OUTPUT_DIR}
-stringtie ${STRAND_OPTION[@]} "${DATASET_DIR}/${SAMPLE_ID}/aligner/${SAMPLE_ID}_primary_unique.bam" -o "${SAMPLE_ID}.gtf"
+stringtie -G ${TACO_STRINGTIE_REFERENCE} ${STRAND_OPTION[@]} "${DATASET_DIR}/${SAMPLE_ID}/aligner/${SAMPLE_ID}_primary_unique.bam" -o "${SAMPLE_ID}.gtf"
 popd
 
-echo "----------"
+# use to calculate job time:
+end_time=$(date +"%s")
+diff=$((end_time-start_time))
+echo "$((diff / 3600)) hours, $(((diff / 60) % 60)) minutes and $((diff % 60)) seconds elapsed."
+echo "=========================================================="
 echo "IAMOK"
