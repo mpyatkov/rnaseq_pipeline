@@ -1,4 +1,14 @@
-## [4.4] - 06-04-2021
+## [4.4.1] - 2021-04-06
+
+### Updated
+- updated 10_TACO step, added taco_refcomp script to conduct
+  comparisons between reference GTF and combined by groups GTFs. Added
+  new variables to the 00/Setup_Pipeline.conf which allow user to
+  change behavior of this step.
+- added notes to 00/Sample_Labels.txt with preferable colors for UCSC
+  browser
+
+## [4.4] - 2021-03-31
 
 ### Added
 - added step 10_TACO, which allows the pipeline to calculate isoforms
