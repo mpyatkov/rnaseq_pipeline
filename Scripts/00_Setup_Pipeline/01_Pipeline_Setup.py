@@ -40,6 +40,12 @@ Comparison_Number; Condition_1; Condition_2
 """.strip()
 
 DEFAULT_SAMPLES_CONFIG = """
+# Recommended colors:
+# 204,0,204 (purple), 204,77,0 (light brown), 0,127,204 (blue), 66,162,66 (green),
+# 146,166,196 (purple), 194,86,26 (brown-red), 40,150,160 (blue-green),
+# 255,86,0 (orange), 0,153,153 (green) , 130,130,210 (ligth blue),
+# 80,80,160 (dark blue), 20,150,88 (blue), 156,120,0 (dark yellow)
+# ---
 Group;  Condition_Name; Sample_ID;  Description;                 Color
 A;      Male;           G186_M1;    Male_Liver_4wk_Control;      255,0,0
 A;      Male;           G186_M2;    Male_Liver_4wk_Control;      255,0,0
