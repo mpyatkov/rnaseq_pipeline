@@ -122,8 +122,13 @@ TACO_ENABLE=0
 
 # the following set of variables started with TACO prefix are only
 # activated when TACO_ENABLE option is set to 1.
+
 # path to the GTF file which used as a reference when we extract
-# isoforms for individual samples from the BAM files
+# isoforms for individual samples from the BAM files.
+# Possible options:
+# "NA" - do not use reference file, build de-novo assembly without
+#        information about known genes
+# "path/to/the/reference/gtf/file" - use information about known genes
 TACO_STRINGTIE_REFERENCE=${SYSTEM:GTF_FILES_DIR}/09_RefSeqLncRNA76k_ExonCollapsed.gtf
 
 # path to the GTF file which used as a reference for the taco_refcomp

@@ -61,7 +61,12 @@ fi
 
 mkdir -p ${OUTPUT_DIR}
 pushd ${OUTPUT_DIR}
-stringtie -G ${TACO_STRINGTIE_REFERENCE} ${STRAND_OPTION[@]} "${DATASET_DIR}/${SAMPLE_ID}/aligner/${SAMPLE_ID}_primary_unique.bam" -o "${SAMPLE_ID}.gtf"
+if [ ${TACO_STRINGTIE_REFERENCE} != "NA" ]; then
+    (set -x; stringtie -G ${TACO_STRINGTIE_REFERENCE} ${STRAND_OPTION[@]} "${DATASET_DIR}/${SAMPLE_ID}/aligner/${SAMPLE_ID}_primary_unique.bam" -o "${SAMPLE_ID}.gtf")
+else
+    # do not use reference file for stringtie, build de-novo assembly
+    (set -x; stringtie ${STRAND_OPTION[@]} "${DATASET_DIR}/${SAMPLE_ID}/aligner/${SAMPLE_ID}_primary_unique.bam" -o "${SAMPLE_ID}.gtf")
+fi
 popd
 
 # use to calculate job time:
