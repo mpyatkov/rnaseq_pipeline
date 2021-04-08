@@ -6,6 +6,7 @@ _________________
 3. Variables in config file
 4. Step description
 5. Tracks creating
+6. How to compare two arbitrary groups using taco_refcomp?
 
 
 
@@ -111,3 +112,44 @@ _________________
   (${DATASET_LABEL}-TACO_Tracks.txt) for each bigBed file and copy it to
   Job_Summary as well as
   ${VM_DIR_UCSC}/PERSONAL/${BU_USER}/${DATASET_LABEL}/UCSC_Track_Lines/.
+
+
+6 How to compare two arbitrary groups using taco_refcomp?
+=========================================================
+
+  First of all, user should get the GTF files for groups. For that, user
+  should specify option TACO_KEEP_GTF to 1. After that, user need to
+  recalculate TACO to obtain GTF files in the same directory where
+  bigBed files are located. On the next step it is required to create
+  cluster job using the following template:
+
+  ,----
+  | #!/bin/bash -l
+  | 
+  | #$ -P PROJECT # need to specify correct project
+  | #$ -o log.txt
+  | #$ -N taco_refcomp
+  | #$ -pe omp 8
+  | #$ -l mem_per_core=2G
+  | #$ -l h_rt=01:00:00
+  | 
+  | module load miniconda
+  | conda activate --stack /projectnb/wax-es/routines/condaenv/isoforms
+  | 
+  | set -o errexit
+  | set -o pipefail
+  | set -o nounset
+  | 
+  | REFERENCE_GTF=/path/to/gtf/which/will/be/reference
+  | TESTED_GTF=/path/to/gtf/which/will/be/test
+  | TACO_REFCOMP_OUTPUT=taco_refcomp
+  | taco_refcomp -p ${NSLOTS} -o taco_refcomp -r ${REFERENCE_GTF}  -t ${TESTED_GTF}
+  `----
+
+  and run it using qsub. After ~10-15 minutes taco_refcomp script will
+  create directory containing GTF and TSV files with necessary
+  information.
+
+  The other source of information is an official site:
+  <https://tacorna.github.io/> which contains additional options for
+  TACO and TACO_REFCOMP programs.
