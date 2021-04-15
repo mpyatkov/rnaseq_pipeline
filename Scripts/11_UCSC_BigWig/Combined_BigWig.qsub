@@ -32,9 +32,6 @@ set -eu
 # dir name for storing bigwig files 
 # UCSC_SAMPLE=UCSC_BigWig
 
-# remove file from previous run which will contains group names
-rm -rf COMBINED_PAIRS.txt
-
 groups=($("${SETUP_PIPELINE_DIR}"/01_Pipeline_Setup.py --groups))
 
 # for each group
@@ -95,6 +92,7 @@ for group in "${groups[@]}"; do
 	echo "${PATH_ON_SERVER}/${FORWARD_BW}"
 	echo "${PATH_ON_SERVER}/${REVERSE_BW}"
 	echo "processing ${SAMPLE_ID}"
+
 	# run wiggletools to calculate average for bigwig files and
 	# convert them back to bigwig again
 	echo "Forward reads ${suffix_combined}"
@@ -109,36 +107,24 @@ for group in "${groups[@]}"; do
 	rm tmp_reverse.wig
 
 	set +eu
+	
 	echo "Trying to copy combined forward bigwig"
 	cp ${FORWARD_BW} ${PATH_ON_SERVER}/
 	if [ $? -ne 0 ]; then
 	    echo "WARNING: cannot copy Forward combined BIGWIG files to the ${PATH_ON_SERVER}."
 	fi
+	
 	echo "Trying to copy combined reverse bigwig"
 	cp ${REVERSE_BW} ${PATH_ON_SERVER}/
 	if [ $? -ne 0 ]; then
 	    echo "WARNING: cannot copy Reverse combined BIGWIG files to the ${PATH_ON_SERVER}."
 	fi
 	rm ${FORWARD_BW} ${REVERSE_BW}
+	
 	set -eu
     fi
 
-    # add filename to COMBINED_PAIRS.txt (this file is required for track lines(next step))
-    
-    # print "filename \t group_name for forward reads"
-    printf "%s\t%s\t%s\t%s\n" "${FORWARD_BW}" "${group_name}" "${SERVER_DIR_NAME}" "${COLOR}" >> COMBINED_PAIRS.txt
-
-    # print "filename \t group_name for reverse reads"
-    printf "%s\t%s\t%s\t%s\n" "${REVERSE_BW}" "${group_name}" "${SERVER_DIR_NAME}" "${COLOR}">> COMBINED_PAIRS.txt
-    
 done
-
-# generate track lines
-# even if bw files already were created, it is necessary to restart
-# the creation of tracks for cases when we change group names in config
-# files
-./UCSC_Tracks.sh
-
 
 echo "-----"
 echo "IAMOK"

@@ -67,25 +67,42 @@ done
 # and recalculates required combined files
 recalculate_combined=0
 
+# remove file from previous run which will contains group names
+if [ -f "COMBINED_PAIRS.txt" ]; then
+    rm -rf COMBINED_PAIRS.txt
+fi
+
 groups=($("${SETUP_PIPELINE_DIR}"/01_Pipeline_Setup.py --groups))
 for group in "${groups[@]}"; do
 
     combined_name_project=($("${SETUP_PIPELINE_DIR}"/01_Pipeline_Setup.py --combined_name_by_group ${group}))
     combined_name=${combined_name_project[0]}
     project=${combined_name_project[1]}
+    description=${combined_name_project[2]}
+    color=${combined_name_project[3]}
     path_on_server="${VM_DIR_UCSC}/INDEXED_PROJECTS/${project}"
     forward_bw="${combined_name}.Forward.combined.bw"
     reverse_bw="${combined_name}.Reverse.combined.bw"
     echo "Checking availability of ${combined_name} combined files inside the ${VM_DIR_UCSC}/INDEXED_PROJECTS/${project}"
     if [ ! -f "${path_on_server}/${forward_bw}" -o ! -f "${path_on_server}/${reverse_bw}" ]; then
+	echo "${combined_name} not found. Recalculation is required."
 	recalculate_combined=1
     fi
+
+    server_dir_name="INDEXED_PROJECTS/${project}"
+    # print "filename \t group_name for forward reads"
+    printf "%s\t%s\t%s\t%s\n" "${forward_bw}" "${description}" "${server_dir_name}" "${color}" >> COMBINED_PAIRS.txt
+
+    # print "filename \t group_name for reverse reads"
+    printf "%s\t%s\t%s\t%s\n" "${reverse_bw}" "${description}" "${server_dir_name}" "${color}">> COMBINED_PAIRS.txt
+    
 done
 
 if [ ${recalculate_combined} -eq 1 ]; then
     qsub -hold_jid "${job_name}*" -N "${job_name}_Combined" -P "${PROJECT}" -l h_rt="${TIME_LIMIT}" Combined_BigWig.qsub
 fi
 
+./UCSC_Tracks.sh
 
 echo "End of qsub commands"
 echo "-----------------------"
