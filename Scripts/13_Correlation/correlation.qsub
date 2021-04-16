@@ -36,6 +36,19 @@ function combined_pdf() {
     ALL+=" "
     ALL+=$(find . -iname "*_non*.pdf" | sort -n)
     pdfunite $(echo $ALL | paste -s -d " ") ${OUTNAME}
+
+    # remove all individual pdf files
+    rm -rf ${ALL[@]}
+
+    # copy csv files in one directory
+    # for Pearson/Spearman 
+    if [[ "${OUTNAME}" =~ Pearson|Spearman ]]; then
+	mkdir -p Correlation_CSVs
+	mv *.csv ./Correlation_CSVs
+    else # for PCA
+	mkdir -p Non-significant_genes
+	mv *.csv ./Non-significant_genes
+    fi
 }
 
 function calc_correlation()
