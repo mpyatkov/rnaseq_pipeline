@@ -150,8 +150,8 @@ get_conditions <- function(filenames_prefix, extargs) {
       cond1[i] <-  paste("((",listFC[i],")","<0.263","&(","(",listFC[i],")",">","-0.263)","&","(", listFDR[i],">0.1))", sep=" ")
    }
    
-   list_data_cond <- (paste(cond, collapse = "&") )                     # merge the list into string
-   list_data_cond1 <- (paste(cond1, collapse = "&") )                     # merge the list into string
+   list_data_cond <- (paste(cond, collapse = "|") )    # merge the list into string, significant
+   list_data_cond1 <- (paste(cond1, collapse = "&") )  # merge the list into string, non-significant
    
    list(signif=list(name="signif", cond=list_data_cond), nonsignif=list(name="nonsignif", cond=list_data_cond1))
 }
