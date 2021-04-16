@@ -188,14 +188,19 @@ do
 	for feature in $features; do
 	    # create temporary dir
 	    tmpdir=${de_ix}_${feature}_${norm_method}
-	    rm -rf tmpdir && mkdir $tmpdir && pushd $tmpdir
+	    rm -rf tmpdir && mkdir $tmpdir
+	    pushd $tmpdir
 
 	    # process files
 	    link_all_segex_by_norm ${de_ix} ${norm_method} ${feature}
 	    combined_fname=$(segex_combined_files $(pwd))
 
+	    # create the output directory
+	    combined_output_dir="../output/Segex_${de_ix}/Combined_${de_ix}/"
+	    mkdir -p ${combined_output_dir}
+	    
 	    # copy output to correct dir
-	    mv ${combined_fname} ../output/Segex_${de_ix}/
+	    mv ${combined_fname} ${combined_output_dir}
 	    popd && rm -rf $tmpdir
 	done
     done
