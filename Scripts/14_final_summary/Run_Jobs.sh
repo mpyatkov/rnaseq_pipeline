@@ -83,9 +83,10 @@ copy_feature(){
 # copy segex files from DE directories to step 14 output
 copy_all_segex_files() {
     local de_index=$1
-    
-    mkdir -p output/Segex_${de_index}
-    find ../${de_index}_DE_* -name "*SEGEX*" | grep -iv output | grep -i fpkm | grep -i exoncollapsed | grep -i edger | xargs -n1 -I{} cp {} ./output/Segex_${de_index}/
+
+    ## copy exoncollapsed files to up level of each feature directory (deprecated, 2021-04-15)
+    # mkdir -p output/Segex_${de_index}
+    # find ../${de_index}_DE_* -name "*SEGEX*" | grep -iv output | grep -i fpkm | grep -i exoncollapsed | grep -i edger | xargs -n1 -I{} cp {} ./output/Segex_${de_index}/
     
     # copy features (ex. for index 9a -> ExonOnly, IntronOnly, ExonCollapsed, ...)
     features=$(find ../${de_index}* -iname "output*" | grep -Po "\K([a-zA-Z]*)(?=$)" | sort | uniq)
