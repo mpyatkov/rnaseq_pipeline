@@ -59,14 +59,23 @@ cp -rf ${Level_UP}/13_Correlation/Job_Summary/* ./output/
 # TODO: requirenments were changed refactor this to copy only combined
 # files
 find ./output/13* -name "*.pdf" | grep -iv "combined" | xargs rm -rf
+
 # remove all *.txt and *.csv files
 find ./output/13* \( -name "*.csv" -o -name "*.txt" \) | xargs rm -rf
 
-# remove from 09abc/Output* all segex files
-# TODO: refactor this, data should be processed and removed at the 09 steps
-# set +eu
-# find ../09* -name "*_forSEGEXUpload*.txt" | grep Output | xargs -n1 rm -rf 
-# set -eu
+# copy all STEP13 combined files to upper level directory
+s13_combined_files=($(find ./output -iname "*Comb*" | grep 13))
+for f in ${s13_combined_files[@]}; do
+    dname=$(dirname $f)
+    dist=$(dirname ${dname})
+    fname=$(basename $f)
+    
+    # move file to upper dir
+    mv $f ${dist}
+    # remove dir
+    rm -rf ${dname}
+done
+
 
 copy_feature(){
     local de_index=$1
