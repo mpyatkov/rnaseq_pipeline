@@ -32,18 +32,15 @@ set -eu
 
 SCRIPT_DIR=$(pwd)
 
-#Source job-specific variables:
-# source setup_DiffExp.sh
-
 # list of samples for each condition (ex. G186_M1M2M3_G184_M1M2M3)
 samples_line(){
     local fname=$1
-    a=$(tail -n+2 $fname | cut -f2 | cut -d "_" -f 1 | sort | uniq)
+    a=$(tail -n+2 $fname | cut -f1 | cut -d "_" -f 1 | sort | uniq)
 
     res=""
     for i in $a
     do
-	group="${i}_$(grep ${i} $fname | cut -f 2 | cut -d "_" -f 2 | paste -s -d '')_"
+	group="${i}_$(grep ${i} $fname | cut -f 1 | cut -d "_" -f 2 | paste -s -d '')_"
 	res+=$group
 	# res+="_"
     done
