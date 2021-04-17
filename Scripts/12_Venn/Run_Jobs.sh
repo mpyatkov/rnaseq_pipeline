@@ -15,10 +15,6 @@ set -o errexit
 set -o pipefail
 set -o nounset
 
-## create venn diagrams for comparisons
-
-# module load R/3.6.0
-
 # export all variables from Pipeline_Setup.conf
 eval "$(../00_Setup_Pipeline/01_Pipeline_Setup.py --export)"
 
@@ -53,7 +49,8 @@ venn_for_one_gtf_set() {
     local DETITLE=$3
     # not individual diagrams
     venn_individ=0
-    output_dir="${OUTDIR}/DE_Comparisons/${OUTDIR_PREFIX}"
+    # output_dir="${OUTDIR}/DE_Comparisons/${OUTDIR_PREFIX}"
+    output_dir="${OUTDIR}"
 
     # loop through the all venn comparisons
     mkdir -p ${output_dir}
@@ -64,7 +61,7 @@ venn_for_one_gtf_set() {
         # array of comparisons which involved in current venn
         comparisons=($("${SETUP_PIPELINE_DIR}"/01_Pipeline_Setup.py --venn_comparisons_by_ix ${i}))
 
-        # outname for pdf file
+        # outname for pdf file           (1 2 3) --> 1_2_3
         outname=${OUTDIR_PREFIX}_$(IFS=_ ; echo "${comparisons[*]}")
         
         # copy ExonCollapsed file from each comparison directory 
@@ -103,9 +100,6 @@ individual_comparison() {
     outname=${current_dir}
     venn_individ=1
 
-    mkdir -p ${current_dir}
-    pushd ${current_dir}
-
     # COPY ALL DiffEx_v2 files to the current_dir
     # extract comparison number (09d_1_... --> 1)
     prefix=$(echo ${current_dir} | grep -Po "_\K([0-9][0-9]?)(?=_)" | head -n1 |tr -d '\n')
@@ -126,8 +120,6 @@ individual_comparison() {
     # make individual plots
     Rscript Venn.R "${DATASET_LABEL}_${current_dir}" "${outname}" ${venn_individ}
     rm *_DiffExp_v2* Venn.R
-
-    popd
 }
 
 # wrapper for individual_comparison function
@@ -143,9 +135,22 @@ individual_comparisons_wrapper() {
 
     for dir in ${all_dirs}
     do
-	individual_comparison $dir
+	mkdir -p ${dir}
+	pushd ${dir}
+
+	# make pair of individual venns
+	individual_comparison ${dir}
+	
+	popd
     done
     popd
+
+    # make combined pdf for all pairs of individ. files
+    # TODO: in future it will require refactoring to separate
+    # 09a,09b,09c,09d individual pdf files
+    all_pdfs=($(eval find ${individual_dirs} -name "*.pdf" | sort))
+    pdfunite ${all_pdfs[@]} "${OUTDIR}/All_individual_venns.pdf"
+    rm -rf ${individual_dirs}
 }
 
 # create individual venn diagrams for each 09 directory
