@@ -191,7 +191,7 @@ draw_pair <- function(data, names, type, parameters) {
   label<-ifelse(type=="all", "all_DE", type)
   
   label <- if (type == "updown" || type == "downup") {
-    paste0(label, " genes\n(red - up, blue -down)")
+    paste0(label, " genes (red - up, blue - down)")
   } else {
     paste0(label, " genes")
   }
@@ -203,8 +203,9 @@ draw_pair <- function(data, names, type, parameters) {
   deseq <- drawVenn(deseq_data, new_names, col, 
                     parameters[[num]]$pos, parameters[[num]]$dist, parameters[[num]]$main_title_height,
                     paste0("DESeq_", label), main_color)
-  
-  grid.arrange(gTree(children=edger), gTree(children=deseq), ncol=2)
+
+    grid.arrange(gTree(children=edger, vp=viewport(width=0.95,height=0.95)),
+                 gTree(children=deseq, vp=viewport(width=0.95,height=0.95)), ncol=2) # , vp=viewport(width=0.7, height=0.7)
 }
 
 # draw full set diagrams (5 diagrams - for set of 2 comparisons, 3 diagrams - for 3 and 4 comparisons)
@@ -242,9 +243,11 @@ draw_all <- function(data, names, dataset_label, num_comparisons, parameters, ou
                        top=textGrob(title, 
                                     gp=gpar(fontsize=18, fontfamily="sans", fontface="bold")))
   
-  # 6x6 one square, 6x12 one line
-  height <- ifelse(num != 2,18,30) 
-  width <- 12
+  ## 6x6 one square, 6x12 one line
+  ## cell_size - square width = height
+  cell_size <- 7
+  height <- ifelse(num != 2, cell_size*3, cell_size*5) 
+  width <- cell_size * 2
   
   pdf(file=paste0(output_name,".pdf"), height = height, width = width)
   grid.draw(plot)
@@ -366,7 +369,7 @@ params <- c()
 params[[2]] <- list(
   pos = c(-180, 0),
   dist = c(0.05, 0.05),
-  main_title_height = 0.95
+  main_title_height = 1.0
 )
 # parameters for 3 circles
 params[[3]] <- list(
