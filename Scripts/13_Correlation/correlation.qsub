@@ -32,10 +32,16 @@ declare -A DETITLE_DICT=( [09a]="RefSeq24k" [09b]="RefSeq24k" [09c]="LncRNA15k" 
 
 function combined_pdf() {
     local OUTNAME=$1
-    ALL=$(find . -name "*All*pdf" -o -name "*_Sig*pdf" | sort -n)
-    ALL+=" "
-    ALL+=$(find . -iname "*_non*.pdf" | sort -n)
-    pdfunite $(echo $ALL | paste -s -d " ") ${OUTNAME}
+    
+    # ALL=$(find . -name "*All*pdf" -o -name "*_Sig*pdf" | sort -n)
+    # ALL+=" "
+    # ALL+=$(find . -iname "*_non*.pdf" | sort -n)
+    # pdfunite $(echo $ALL | paste -s -d " ") ${OUTNAME}
+
+    ALL=($(find . -name "*All*pdf" -o -name "*_Sig*pdf" | sort -n))
+    ALL+=($(find . -iname "*_non*.pdf" | sort -n))
+    # echo "${ALL[@]}"
+    pdfunite ${ALL[@]} ${OUTNAME}
 
     # remove all individual pdf files
     rm -rf ${ALL[@]}
@@ -45,9 +51,12 @@ function combined_pdf() {
     if [[ "${OUTNAME}" =~ Pearson|Spearman ]]; then
 	mkdir -p Correlation_CSVs
 	mv *.csv ./Correlation_CSVs
-    else # for PCA
+    elif [[ "${OUTNAME}" =~ PCA ]]; then
 	mkdir -p Non-significant_genes
 	mv *.csv ./Non-significant_genes
+    else
+	# "TSNE, do nothing"
+	echo -n ""
     fi
 }
 
@@ -69,6 +78,7 @@ function calc_correlation()
     pushd ${OUTDIR}
     
     rm -rf PCA && mkdir -p PCA
+    rm -rf TSNE && mkdir -p TSNE
     rm -rf ${PCOR} && mkdir -p ${PCOR}
     rm -rf ${SCOR} && mkdir -p ${SCOR}
 
@@ -93,6 +103,7 @@ function calc_correlation()
     mv *_Pearson* ./${PCOR}
     mv *_Spearman* ./${SCOR}
     mv *_PCA_* ./PCA/
+    mv *_TSNE_* ./TSNE/
 
     # remove all Diff.Exp files
     rm -rf *DiffExp*
@@ -102,9 +113,10 @@ function calc_correlation()
 
     OUTNAME=$(basename ${OUTDIR})
 
-    (cd ${PCOR}; combined_pdf ${OUTNAME}_Pearson_Combined.pdf)
-    (cd ${SCOR}; combined_pdf ${OUTNAME}_Spearman_Combined.pdf)
-    (cd PCA; combined_pdf ${OUTNAME}_PCA_Combined.pdf)
+    (cd ${PCOR}; combined_pdf "${OUTNAME}_Pearson_Combined.pdf")
+    (cd ${SCOR}; combined_pdf "${OUTNAME}_Spearman_Combined.pdf")
+    (cd PCA; combined_pdf "${OUTNAME}_PCA_Combined.pdf")
+    (cd TSNE; combined_pdf "${OUTNAME}_TSNE_Combined.pdf")
 
     rm ./*.R
     rm ./SAMPLE_CONDNAME.tsv
