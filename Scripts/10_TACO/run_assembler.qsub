@@ -20,6 +20,7 @@ set -o nounset
 # arguments
 SAMPLE_ID=$1
 OUTPUT_DIR=$2
+REF_FLAG=$3
 
 # export all variables from Pipeline_Setup.conf
 eval "$(../00_Setup_Pipeline/01_Pipeline_Setup.py --export)"
@@ -61,11 +62,16 @@ fi
 
 mkdir -p ${OUTPUT_DIR}
 pushd ${OUTPUT_DIR}
-if [ ${TACO_STRINGTIE_REFERENCE} != "NA" ]; then
+if [ ${TACO_STRINGTIE_REFERENCE} != "NA" -a ${REF_FLAG} = "RefOn" ]; then
     (set -x; stringtie -G ${TACO_STRINGTIE_REFERENCE} ${STRAND_OPTION[@]} "${DATASET_DIR}/${SAMPLE_ID}/aligner/${SAMPLE_ID}_primary_unique.bam" -o "${SAMPLE_ID}.gtf")
-else
+elif [ ${REF_FLAG} = "RefOff" ]; then
     # do not use reference file for stringtie, build de-novo assembly
     (set -x; stringtie ${STRAND_OPTION[@]} "${DATASET_DIR}/${SAMPLE_ID}/aligner/${SAMPLE_ID}_primary_unique.bam" -o "${SAMPLE_ID}.gtf")
+else
+    echo "ERROR: inconsistent options:"
+    echo "   TACO_STRINGTIE_REFERENCE=${TACO_STRINGTIE_REFERENCE}"
+    echo "                   REF_FLAG=${TACO_STRINGTIE_REFERENCE}"
+    exit 1
 fi
 popd
 

@@ -4,6 +4,7 @@
 # OUTPUT:
 # combined GTF file with processed isoforms from multiple individual
 # GTF files
+# REFCOMP output
 
 # Specify which shell to use
 #$ -S /bin/bash
@@ -22,6 +23,9 @@ set -o nounset
 # arguments
 GROUP=$1
 OUTPUT_PREFIX=$2
+DESCRIPTION=$3
+OUTPUT_DIR=$4
+REF_FLAG=$5
 
 MAIN_DIR="$(pwd)"
 
@@ -36,11 +40,32 @@ conda activate --stack ${CONDA_DIR}/isoforms
 conda activate --stack ${CONDA_DIR}/bedtools
 set -eu
 
+function create_description(){
+    # creates description for group of samples with user,date and
+    # samples included in group
+
+    local group=$1
+    local outname_path=$2
+
+    printf "user: %s\ndate: %s\n" "${BU_USER}" "$(date)" > ${outname_path}
+
+    samples=($("${SETUP_PIPELINE_DIR}"/01_Pipeline_Setup.py --samples_by_group ${group}))
+
+    # loop over all samples
+    for ((i=0;i< ${#samples[@]} ;i+=2));
+    do
+	sample_id=${samples[i]}
+	condname=${samples[i+1]}
+	printf "%s %s\n" "${sample_id}" "${condname}" >> ${outname_path}
+    done
+}
+
+### SCRIPT START
 start_time=$(date +"%s")
 
-mkdir -p Job_Summary/${OUTPUT_PREFIX}
+mkdir -p "${OUTPUT_DIR}/${DESCRIPTION}_${OUTPUT_PREFIX}"
 
-pushd Job_Summary/${OUTPUT_PREFIX}
+pushd "${OUTPUT_DIR}/${DESCRIPTION}_${OUTPUT_PREFIX}"
 
 if [ "${GROUP}" = "ALL" ]; then
     # all samples with description and color 
@@ -51,7 +76,7 @@ else
 fi
 
 TACO_SAMPLES_INPUT="${OUTPUT_PREFIX}.txt"
-TACO_GTF_OUTPUT="${OUTPUT_PREFIX}"
+TACO_GTF_OUTPUT="${OUTPUT_PREFIX}_${REF_FLAG}"
 
 rm -rf ${TACO_SAMPLES_INPUT}
 for ((i=0;i< ${#samples[@]} ;i+=2)); do
@@ -78,13 +103,46 @@ rm -rf "${TACO_SAMPLES_INPUT}"
 
 ## convert bed to bigBed
 cp ${MAIN_DIR}/Scripts/mm9.chrom.sizes ./
-sort -k1,1 -k2,2n ${OUTPUT_PREFIX}.bed > ${OUTPUT_PREFIX}.sorted.bed
-bedToBigBed ${OUTPUT_PREFIX}.sorted.bed mm9.chrom.sizes ${OUTPUT_PREFIX}.bb
-rm ${OUTPUT_PREFIX}.sorted.bed
-rm ${OUTPUT_PREFIX}.bed
+sort -k1,1 -k2,2n ${TACO_GTF_OUTPUT}.bed > ${TACO_GTF_OUTPUT}.sorted.bed
+bedToBigBed "${TACO_GTF_OUTPUT}.sorted.bed" mm9.chrom.sizes "${OUTPUT_PREFIX}_${REF_FLAG}.bb"
+rm "${TACO_GTF_OUTPUT}.sorted.bed"
+rm "${TACO_GTF_OUTPUT}.bed"
 rm mm9.chrom.sizes
 
-popd
+## create description file
+create_description "${GROUP}" "${OUTPUT_PREFIX}_${REF_FLAG}_description.txt"
+
+####
+## REFCOMP calculation, compare groupped GTF and reference GTF
+###
+
+REFCOMP_TMP="${OUTPUT_PREFIX}_TMP"
+
+taco_refcomp -p ${NSLOTS} -o "${REFCOMP_TMP}" -r "${TACO_REFCOMP_REFERENCE}"  -t "${TACO_GTF_OUTPUT}.gtf"
+
+# rm TACO groupped GTF from if it is not required
+if [ ${TACO_KEEP_GTF} -eq 0 ]; then
+    rm "${TACO_GTF_OUTPUT}.gtf"
+fi
+
+pushd "${REFCOMP_TMP}"
+
+# TSV file postprocessing  
+cp ${MAIN_DIR}/Scripts/TSV_processing.R ./
+Rscript TSV_processing.R "assembly.metadata" "REFCOMP_${DESCRIPTION}_${OUTPUT_PREFIX}_${REF_FLAG}"
+mv "REFCOMP_${DESCRIPTION}_${OUTPUT_PREFIX}_${REF_FLAG}.tsv" ../
+
+# copy TACO REFCOMPARE GTF if it is required
+if [ ${TACO_REFCOMP_KEEP_GTF} -eq 1 ]; then
+    mv "assembly.refcomp.gtf" ../"REFCOMP_${DESCRIPTION}_${OUTPUT_PREFIX}_${REF_FLAG}.gtf"     
+fi
+
+popd # go to ${OUTPUT_DIR}/${DESCRIPTION}_${OUTPUT_PREFIX}
+
+# remove temporary dir
+rm -rf ${REFCOMP_TMP}
+
+popd # go to "${MAIN_DIR}"
 
 # use to calculate job time:
 end_time=$(date +"%s")
