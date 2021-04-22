@@ -79,6 +79,15 @@ DATASET_LABEL=DEFAULT_LABEL
 DATASET_DIR=PATH_TO_PROJECT
 
 [STEPS]
+# Keep bam and related files after execution. These files are required
+# for counting(08), TACO(10), BigWig(11) steps. If you are going to
+# make a lot of experiments with mentioned steps than set the
+# following option to 1.
+# option:
+# 0 - remove BAM/CRAM/CRAI/BAI files
+# 1 - keep files
+KEEP_BAM_AFTER_RUN=0
+
 # Bioanalyzer length (from Bioanalyzer tracings)
 BIOANALYZER_LEN=330
 # Usually the adaptor length is 60bp (60bp on each end: 120bp total)

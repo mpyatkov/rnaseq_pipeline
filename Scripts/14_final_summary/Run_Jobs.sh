@@ -45,6 +45,15 @@ echo ${SCRIPT_DIR}
 echo "Level_UP:"
 echo ${Level_UP}
 
+## remove bam/cram/bai/crai if they are not required
+if [ ${KEEP_BAM_AFTER_RUN} -eq 0 ]; then
+    extensions=( "*bam" "*bai" "*cram" "*crai" )
+    for ext in ${extensions[@]}; do
+	echo "removing '${ext}' files"
+	find ${DATASET_DIR} -name ${ext} -delete
+    done
+fi
+
 set +eu
 # cp -rf  ${Level_UP}/04_TopHat_Paired_End/Job_Summary/TopHat2_Stats_BestMapped.txt  ./output/
 cp -rf  ${Level_UP}/02_Read_Strandness/Job_Summary/Read_Strandness_Stats.txt ./output/
@@ -55,9 +64,7 @@ set -eu
 
 cp -rf ${Level_UP}/13_Correlation/Job_Summary/* ./output/
 
-# remove all files which do not contain "combined" in the name
-# TODO: requirenments were changed refactor this to copy only combined
-# files
+# remove all files which does not contain "combined" in the name
 find ./output/13* -name "*.pdf" | grep -iv "combined" | xargs rm -rf
 
 # remove all *.txt and *.csv files
