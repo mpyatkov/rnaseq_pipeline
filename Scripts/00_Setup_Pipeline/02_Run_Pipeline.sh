@@ -16,13 +16,11 @@ set -o errexit
 #	2. The 00_Setup_Pipeline folder is in a "Scripts"
 #	3. The Scripts folder contains all of the pipeline steps to run
 #Way to run script:
-#Usage: ./02_Run_Pipeline.sh <Start_Step>
-#	<Start_Step> = Needs to be either "FULL" or a specific pipeline step 
+#Usage: ./02_Run_Pipeline.sh <OPTION>
+#	<OPTION> = set of of options specified below
 #Example: 
 #User wants to run the full pipeline:
 #./02_Run_Pipeline.sh FULL
-#User wants to run a subset of the pipeline starting at a specific step (04_TopHat_Paired_End):
-#./02_Run_Pipeline.sh 04_TopHat_Paired_End
 ##################################################################################
 #---------------------------------------------------------------------------------
 
@@ -33,7 +31,8 @@ then
     echo "<option> = START - light version of FULL without recalculation already existed samples"
     echo "<option> = FULL - full pipeline run with recalculation of all steps"
     echo "<option> = DEONLY recalculate DE and summary directories (09abcd,12,13,14)"
-    echo "<option> = TRACKS creates UCSC tracks (01,02,04 and 11 without full recalculation if that possible)"
+    echo "<option> = TACO creates TACO tracks with isoforms (01,02,04 and 10 without full recalculation if that possible)"
+    echo "<option> = BIGWIG creates UCSC tracks (01,02,04 and 11 without full recalculation if that possible)"
     echo "<option> = start_step (example. 05) start from specific step"
     echo "See 02_Run_Pipeline.sh for details."	
     exit 0
@@ -82,7 +81,11 @@ elif [[ "${START_STEP}" == "DEONLY" ]]; then
     GENERATE=1
     RESUME=0
     INCLUDE="09\|12\|13\|14"
-elif [[ "${START_STEP}" == "TRACKS" ]]; then
+elif [[ "${START_STEP}" == "TACO" ]]; then
+    GENERATE=0
+    RESUME=0
+    INCLUDE="01\|02\|04\|10"
+elif [[ "${START_STEP}" == "BIGWIG" ]]; then
     GENERATE=0
     RESUME=0
     INCLUDE="01\|02\|04\|11"

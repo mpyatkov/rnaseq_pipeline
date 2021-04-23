@@ -228,6 +228,10 @@ with_header=1
 
 generate_tracks $fname $bwvisual $autoscale $bamvisual $leftlimit $rightlimit ${with_header}
 
+# remove COMBINED_PAIRS.txt
+rm COMBINED_PAIRS.txt
+
+
 ##################################################################################
 OUTPUT_FILE_Wiggle=${OUTPUT_DIR}/${DATASET_LABEL}'_Tracks_Wiggle_240.txt'
 rm -rf ${OUTPUT_FILE_Wiggle}
