@@ -50,7 +50,9 @@ if [ ${KEEP_BAM_AFTER_RUN} -eq 0 ]; then
     extensions=( "*bam" "*bai" "*cram" "*crai" )
     for ext in ${extensions[@]}; do
 	echo "removing '${ext}' files"
+	set +eu
 	find ${DATASET_DIR} -name ${ext} -delete
+	set -eu
     done
 fi
 
@@ -65,10 +67,12 @@ set -eu
 cp -rf ${Level_UP}/13_Correlation/Job_Summary/* ./output/
 
 # remove all files which does not contain "combined" in the name
+set +eu
 find ./output/13* -name "*.pdf" | grep -iv "combined" | xargs rm -rf
 
 # remove all *.txt and *.csv files
 find ./output/13* \( -name "*.csv" -o -name "*.txt" \) | xargs rm -rf
+set -eu
 
 # copy all STEP13 combined files to upper level directory
 s13_combined_files=($(find ./output -iname "*Comb*" | grep 13))
