@@ -228,10 +228,6 @@ with_header=1
 
 generate_tracks $fname $bwvisual $autoscale $bamvisual $leftlimit $rightlimit ${with_header}
 
-# remove COMBINED_PAIRS.txt
-rm COMBINED_PAIRS.txt
-
-
 ##################################################################################
 OUTPUT_FILE_Wiggle=${OUTPUT_DIR}/${DATASET_LABEL}'_Tracks_Wiggle_240.txt'
 rm -rf ${OUTPUT_FILE_Wiggle}
@@ -310,6 +306,8 @@ popd
 ##################################################################################
 #Remove the temp file:
 rm -rf *.temp
+rm COMBINED_PAIRS.txt
+
 echo '#--------------------------------------------------------------------------'
 #echo 'Check out '${OUTPUT_FILE_PileUp}'!'
 #echo 'Check out '${OUTPUT_FILE_Wiggle}'!'

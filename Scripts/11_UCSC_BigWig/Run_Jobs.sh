@@ -67,11 +67,6 @@ done
 # and recalculates required combined files
 recalculate_combined=0
 
-# remove file from previous run which will contains group names
-if [ -f "COMBINED_PAIRS.txt" ]; then
-    rm -rf COMBINED_PAIRS.txt
-fi
-
 groups=($("${SETUP_PIPELINE_DIR}"/01_Pipeline_Setup.py --groups))
 for group in "${groups[@]}"; do
 
