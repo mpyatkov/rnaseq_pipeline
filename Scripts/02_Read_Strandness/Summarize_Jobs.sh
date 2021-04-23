@@ -15,12 +15,6 @@ set -o nounset
 # FULL_RECALC equal to number after ':-' if parameter was not provided
 FULL_RECALC=${1:-0}
 
-# Skip this step if recalculation flag set to 0
-if [ ${FULL_RECALC} -eq 0 ]; then
-    echo "Recalculation is not required. FULL_RECALC set to 0."
-    exit 0
-fi
-
 # export all variables from Pipeline_Setup.conf
 eval "$(../00_Setup_Pipeline/01_Pipeline_Setup.py --export)"
 
