@@ -66,7 +66,17 @@ _________________
 4 Step description
 ==================
 
-  The step consist of two 3 jobs which are dependent to each
+  The step executes 2 times and produces 2 Job_Summary directories
+  (Job_Summary_RefOn, Job_Summary_RefOff). The only difference between
+  two executions that in case of RefOn the step will use
+  *TACO_STRINGTIE_REFERENCE* for StringTie, in the case of RefOff,
+  StringTie will not use any reference GTF and creates de-novo
+  assembly. The main reason for this is that StringTie without reference
+  (RefOff) can find potentially new isoforms. Thus the following
+  description will be the same for both modes (RefOn, RefOff), but keep
+  in mind that we run it twice.
+
+  The step consist of two 2 jobs which are dependent to each
   other. First of all the pipeline calculates individual GTF files
   (run_assembler.qsub). Until all individual GTF files are counted we
   cannot run the TACO meta-assembler.
@@ -79,12 +89,12 @@ _________________
   Samples_Labels.txt + 1 group with all samples together. The output for
   the TACO meta-assembly step is GTF and bigBed files.
 
-  On the last step *taco_refcomp* produces pairwise comparisons between
-  TACO_REFCOMP_REFERENCE and meta-assemblies for each group which were
-  obtained previosly.
+  At the end of the step *taco_refcomp* produces pairwise comparisons
+  between TACO_REFCOMP_REFERENCE and meta-assemblies for each group
+  which were obtained previosly.
 
-  TACO and TACO_REFCOMP jobs use the "qsub -hold_jid" command to put own
-  execution off until the previous jobs are completed.
+  TACO and job uses the "qsub -hold_jid" command to put own execution
+  off until the previous jobs are completed.
 
   Output for group ALL and groups specified in Samples_Labels.txt is a
   little different, because in first case TACO can produce long names
