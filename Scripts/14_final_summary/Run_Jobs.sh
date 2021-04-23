@@ -66,12 +66,12 @@ set -eu
 
 cp -rf ${Level_UP}/13_Correlation/Job_Summary/* ./output/
 
+# The whole directory is copied to preserve subdirectories
+# it is much easy to copy whole dir and after that remove unnecessary
+# files than recreate the subdirectories from the beginning.
 # remove all files which does not contain "combined" in the name
 set +eu
-find ./output/13* -name "*.pdf" | grep -iv "combined" | xargs rm -rf
-
-# remove all *.txt and *.csv files
-find ./output/13* \( -name "*.csv" -o -name "*.txt" \) | xargs rm -rf
+find ./output/13* -name "*" -type f | grep -iv "combined" | xargs rm -rf
 set -eu
 
 # copy all STEP13 combined files to upper level directory
