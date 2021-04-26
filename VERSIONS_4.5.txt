@@ -1,3 +1,25 @@
+## [4.5] - 2021-04-23
+
+### Added
+- option KEEP_BAM_AFTER_RUN which allows user to keep/delete BAM
+  files after pipeline execution (BAMs are required only for steps 06,
+  08,10,11)
+- TSNE plots in the same way as PCA/correlation plots
+
+### Changed
+- set intersection for non-significant and union for significant merged
+  outputs (PCA/TSNE/Correlation). Output file names represent info
+  about intersection/union
+- running StringTie / TACO / TACOREFCOMP conveyer with/without
+  reference GTF file:
+  -- two sets of output tracks with RefOn/RefOff suffixes
+  -- bigBed file names and corresponding UCSC captions represent
+     RefOn/RefOff suffixes
+
+### Multiple minor changes:
+ - Reformatting / combining / renaming output pdfs for steps 12-14
+
+
 ## [4.4.1] - 2021-04-06
 
 ### Updated
