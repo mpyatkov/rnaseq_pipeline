@@ -238,7 +238,9 @@ draw_all <- function(data, names, dataset_label, num_comparisons, parameters, ou
   }
 
   title <- paste0("Dataset: ", dataset_label,
-                  " Comparisons: ", paste0(num_comparisons, collapse = " vs "))
+                  " Comparisons: ",
+                  paste0(num_comparisons, collapse = " vs "),
+                  "\nFC > 2, FDR < 0.05")
   plot <- grid.arrange(gTree(children=gList(plot)), 
                        top=textGrob(title, 
                                     gp=gpar(fontsize=18, fontfamily="sans", fontface="bold")))
@@ -409,7 +411,7 @@ if (VENN_INDIVIDUAL == "0") {
   features <- str_extract(files, "(?<=_)(ExonCollapsed|IntronicOnly|ExonOnly|IntronOnly|ExonicOnly|FullGeneBody)(?=_)")
   comparison_name <- str_extract(files[1], paste0("(?<=(", features[1],"_))([[:alnum:]|[_]]+)(?=(_featureCounts|_htseq))"))
 
-  title <- paste0(DATASET_LABEL, ", ", comparison_name)
+  title <- paste0(DATASET_LABEL, ", ", comparison_name, "\nFC > 2, FDR < 0.05")
 
   draw_pairwise_for_each_feature(files,params, title, paste0(OUTPUT_NAME,"_Individual"))
 
