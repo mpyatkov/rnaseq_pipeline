@@ -100,6 +100,6 @@ left_join(up.down.genes,cmp_samples) %>%
   spread(combine, value) %>% 
   arrange(comparison) %>% 
 #  write_excel_csv2(., output_name) # separator ";"
-  write_csv(., output_name) # separator ","
+  write_tsv(., output_name) # separator "\t"
 
 
