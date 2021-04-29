@@ -116,30 +116,37 @@ plot_cor <- function(df, title, method, out_name)
 
 # return ggplot object after PCA/TSNE calculation
 pcatsne_init_ggplot <- function(df_pca, type) {
-   if (type == "PCA") {
-      pca <- prcomp(subset(df_pca, select = -c(group)))
-      ggresult <- autoplot(pca, data= df_pca, label = F)
-      
-   } else {
-      perplexity <- ifelse(length(levels(as.factor(df_pca$group))) > 2, 2, 1)
-      set.seed(42)
-      tsne_model <- Rtsne(as.matrix(subset(df_pca, select = -c(group))), 
-                          check_duplicates=FALSE, 
-                          pca=TRUE, 
-                          perplexity=perplexity, 
-                          theta=0.5, 
-                          dims=3, 
-                          set.seed=TRUE)
-      
-      ## getting the two dimension matrix
-      
-      # df_tsne <- as.data.frame(tsne_model$Y)
-      df_tsne <- data.frame(PC1 = tsne_model$Y[,1],
-                            PC2 = tsne_model$Y[,2],
-                            group = df_pca$group)
-      
-      ggresult <- ggplot(df_tsne, aes(x=PC1, y=PC2, group=group), label= F)  
-   }
+    if (dim(df_pca)[2] <= 2) {
+        ## empty ggplot, because we do not have enough dimensions for SVD
+        ggresult<-ggplot()
+
+    } else {
+
+        if (type == "PCA") {
+            pca <- prcomp(subset(df_pca, select = -c(group)))
+            ggresult <- autoplot(pca, data= df_pca, label = F)
+            
+        } else {
+            perplexity <- ifelse(length(levels(as.factor(df_pca$group))) > 2, 2, 1)
+            set.seed(42)
+            tsne_model <- Rtsne(as.matrix(subset(df_pca, select = -c(group))), 
+                                check_duplicates=FALSE, 
+                                pca=TRUE, 
+                                perplexity=perplexity, 
+                                theta=0.5, 
+                                dims=3, 
+                                set.seed=TRUE)
+            
+            ## getting the two dimension matrix
+            ## df_tsne <- as.data.frame(tsne_model$Y)
+            df_tsne <- data.frame(PC1 = tsne_model$Y[,1],
+                                  PC2 = tsne_model$Y[,2],
+                                  group = df_pca$group)
+            
+            ggresult <- ggplot(df_tsne, aes(x=PC1, y=PC2, group=group), label= F)  
+        }
+    }
+    ggresult
 }
 
 plot_pca <- function(df_pca, title, out_names, ggplot_obj) {
@@ -147,7 +154,7 @@ plot_pca <- function(df_pca, title, out_names, ggplot_obj) {
       message(paste0("WARNING: ", out_names, " does not have any significant/non-significant genes, table is empty, PCA will not be created"))
       
       # create empty ggplot
-      pca<-ggplot() + ggtitle(title) + theme_bw()+
+      pca<-ggplot_obj + ggtitle(title) + theme_bw()+
          theme(text = element_text(size=14),
                legend.title = element_text(size=15),
                legend.text=element_text(size=15))
