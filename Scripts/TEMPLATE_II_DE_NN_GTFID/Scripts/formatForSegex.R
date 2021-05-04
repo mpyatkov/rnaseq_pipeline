@@ -26,6 +26,7 @@ replace_name <- function(name) {
     str_replace(., "random", "") %>% 
     str_replace(., "_JH[0-9]+","_JH") %>% 
     str_replace(.,"LOC100861978_chr4_JH_m", "LOC100861978_chr4m") %>% 
+    str_replace(., "Fam205a2_chr4_GL456350_m", "Fam205a2_chr4_GL_m") %>% 
     ifelse(str_detect(., "^nc_"), str_to_lower(.), .) 
 }
 
