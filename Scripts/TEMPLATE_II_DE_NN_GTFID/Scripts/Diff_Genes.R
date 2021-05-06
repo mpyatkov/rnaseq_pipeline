@@ -54,7 +54,7 @@ print("-----------------")
 #to remind user to use the  *.annotated file
 #Spaces/brackets matter for "if" statement syntax
 #Need invisible() to avoid printing NULL
-invisible(if ( grepl("_forSEGEXUpload_DESeq.txt", DiffExp_Output)  || grepl("_forSEGEXUpload_EdgeR.txt", DiffExp_Output))  {
+invisible(if ( grepl("_forSEGEXUpload_FPKM_DESeq.txt", DiffExp_Output)  || grepl("_forSEGEXUpload_FPKM_EdgeR.txt", DiffExp_Output))  {
 #Do nothing
 } else {
 print("WARNING: DiffExp_Output is not the *_forSEGEXUpload_DESeq.txt or *_forSEGEXUpload_EdgeR.txt file!")
@@ -67,7 +67,7 @@ setwd(dir)
 #---------------------------------------------------------------------------
 #Check to make sure *_forSEGEXUpload_DESeq.txt file exists
 #Need invisible() to avoid printing NULL
-invisible(if ( length(list.files(pattern = "_forSEGEXUpload_DESeq.txt")) >= 1 || length(list.files(pattern = "_forSEGEXUpload_EdgeR.txt")) >= 1)  {
+invisible(if ( length(list.files(pattern = "_forSEGEXUpload_FPKM_DESeq.txt")) >= 1 || length(list.files(pattern = "_forSEGEXUpload_FPKM_EdgeR.txt")) >= 1)  {
 #Do nothing
 } else {
 print("DESeq or EdgeR job most likely failed.")

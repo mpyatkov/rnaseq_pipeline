@@ -256,8 +256,8 @@ echo 'Running Diff_Genes.R'
 mv ${TMPDIR}/Diff_Genes.R ${TMPDIR}/Input/
 
 #Call the Rscript
-(set -x; Rscript Diff_Genes.R ${SEGEX_File}_DESeq.txt 2 0.05 DESeq ${COL_SUFFIX}'_'${Comparison_Info})
-(set -x; Rscript Diff_Genes.R ${SEGEX_File}_EdgeR.txt 2 0.05 EdgeR ${COL_SUFFIX}'_'${Comparison_Info})
+(set -x; Rscript Diff_Genes.R ${SEGEX_File}_FPKM_DESeq.txt 2 0.05 DESeq ${COL_SUFFIX}'_'${Comparison_Info})
+(set -x; Rscript Diff_Genes.R ${SEGEX_File}_FPKM_EdgeR.txt 2 0.05 EdgeR ${COL_SUFFIX}'_'${Comparison_Info})
 
 #Move Venn_Diff_Genes.R to Input folder
 mv ${TMPDIR}/Venn_Diff_Genes.R ${TMPDIR}/Input/

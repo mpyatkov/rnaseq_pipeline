@@ -81,7 +81,7 @@ res[res == -Inf] <- 1
 res[res == Inf] <- 1
 
 # for deseq (rpkm | tpm normalization)
-output_filename <- paste0(outputFile, ifelse(normalization == "tpm", "_TPM_DESeq.txt", "_DESeq.txt"))
+output_filename <- paste0(outputFile, ifelse(normalization == "tpm", "_TPM_DESeq.txt", "_FPKM_DESeq.txt"))
 deseq_output <- res %>% 
   select(one_of(paste0("id.",col_suffix)), matches(paste0("deseq|",normalization))) %>% 
   rename_all(~str_replace(., "deseq_", "")) %>% 
@@ -89,7 +89,7 @@ deseq_output <- res %>%
   write_tsv(output_filename)
 
 # for edger (rpkm | tpm normalization)
-output_filename <- paste0(outputFile, ifelse(normalization == "tpm", "_TPM_EdgeR.txt", "_EdgeR.txt"))
+output_filename <- paste0(outputFile, ifelse(normalization == "tpm", "_TPM_EdgeR.txt", "_FPKM_EdgeR.txt"))
 edger_output <- res %>% 
   select(one_of(paste0("id.",col_suffix)), matches(paste0("edger|",normalization))) %>% 
   rename_all(~str_replace(., "edger_", "")) %>% 

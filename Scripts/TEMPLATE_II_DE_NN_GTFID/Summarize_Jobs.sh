@@ -143,8 +143,8 @@ set -eu
 
 IFPKMDIR=${Individual_DIR}/Segex_FPKM
 mkdir ${IFPKMDIR}
-mv *_forSEGEXUpload_'DESeq_'${COUNT_PROGRAM}'.txt' ${IFPKMDIR}
-mv *_forSEGEXUpload_'EdgeR_'${COUNT_PROGRAM}'.txt' ${IFPKMDIR}
+mv *_forSEGEXUpload_'FPKM_DESeq_'${COUNT_PROGRAM}'.txt' ${IFPKMDIR}
+mv *_forSEGEXUpload_'FPKM_EdgeR_'${COUNT_PROGRAM}'.txt' ${IFPKMDIR}
 
 ITPMDIR=${Individual_DIR}/Segex_TPM
 mkdir ${ITPMDIR}

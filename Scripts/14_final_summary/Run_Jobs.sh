@@ -125,15 +125,17 @@ link_all_segex_by_norm() {
     local norm_method=$2 # fpkm/tpm
     local feature=$3
 
-    if [[ ${norm_method} == "TPM" ]]; then
-	find ../../${de_index}_DE_* -name "*SEGEX*" | grep -i ${feature} | grep -i edger |grep -i ${norm_method} | xargs -n1 -I{} ln -s {} ./	
-    else
-	find ../../${de_index}_DE_* -name "*SEGEX*" | grep -i ${feature} | grep -i edger |grep -iv "TPM" | xargs -n1 -I{} ln -s {} ./	
-    fi
+    find ../../${de_index}_DE_* -name "*SEGEX*" | grep -i ${feature} | grep -i edger |grep -i ${norm_method} | xargs -n1 -I{} ln -s {} ./
+    
+    # if [[ ${norm_method} == "TPM" ]]; then
+    # 	find ../../${de_index}_DE_* -name "*SEGEX*" | grep -i ${feature} | grep -i edger |grep -i ${norm_method} | xargs -n1 -I{} ln -s {} ./	
+    # else
+    # 	find ../../${de_index}_DE_* -name "*SEGEX*" | grep -i ${feature} | grep -i edger |grep -iv "TPM" | xargs -n1 -I{} ln -s {} ./	
+    # fi
     
 }
 
-# make links for segex files by de index
+# make links for segex files by the DE index
 link_all_segex_by_ix() {
     local de_index=$1
     find ../../${de_index}_DE_* -name "*SEGEX*" | grep -i "TPM" | xargs -n1 -I{} ln -s {} ./
@@ -199,7 +201,6 @@ do
     ## copy all segex files by DE index
     copy_all_segex_files ${de_ix}
     
-
     ## make combined files
     ## find all features associated with de index
     features=$(find ../${de_ix}* -iname "output*" | grep -Po "\K([a-zA-Z]*)(?=$)" | sort | uniq)
