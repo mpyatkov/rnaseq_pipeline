@@ -80,6 +80,11 @@ res <- data %>%
 res[res == -Inf] <- 1
 res[res == Inf] <- 1
 
+## excel does not support numbers less than 1e-308 and convert them to char
+## R convert numbers less than 1e-325 to 0
+## We convert all numbers in the res table less than 1e-300 to 0 
+res[res<1e-300] <- 0
+
 # for deseq (rpkm | tpm normalization)
 output_filename <- paste0(outputFile, ifelse(normalization == "tpm", "_TPM_DESeq.txt", "_FPKM_DESeq.txt"))
 deseq_output <- res %>% 
