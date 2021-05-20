@@ -62,6 +62,15 @@ res <- data %>%
          edger_padj= ifelse(is.na(EdgeR_padj_FDR), 1, EdgeR_padj_FDR),
          deseq_pval=ifelse(is.na(DESeq2_pvalue), 1, DESeq2_pvalue),
          edger_pval=ifelse(is.na(EdgeR_pvalue), 1, EdgeR_pvalue),
+
+         ## excel does not support numbers less than 1e-308 and convert them to char
+         ## R convert numbers less than 1e-325 to 0
+         ## We convert all numbers in the res table less than 1e-300 to 1e-300
+         ## all 0 also will be converted to 1e-300 automatically, because log10(0) == -Inf
+         deseq_padj = ifelse(log10(deseq_padj)<(-300),1e-300,deseq_padj),
+         edger_padj = ifelse(log10(edger_padj)<(-300),1e-300,edger_padj),
+         deseq_pval = ifelse(log10(deseq_pval)<(-300),1e-300,deseq_pval),
+         edger_pval = ifelse(log10(edger_pval)<(-300),1e-300,edger_pval),
          id = replace_name(id)) %>% 
   select(id,
          edger_ratio = EdgeR_foldChange,
@@ -79,11 +88,6 @@ res <- data %>%
 # because is.infinite() does not work with data frames, we replace all Inf values inplace
 res[res == -Inf] <- 1
 res[res == Inf] <- 1
-
-## excel does not support numbers less than 1e-308 and convert them to char
-## R convert numbers less than 1e-325 to 0
-## We convert all numbers in the res table less than 1e-300 to 0 
-res[res<1e-300] <- 0
 
 # for deseq (rpkm | tpm normalization)
 output_filename <- paste0(outputFile, ifelse(normalization == "tpm", "_TPM_DESeq.txt", "_FPKM_DESeq.txt"))
