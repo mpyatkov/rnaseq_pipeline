@@ -1,3 +1,13 @@
+## [4.5.1] - 2021-06-04
+
+### Updated
+- for SEGEX output files for values less than 1e-300 automatically set 0
+- added FPKM for SEGEX output names
+- for Fam205_GL name was reduced to 18 characters
+- fixing SVD behavior after refactoring
+- Updated TACO documentation
+- added info about FC and FDR for Venn diagrams
+
 ## [4.5] - 2021-04-23
 
 ### Added
