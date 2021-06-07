@@ -175,6 +175,23 @@ DEFAULT_ALIGNER=1
 DEFAULT_FC=2
 DEFAULT_FDR=0.05
 
+## SEGEX options
+# In the last pipeline step we have as output several files in the
+# Segex_09* directories. To simplify uploading files to the database
+# we add SEGEX_EXPT_IX to the file names and create special table
+# "Upload_SEGEX_table.tsv" which contains summary information.
+# Segex experiment start index.
+SEGEX_EXPT_IX=123
+
+# As output of step 14 we have ExonCollapsed/FullGeneBody features. If
+# users would like to load only particular feature they can specify
+# the order in which features will be numerated.
+# 0 - no numeration, default behavior, do nothing
+# 1 - numerate FullGeneBody output, skip ExonCollapsed
+# 2 - numerate ExonCollapsed output, skip FullGeneBody
+# 3 - numerate both features outputs starting from FullGeneBody
+SEGEX_FEATURE_SORT_IX=0
+
 [SYSTEM]
 # The location of the GTF files (you will need to have access to
 # wax-es to run pipeline)

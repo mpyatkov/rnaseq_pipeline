@@ -200,7 +200,7 @@ for de_ix in $dedirs
 do
     ## copy all segex files by DE index
     copy_all_segex_files ${de_ix}
-    
+
     ## make combined files
     ## find all features associated with de index
     features=$(find ../${de_ix}* -iname "output*" | grep -Po "\K([a-zA-Z]*)(?=$)" | sort | uniq)
@@ -226,6 +226,16 @@ do
 	done
     done
 
+    
+    ## postprocessing files for SEGEX, adding index
+    pushd "./output/Segex_${de_ix}"
+    cp "../../Scripts/add_segex_index.R" ./
+    Rscript add_segex_index.R ${SEGEX_EXPT_IX} ${SEGEX_FEATURE_SORT_IX}
+    rm add_segex_index.R
+    # TODO: rename "Upload_SEGEX_table.tsv" to dir name
+    popd
+
+    
     ## make summary for up/down genes
     tmpdir=${de_ix}_DE_Genes_counts
     rm -rf $tmpdir && mkdir $tmpdir && pushd ${tmpdir}
