@@ -97,7 +97,7 @@ copy_feature(){
     # find all segex files associated with fpkm, edger, not located in
     # output, contained ${feature} in the name and copy them to the
     # required folder
-    find ../${de_index}_DE_* -name "*SEGEX*" | grep -iv output | grep -i ${feature} | grep -i fpkm | grep -i edger | xargs -n1 -I{} cp {} ./output/Segex_${de_index}/Segex${de_index}_${feature}/
+    find ../${de_index}_DE_* -name "*SEGEX*" | grep -iv output | grep -i ${feature} | grep -i tpm | grep -i edger | xargs -n1 -I{} cp {} ./output/Segex_${de_index}/Segex${de_index}_${feature}/
 }
 
 # copy segex files from DE directories to step 14 output
