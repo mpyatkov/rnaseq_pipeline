@@ -87,6 +87,7 @@ for f in ${s13_combined_files[@]}; do
     rm -rf ${dname}
 done
 
+## SPECIFY FUNCTIONS
 
 copy_feature(){
     local de_index=$1
@@ -99,6 +100,7 @@ copy_feature(){
     # required folder
     find ../${de_index}_DE_* -name "*SEGEX*" | grep -iv output | grep -i ${feature} | grep -i tpm | grep -i edger | xargs -n1 -I{} cp {} ./output/Segex_${de_index}/Segex${de_index}_${feature}/
 }
+
 
 # copy segex files from DE directories to step 14 output
 copy_all_segex_files() {
@@ -119,6 +121,7 @@ copy_all_segex_files() {
     done
 }
 
+
 # make links for segex files by normalization method (fpkm/tpm)
 link_all_segex_by_norm() {
     local de_index=$1
@@ -135,11 +138,13 @@ link_all_segex_by_norm() {
     
 }
 
+
 # make links for segex files by the DE index
 link_all_segex_by_ix() {
     local de_index=$1
     find ../../${de_index}_DE_* -name "*SEGEX*" | grep -i "TPM" | xargs -n1 -I{} ln -s {} ./
 }
+
 
 # summarize up and down genes
 function updown_genes() {
@@ -191,6 +196,48 @@ function segex_combined_files() {
     echo ${output_fname}
 }
 
+# extract fastqc headers
+function get_fastq_headers(){
+    # INPUT: info about fq reads location
+    # OUTPUT: fq headers for each read assocciated with SAMPLE_ID, CONDNAME
+    
+    # 1. get info for each sample from index file using using the pipeline cmd
+    #    (01_Pipeline_Setup.py)
+    # 2. extract 1st and 2nd location info and get header from these files
+    # 3. save output to 'outname' file
+
+    local outname=$1
+
+    # remove outname if exists
+    rm -rf ${outname}
+    printf "%s,%s,%s,%s\n" "SAMPLE_ID" "CONDITION_NAME" "READ1_HEADER" "READ2_HEADER"> ${outname}
+    
+    # get all samples from Sample_labels.txt
+    samples=($("${SETUP_PIPELINE_DIR}"/01_Pipeline_Setup.py --samples))
+    
+    for ((i=0;i< ${#samples[@]} ;i+=2));
+    do
+	SAMPLE_ID=${samples[i]}
+	CONDNAME=${samples[i+1]}
+
+	# extract info about fastq files locations
+	sample_info=($("${SETUP_PIPELINE_DIR}"/01_Pipeline_Setup.py --get_sample_info ${SAMPLE_ID}))
+	READ1=${sample_info[1]}
+	READ2=${sample_info[2]}
+	
+	# get header
+	set +eu
+	READ1_HEADER=$(zcat ${READ1} | head -n1)
+	READ2_HEADER=$(zcat ${READ2} | head -n1)
+	set -eu
+
+	# save to file
+	printf "%s,%s,%s,%s\n" "${SAMPLE_ID}" "${CONDNAME}" "${READ1_HEADER}" "${READ2_HEADER}" >> ${outname}
+    done
+}
+
+## RUN FUNCTIONS
+
 # find all 09a, 09b, 09c, ... directories
 dedirs=$(find ../09* -iname "output*" | grep -Po '09[a-z]' | sort | uniq)
 norm_methods=( "TPM" "FPKM" )
@@ -226,7 +273,7 @@ do
 	done
     done
 
-    
+   
     ## postprocessing files for SEGEX, adding index
     pushd "./output/Segex_${de_ix}"
     cp "../../Scripts/add_segex_index.R" ./
@@ -235,7 +282,6 @@ do
     # TODO: rename "Upload_SEGEX_table.tsv" to dir name
     popd
 
-    
     ## make summary for up/down genes
     tmpdir=${de_ix}_DE_Genes_counts
     rm -rf $tmpdir && mkdir $tmpdir && pushd ${tmpdir}
@@ -249,5 +295,9 @@ do
     popd &&  rm -rf $tmpdir
 
 done
+
+echo "Extracting headers from corresponding FASTQ files"
+get_fastq_headers "FASTQ_headers.csv"
+mv "FASTQ_headers.csv" ./output
 
 echo "All files copied. Done "
