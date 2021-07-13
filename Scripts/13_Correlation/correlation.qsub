@@ -51,11 +51,11 @@ function combined_pdf() {
     if [[ "${OUTNAME}" =~ Pearson|Spearman ]]; then
 	mkdir -p Correlation_CSVs
 	mv *.csv ./Correlation_CSVs
-    elif [[ "${OUTNAME}" =~ PCA ]]; then
+    elif [[ "${OUTNAME}" =~ _PCA_ ]]; then
 	mkdir -p Non-significant_genes
 	mv *.csv ./Non-significant_genes
     else
-	# "TSNE, do nothing"
+	# "TSNE or RPCA, do nothing"
 	echo -n ""
     fi
 }
@@ -79,6 +79,7 @@ function calc_correlation()
     
     rm -rf PCA && mkdir -p PCA
     rm -rf TSNE && mkdir -p TSNE
+    rm -rf RPCA && mkdir -p RPCA
     rm -rf ${PCOR} && mkdir -p ${PCOR}
     rm -rf ${SCOR} && mkdir -p ${SCOR}
 
@@ -104,6 +105,7 @@ function calc_correlation()
     mv *_Spearman* ./${SCOR}
     mv *_PCA_* ./PCA/
     mv *_TSNE_* ./TSNE/
+    mv *_RPCA_* ./RPCA/
 
     # remove all Diff.Exp files
     rm -rf *DiffExp*
@@ -117,6 +119,7 @@ function calc_correlation()
     (cd ${SCOR}; combined_pdf "${OUTNAME}_Spearman_Combined.pdf")
     (cd PCA; combined_pdf "${OUTNAME}_PCA_Combined.pdf")
     (cd TSNE; combined_pdf "${OUTNAME}_TSNE_Combined.pdf")
+    (cd RPCA; combined_pdf "${OUTNAME}_RPCA_Combined.pdf")
 
     rm ./*.R
     rm ./SAMPLE_CONDNAME.tsv

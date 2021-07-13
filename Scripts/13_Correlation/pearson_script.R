@@ -5,7 +5,6 @@
 ##################################################################################
 
 args <- commandArgs(T)
-# DATASET_LABEL <- args[1]
 
 EXTARGS=list(dataset_label=args[1],
              detitle=args[2],
@@ -24,6 +23,7 @@ wd <- getwd()
 if(!is.null(wd)) {setwd(wd)}
 
 require(stringr)
+library(rrcov)
 require(ggplot2)
 require(MASS)
 library(tools)
@@ -116,35 +116,59 @@ plot_cor <- function(df, title, method, out_name)
 
 # return ggplot object after PCA/TSNE calculation
 pcatsne_init_ggplot <- function(df_pca, type) {
-    if (dim(df_pca)[2] <= 2) {
+   
+    if (dim(df_pca$df_pca)[2] <= 2) {
         ## empty ggplot, because we do not have enough dimensions for SVD
         ggresult<-ggplot()
 
     } else {
 
-        if (type == "PCA") {
-            pca <- prcomp(subset(df_pca, select = -c(group)))
-            ggresult <- autoplot(pca, data= df_pca, label = F)
-            
-        } else {
-            perplexity <- ifelse(length(levels(as.factor(df_pca$group))) > 2, 2, 1)
-            set.seed(42)
-            tsne_model <- Rtsne(as.matrix(subset(df_pca, select = -c(group))), 
-                                check_duplicates=FALSE, 
-                                pca=TRUE, 
-                                perplexity=perplexity, 
-                                theta=0.5, 
-                                dims=3, 
-                                set.seed=TRUE)
-            
-            ## getting the two dimension matrix
-            ## df_tsne <- as.data.frame(tsne_model$Y)
-            df_tsne <- data.frame(PC1 = tsne_model$Y[,1],
-                                  PC2 = tsne_model$Y[,2],
-                                  group = df_pca$group)
-            
-            ggresult <- ggplot(df_tsne, aes(x=PC1, y=PC2, group=group), label= F)  
-        }
+       switch (type,
+               
+               PCA={
+                  df_pca <- df_pca$df_pca
+                  pca <- prcomp(subset(df_pca, select = -c(group)))
+                  ggresult <- autoplot(pca, data= df_pca, label = F)
+               },
+               
+               TSNE={
+                  df_pca <- df_pca$df_pca
+                  perplexity <- ifelse(length(levels(as.factor(df_pca$group))) > 2, 2, 1)
+                  set.seed(42)
+                  tsne_model <- Rtsne(as.matrix(subset(df_pca, select = -c(group))), 
+                                      check_duplicates=FALSE, 
+                                      pca=TRUE, 
+                                      perplexity=perplexity, 
+                                      theta=0.5, 
+                                      dims=3, 
+                                      set.seed=TRUE)
+                  
+                  ## getting the two dimension matrix
+                  ## df_tsne <- as.data.frame(tsne_model$Y)
+                  df_tsne <- data.frame(PC1 = tsne_model$Y[,1],
+                                        PC2 = tsne_model$Y[,2],
+                                        group = df_pca$group)
+                  
+                  ggresult <- ggplot(df_tsne, aes(x=PC1, y=PC2, group=group), label= F) 
+               },
+               
+               RPCA={
+                  rpca_tmp <-  df_pca$rpca
+                  rpca_mx <- as.matrix(subset(rpca_tmp, select = -c(group)))
+                  rpca <- PcaGrid(rpca_mx, 3)
+                  rpca_df <- data.frame(x = rpca$sd, y = rpca$od, group = rpca_tmp$group)
+                  
+                  ggresult <- ggplot(data = rpca_df, aes(x=x, y=y, group=group))+
+                     {if(type == "RPCA") geom_hline(yintercept=rpca$cutoff.od)}+
+                     {if(type == "RPCA") geom_vline(xintercept=rpca$cutoff.sd)}+
+                     {if(type == "RPCA") xlab("Score Distance")}+
+                     {if(type == "RPCA") ylab("Orthogonal Distance")}
+               },
+               
+               {
+                  print("DO NOTHING, nor PCA, nor TSNE, nor RPCA")
+               }
+       )
     }
     ggresult
 }
@@ -236,6 +260,37 @@ read_dataset <- function(filenames, group_names, filter_condition = NULL, meanon
       }
    }
    
+   
+   ## -- RPCA 
+   # choose only columns with counts, rPCA data)
+   names_with_counts <- tibble(id = names(dataset)) %>% 
+      inner_join(., tibble(id = group_names$id), by = c("id")) %>% 
+      pull(id)
+   
+   rpca <- dataset %>% select(1, names_with_counts)
+   
+   # get subset of significant/non-significant genes for rpca
+   rpca <- rpca %>% left_join(tibble(id = rownames(dataset_grep_filter)), ., by = c("id"))
+   
+   # tibble deprecated assigning rownames convert it to df
+   rpca <- as.data.frame(rpca)
+   rownames(rpca) <- rpca$id
+   rpca$id <- NULL
+   rpca <- t(rpca)
+   
+   # reassociate rownames (condname_sample) and groups by id (condname_sample)
+   groups <- tibble(id = rownames(rpca)) %>% 
+      left_join(., group_names, by=c("id")) %>% 
+      select(-id) %>% pull(group)
+   
+   rpca <- as.data.frame(rpca)
+   rpca$group <- groups
+   
+   ## -- end RPCA
+   
+   
+   ## -- for correlation and PCA
+   
    # get gene names
    gene_names <- rownames(dataset_grep_filter)
    
@@ -255,7 +310,7 @@ read_dataset <- function(filenames, group_names, filter_condition = NULL, meanon
    for_pca <- dataset_grep_filter %>%
       select(-contains("_mean_"))
    
-   #extract only RPKM columns 
+   # extract only RPKM columns 
    df_pca <- t(for_pca)
    rownames(df_pca) <- str_remove(rownames(df_pca), "rpkm_")
    
@@ -268,7 +323,9 @@ read_dataset <- function(filenames, group_names, filter_condition = NULL, meanon
    df_pca <- as.data.frame(df_pca)
    df_pca$group <- groups
    
-   list(df_pca=df_pca, df_cor=for_cor, gene_names = gene_names)
+   ## -- end for correlation and PCA
+   
+   list(df_pca=df_pca, df_cor=for_cor, gene_names = gene_names, rpca = rpca)
 }
 
 # generate out_names for PCA and correlation plots
@@ -298,14 +355,14 @@ pca_3plot <- function(filename, plot_type, group_names, extargs, number, meanonl
    ds <- read_dataset(filename, group_names, meanonly = meanonly)
    out_fname <- paste0(number, paste0("_",plot_type,"_All_"), get_out_names(out_names))
    header <- paste0(extargs$dataset_label, ", ", out_fname, ", ", "\nAll genes (without filter), ",extargs$detitle,"_Genes: ", length(ds$gene_names))
-   ggplot_obj <- pcatsne_init_ggplot(df_pca = ds$df_pca, plot_type)
+   ggplot_obj <- pcatsne_init_ggplot(df_pca = ds, plot_type)
    plot_pca(ds$df_pca, header, out_fname, ggplot_obj)
    
    # dataset with significant genes
    ds <- read_dataset(filename, group_names, filter_condition = cond$signif, meanonly = meanonly)
    out_fname <- paste0(number, paste0("_",plot_type,"_Significant_"), get_out_names(out_names, cond$signif$text))
    header <- paste0(extargs$dataset_label, ", ", out_fname, ", ", "\nSignificant genes (|FC|>",extargs$CUSTOM_FC," and FDR<", extargs$CUSTOM_FDR,"), ",extargs$detitle,"_Genes: ", length(ds$gene_names))
-   ggplot_obj <- pcatsne_init_ggplot(df_pca = ds$df_pca, plot_type)
+   ggplot_obj <- pcatsne_init_ggplot(df_pca = ds, plot_type)
    plot_pca(ds$df_pca, header, out_fname, ggplot_obj)
    
    # dataset with non-significant genes
@@ -315,7 +372,7 @@ pca_3plot <- function(filename, plot_type, group_names, extargs, number, meanonl
    if (plot_type == "PCA") {
       write_csv(tibble(id = ds$gene_names), paste0(out_fname,"_GeneNames",".csv"))
    }
-   ggplot_obj <- pcatsne_init_ggplot(df_pca = ds$df_pca, plot_type)
+   ggplot_obj <- pcatsne_init_ggplot(df_pca = ds, plot_type)
    plot_pca(ds$df_pca, header, out_fname, ggplot_obj)
 }
 
@@ -378,8 +435,9 @@ if(!is.na(list.filenames.HT[1])){
    group_names <- read_tsv("./SAMPLE_CONDNAME.tsv", col_names = F) %>% 
       select(id = X3, group = X2)
    
-   dataset <- read_dataset(list.filenames.HT[1], group_names)
-   #cor_3plot(list.filenames.HT, "pearson", EXTARGS, 0, meanonly = F)
+   #dataset <- read_dataset(list.filenames.HT, group_names)
+   #cor_3plot(list.filenames.HT, group_names, "pearson", EXTARGS, 0)
+   #pca_3plot(list.filenames.HT[1],"RPCA", group_names, EXTARGS, 0)
    
    tic("total")
    
@@ -391,7 +449,12 @@ if(!is.na(list.filenames.HT[1])){
    tic("create 3 TSNE plot for all genes")
    pca_3plot(list.filenames.HT,"TSNE", group_names, EXTARGS, 0)
    toc()
-   
+
+   tic("create 3 RPCA plot for all genes")
+   # create 3 pca plot for all genes
+   pca_3plot(list.filenames.HT,"RPCA", group_names, EXTARGS, 0)
+   toc()
+    
    tic("create 3 Pearson correlation plot for all genes")
    # create 3 Pearson correlation plot for all genes
    cor_3plot(list.filenames.HT,group_names, "pearson", EXTARGS, 0)
@@ -421,6 +484,9 @@ if(!is.na(list.filenames.HT[1])){
       
       # create TSNE plot for each group
       pca_3plot(list.filenames.HT[i], "TSNE", group_names, EXTARGS, number)
+
+      # create TSNE plot for each group
+      pca_3plot(list.filenames.HT[i], "RPCA", group_names, EXTARGS, number)
       
       # create correlation plots
       cor_3plot(list.filenames.HT[i], group_names, "pearson", EXTARGS, number)
