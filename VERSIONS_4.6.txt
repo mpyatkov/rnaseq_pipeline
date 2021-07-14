@@ -1,3 +1,14 @@
+## [4.6]
+
+### Added
+- Added RPCA plots in addition to PCA and TSNE
+- Added additional report (step 14) about FASTQ headers
+- Added experiment number for SEGEX output (step 14)
+
+### Changed
+- changed FPKM to TPM for SEGEX output (step 14)
+
+
 ## [4.5.1] - 2021-06-04
 
 ### Updated
@@ -7,6 +18,7 @@
 - fixing SVD behavior after refactoring
 - Updated TACO documentation
 - added info about FC and FDR for Venn diagrams
+
 
 ## [4.5] - 2021-04-23
 
