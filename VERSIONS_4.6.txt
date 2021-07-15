@@ -1,4 +1,4 @@
-## [4.6]
+## [4.6] - 2021-07-14
 
 ### Added
 - Added RPCA plots in addition to PCA and TSNE
