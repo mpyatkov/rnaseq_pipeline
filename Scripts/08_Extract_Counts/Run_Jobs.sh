@@ -29,7 +29,7 @@ for ((i=0;i< ${#samples[@]} ;i+=2))
 do
     # sample_dir=${samples[i]}
     sample_id=${samples[i]}
-    description=${samples[i+1]}
+    # description=${samples[i+1]}
     
     for ((j=0; j< ${#gtflist[@]} ;j+=2))
     do

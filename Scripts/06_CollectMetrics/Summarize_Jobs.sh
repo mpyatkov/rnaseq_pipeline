@@ -45,8 +45,9 @@ echo SAMPLE_ID $'\t'DESCRIPTION $'\t'CODING_BASES $'\t'UTR_BASES $'\t'PCT_INTRON
 
 collect_size_metrics() {
     local sample_id=$1
-    local output_dir=$2
-    local output_file=$3
+    local description=$2
+    local output_dir=$3
+    local output_file=$4
 
     #Copy hist file to output_dir
     cp ${sample_id}'_hist.pdf' ${output_dir}
@@ -89,7 +90,8 @@ collect_size_metrics() {
 collect_rnaseq_metrics() {
 
     local sample_id=$1
-    local output_file=$2
+    local description=$2
+    local output_file=$3
 
     #Extract lines 7 and 8 from file
     sed -n 7,8p ${sample_id}'_metrics' > temp1.txt
@@ -130,14 +132,14 @@ do
 
     # Need to cd to sample specific CollectInsertSizeMetrics folder
     pushd "${DATASET_DIR}/${sample_id}/CollectInsertSizeMetrics"
-    collect_size_metrics ${sample_id} ${output_dir} ${size_metrics}
+    collect_size_metrics ${sample_id} ${description} ${output_dir} ${size_metrics}
     popd
 
     # Need to cd to sample specific CollectRnaSeqMetrics folder
     pushd "${DATASET_DIR}/${sample_id}/CollectRnaSeqMetrics"
     echo "---> $(pwd)"
     ls -l
-    collect_rnaseq_metrics ${sample_id} ${rna_metrics}
+    collect_rnaseq_metrics ${sample_id} ${description} ${rna_metrics}
     popd
 done
 

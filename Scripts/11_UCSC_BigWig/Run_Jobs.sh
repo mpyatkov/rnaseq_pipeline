@@ -42,7 +42,7 @@ for ((i=0;i< ${#samples[@]} ;i+=2));
 do
     # sample_dir=${samples[i]}
     sample_id=${samples[i]}
-    description=${samples[i+1]}
+    # description=${samples[i+1]}
 
     # check if sample in db
     sample_info=($("${SETUP_PIPELINE_DIR}"/01_Pipeline_Setup.py --get_sample_info ${sample_id}))
