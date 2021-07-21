@@ -156,7 +156,9 @@ pcatsne_init_ggplot <- function(df_pca, type) {
                RPCA={
                   rpca_tmp <-  df_pca$rpca
                   rpca_mx <- as.matrix(subset(rpca_tmp, select = -c(group)))
+                  rpca_mx <-t(rpca_mx)
                   rpca_mx <- rlog(rpca_mx)
+                  rpca_mx <-t(rpca_mx)
                   rpca <- PcaGrid(rpca_mx, 3)
                   rpca_df <- data.frame(x = rpca$sd, y = rpca$od, group = rpca_tmp$group)
                   
