@@ -154,11 +154,11 @@ pcatsne_init_ggplot <- function(df_pca, type) {
                },
                
                RPCA={
-                  rpca_tmp <-  df_pca$rpca
+                  rpca_tmp <-  df_pca$df_pca
                   rpca_mx <- as.matrix(subset(rpca_tmp, select = -c(group)))
-                  rpca_mx <-t(rpca_mx)
-                  rpca_mx <- rlog(rpca_mx)
-                  rpca_mx <-t(rpca_mx)
+                 # rpca_mx <-t(rpca_mx)
+                 # rpca_mx <- rlog(rpca_mx)
+                 # rpca_mx <-t(rpca_mx)
                   rpca <- PcaGrid(rpca_mx, 3)
                   rpca_df <- data.frame(x = rpca$sd, y = rpca$od, group = rpca_tmp$group)
                   
@@ -168,7 +168,13 @@ pcatsne_init_ggplot <- function(df_pca, type) {
                      {if(type == "RPCA") xlab("Score Distance")}+
                      {if(type == "RPCA") ylab("Orthogonal Distance")}
                },
-               
+               RPCAscore={
+                  rpca_tmp <-  df_pca$df_pca
+                  rpca_mx <- as.matrix(subset(rpca_tmp, select = -c(group)))
+                  rpca <- PcaGrid(rpca_mx, 3)
+                  rpcapr <- getPrcomp(rpca)
+                  ggresult <- autoplot(rpcapr, data= rpca_tmp, label = F)
+               },
                {
                   print("DO NOTHING, nor PCA, nor TSNE, nor RPCA")
                }
@@ -458,7 +464,12 @@ if(!is.na(list.filenames.HT[1])){
    # create 3 pca plot for all genes
    pca_3plot(list.filenames.HT,"RPCA", group_names, EXTARGS, 0)
    toc()
-    
+
+   tic("create 3 RPCA score plots for all genes")
+   # create 3 pca plot for all genes
+   pca_3plot(list.filenames.HT,"RPCAscore", group_names, EXTARGS, 0)
+   toc()
+
    tic("create 3 Pearson correlation plot for all genes")
    # create 3 Pearson correlation plot for all genes
    cor_3plot(list.filenames.HT,group_names, "pearson", EXTARGS, 0)
@@ -489,8 +500,11 @@ if(!is.na(list.filenames.HT[1])){
       # create TSNE plot for each group
       pca_3plot(list.filenames.HT[i], "TSNE", group_names, EXTARGS, number)
 
-      # create TSNE plot for each group
+      # create RPCA plot for each group
       pca_3plot(list.filenames.HT[i], "RPCA", group_names, EXTARGS, number)
+
+      # create RPCA Score plot for each group
+      pca_3plot(list.filenames.HT[i], "RPCAscore", group_names, EXTARGS, number)
       
       # create correlation plots
       cor_3plot(list.filenames.HT[i], group_names, "pearson", EXTARGS, number)
