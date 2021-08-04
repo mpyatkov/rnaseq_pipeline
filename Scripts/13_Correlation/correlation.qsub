@@ -129,8 +129,57 @@ function calc_correlation()
     popd
 }
 
+function montage_pca_plots(){
+
+    # - copy 3 resulted pdf to one directory
+    # - disassemble 3 pdf (RPCA, RPCAscores, PCA) by pages
+    # - montage i-pages (where i=1,2,3,..) as one i-out page
+    # - combine i-out pages in one pdf file
+    
+    local OUTDIR=$1
+    local LOCALDIR="Tiled_PCA"
+    local OUTNAME="$(basename ${OUTDIR})_${LOCALDIR}_Combined.pdf"
+    
+    mkdir -p "${OUTDIR}/${LOCALDIR}"
+
+    pushd "${OUTDIR}/${LOCALDIR}"
+
+    ## disassemble pdf files
+    cp ../PCA/*.pdf ./
+    cp ../RPCA/*.pdf ./
+    cp ../RPCA_Score/*.pdf ./
+
+    pdfseparate *_PCA_*.pdf %d_PCA.pdf
+    rm -rf *_PCA_*.pdf
+
+    pdfseparate *_RPCAscore_*.pdf %d_RPCAscore.pdf
+    rm -rf *_RPCAscore_*.pdf
+
+    pdfseparate *_RPCA_*.pdf %d_RPCA.pdf
+    rm -rf *_RPCA_*.pdf
+
+    ## montage 3 (PCA,RPCA,RPCAScore) files in one
+    NUMBER_OF_PLOTS=$(find . -name "*_PCA*pdf" | wc -l)
+
+    for ((i=1; i<=${NUMBER_OF_PLOTS}; i++)); do
+	echo "montage ${i} triples of PCA,RPCA,RPCAScore"
+	montage -geometry +3+3 -tile 2x2 "${i}_RPCA.pdf" "${i}_PCA.pdf" "${i}_RPCAscore.pdf" "${i}_montage.pdf"
+	rm -rf "${i}_RPCA.pdf" "${i}_PCA.pdf" "${i}_RPCAscore.pdf"
+    done
+
+    ## combine all montaged files in one output
+    montage_files=($(find . -name "*montage*pdf" | xargs -n1 basename | sort -n))
+    pdfunite ${montage_files[@]} ${OUTNAME}
+    rm -rf ./*montage*
+    popd
+    
+}
+
 echo "Start ${OUTDIR_DICT[$DEDIR]}: $(date)"
 calc_correlation "../../../${DEDIR}_DE_* -name 'DiffEx*ExonCollapsed*txt'" "./Job_Summary/${OUTDIR_DICT[$DEDIR]}" "${DETITLE_DICT[$DEDIR]}"
+
+echo "Start montaging the PCA plots"
+montage_pca_plots "./Job_Summary/${OUTDIR_DICT[$DEDIR]}"
 
 ## Special symbol that step is ok (do not remove it)
 echo "IAMOK"
