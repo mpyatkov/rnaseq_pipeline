@@ -148,7 +148,8 @@ function montage_pca_plots(){
     cp ../PCA/*.pdf ./
     cp ../RPCA/*.pdf ./
     cp ../RPCA_Score/*.pdf ./
-
+    cp ../Pearson_correlation/*.pdf ./
+    
     pdfseparate *_PCA_*.pdf %d_PCA.pdf
     rm -rf *_PCA_*.pdf
 
@@ -158,13 +159,37 @@ function montage_pca_plots(){
     pdfseparate *_RPCA_*.pdf %d_RPCA.pdf
     rm -rf *_RPCA_*.pdf
 
-    ## montage 3 (PCA,RPCA,RPCAScore) files in one
+    pdfseparate *_Pearson_*.pdf %d_Pearson.pdf
+    rm -rf *_Pearson_*.pdf
+
+    # number of PCA plots (for the Pearson correlation we will have
+    # have some extra plots which we should to remove)
     NUMBER_OF_PLOTS=$(find . -name "*_PCA*pdf" | wc -l)
 
+    # remove 3, 4 and 2*n+4 pages (starting from 1) - this is
+    # all,sign,non-sign pages for all genes
+    (set -x; rm -rf 3_Pearson.pdf 4_Pearson.pdf "$((2*${NUMBER_OF_PLOTS}/3+4))_Pearson.pdf")
+        
+    # renumerate indexes of files ex. (1_Pearson.pdf,2_Pearson.pdf,4_Pearson.pdf) -> (1..,2..,3..)
+    pearpages=($(find . -name "*_Pearson.pdf" | xargs -n1 basename | sort -n))
+    for i in ${!pearpages[@]}; do
+	# create new index
+	let NEWIX=${i}+1
+	
+	# extract the part after the underscore (1_[bla.txt])
+	BODY=$(echo ${pearpages[$i]} | cut -d'_' -f2)
+    
+	# rename file using new index if required 
+	if [ ${pearpages[$i]} != "${NEWIX}_${BODY}" ]; then
+	    mv ${pearpages[$i]} "${NEWIX}_${BODY}"
+	fi
+    done
+
+    ## montage 4 (PCA,RPCA,RPCAScore,Pearson) files in one
     for ((i=1; i<=${NUMBER_OF_PLOTS}; i++)); do
-	echo "montage ${i} triples of PCA,RPCA,RPCAScore"
-	montage -geometry +3+3 -tile 2x2 "${i}_RPCA.pdf" "${i}_PCA.pdf" "${i}_RPCAscore.pdf" "${i}_montage.pdf"
-	rm -rf "${i}_RPCA.pdf" "${i}_PCA.pdf" "${i}_RPCAscore.pdf"
+	echo "montage ${i} 4 plots of PCA,RPCA,RPCAScore,Pearson"
+	montage -geometry +3+3 -tile 2x2 "${i}_RPCA.pdf" "${i}_PCA.pdf" "${i}_RPCAscore.pdf" "${i}_Pearson.pdf" "${i}_montage.pdf"
+	rm -rf "${i}_RPCA.pdf" "${i}_PCA.pdf" "${i}_RPCAscore.pdf" "${i}_Pearson.pdf"
     done
 
     ## combine all montaged files in one output
