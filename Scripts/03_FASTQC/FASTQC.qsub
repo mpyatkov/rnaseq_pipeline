@@ -63,18 +63,11 @@ module load miniconda
 conda activate --stack ${CONDA_DIR}/fastqc
 set -eu
 
-# module load fastqc
+# get_sample_info return (PRJ_NAME, READ1, READ2) or EXCEPTION
+sample_info=($("${SETUP_PIPELINE_DIR}"/01_Pipeline_Setup.py --get_sample_info ${sample_id}))
 
-# get correct reads
-function get_fastq_by_read_number(){
-    local READ_NUMBER=$1
-    R=$(find ${DATASET_DIR}/${sample_id} \( -name "*_${READ_NUMBER}.f*q.gz" -o -name "*R${READ_NUMBER}*.f*q.gz" \) | head -n1)
-    echo $R
-}
-
-# read 1 and 2
-R1=$(get_fastq_by_read_number 1)
-R2=$(get_fastq_by_read_number 2)
+R1=${sample_info[1]}
+R2=${sample_info[2]}
 
 # if fastq files do not exist the following commands should raise
 # an error and script will be interrupted
