@@ -20,7 +20,8 @@ eval "$(../00_Setup_Pipeline/01_Pipeline_Setup.py --export)"
 
 set +eu
 module load miniconda
-conda activate --stack /projectnb/wax-es/routines/condaenv/rlang361
+conda activate --stack ${CONDA_DIR}/rlang361
+conda activate --stack ${CONDA_DIR}/multiqc
 set -eu
 
 # module load gcc/8.1.0
@@ -58,8 +59,8 @@ fi
 
 set +eu
 # cp -rf  ${Level_UP}/04_TopHat_Paired_End/Job_Summary/TopHat2_Stats_BestMapped.txt  ./output/
-cp -rf  ${Level_UP}/02_Read_Strandness/Job_Summary/Read_Strandness_Stats.txt ./output/
-cp -rf  ${Level_UP}/06_CollectMetrics/Job_Summary/CollectRnaSeqMetrics_Stats.txt  ./output/
+# cp -rf  ${Level_UP}/02_Read_Strandness/Job_Summary/Read_Strandness_Stats.txt ./output/
+# cp -rf  ${Level_UP}/06_CollectMetrics/Job_Summary/CollectRnaSeqMetrics_Stats.txt  ./output/
 cp -rf  ${Level_UP}/06_CollectMetrics/Job_Summary/CollectInsertSizeMetrics_Plots.pdf ./output/
 # cp -rf  ${Level_UP}/08_Extract_Counts/Job_Summary/featureCounts_summary_LncRNA15k_ExonCollapsed_GTF.txt  ./output/
 set -eu
@@ -236,6 +237,14 @@ function get_fastq_headers(){
     done
 }
 
+function multiqc_report() {
+    mkdir multiqc_report
+    pushd multiqc_report
+    multiqc --no-ansi ${DATASET_DIR} ${Level_UP}/03_FASTQC/ ${Level_UP}/06_CollectMetrics/ > multiqc_log.txt
+    popd
+}
+
+
 ## RUN FUNCTIONS
 
 # find all 09a, 09b, 09c, ... directories
@@ -299,5 +308,8 @@ done
 echo "Extracting headers from corresponding FASTQ files"
 get_fastq_headers "FASTQ_headers.csv"
 mv "FASTQ_headers.csv" ./output
+
+multiqc_report
+mv multiqc_report ./output
 
 echo "All files copied. Done "
