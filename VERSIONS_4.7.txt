@@ -1,3 +1,13 @@
+## [4.7] - 2021-08-23
+
+## Added
+- Added multiqc to summarize reports
+- Added tiled plot which containes PCA,RPCA,RPCAscore and Pearson plots
+- Added RPCAScore (RPKM based) plots in addtion to RPCA (RPKM based)
+
+## Updated
+- removed deprecated code that incorrectly identified R1, R2 reads 
+ 
 ## [4.6] - 2021-07-14
 
 ### Added
