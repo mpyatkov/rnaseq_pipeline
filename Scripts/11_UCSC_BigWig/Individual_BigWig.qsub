@@ -182,7 +182,7 @@ echo "bam2wig.py "${bam2wig_options}
 # Before run we should check existence of the bw files on server
 # UPDATE: This check is not required anymore, because we made it in the Run_Jobs
 # TODO: Run_Jobs.sh, so the following condition will be removed in the future
-if [ ! -f "${OUTPUT_DIR}/${SAMPLE_ID}.Forward.bw" -o ! -f "${OUTPUT_DIR}/${SAMPLE_ID}.Reverse.bw" ]; then
+if [[ (! -f "${OUTPUT_DIR}/${SAMPLE_ID}.Forward.bw" || ! -f "${OUTPUT_DIR}/${SAMPLE_ID}.Reverse.bw") && ! -f "${OUTPUT_DIR}/${SAMPLE_ID}.Unstranded.bw" ]]; then
 
     # samtools sort ${INPUT_BAM} --> ${SAMPLE_ID}_sorted
     samtools sort -@ ${NSLOTS} -o ${SORTED_INPUT_BAM} ${INPUT_BAM}
@@ -192,8 +192,17 @@ if [ ! -f "${OUTPUT_DIR}/${SAMPLE_ID}.Forward.bw" -o ! -f "${OUTPUT_DIR}/${SAMPL
     # if one or both files do not exist - recalculate both of them
     bam2wig.py ${bam2wig_options}
 
+    ## if data are 'unstranded' just dublicate output bw as Forward
+    ## and Reverse (they should be the same) after that we will
+    ## combine them as usual, but track will contain note that this
+    ## data 'unstranded'
+    if [ "${STRAND_RULE}" == "none" ];
+    then
+	mv "${SAMPLE_ID}.bw" "${SAMPLE_ID}.Unstranded.bw"
+    fi
+    
     echo "Copy output to storage dir"
-    # at this moment we suppose that bigwig files for this sampe is not created
+    # at this moment we suppose that bigwig files for this sample is not created
 
     for f in *.bw; do
 	set +eu

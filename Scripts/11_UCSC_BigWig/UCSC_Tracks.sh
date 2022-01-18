@@ -198,10 +198,19 @@ function generate_tracks() {
 	group_name=${comb[1]}
 	server_dir_name=${comb[2]}
 	combined_color=${comb[3]}
+		
 	if [[ $fname == *"Forward"* ]]; then
+	    
 	    echo "track type=bigWig name='${fname}' description='${group_name}' db=mm9 visibility=${BWVISUAL} autoScale=${AUTOSCALE} viewLimits=${LEFTLIMIT}:${RIGHTLIMIT} color='${combined_color}' yLineOnOff=off windowingFunction=mean smoothingWindow=3 maxHeightPixels=100:45:8 bigDataUrl=http://waxmanlabvm.bu.edu/TRACKS/${server_dir_name}/${fname}"
-	else
+	    
+	elif [[ $fname == *"Reverse"* ]]; then
+	    
 	    echo "track type=bigWig name='${fname}' description='${group_name}' db=mm9 visibility=${BWVISUAL} autoScale=${AUTOSCALE} viewLimits=-${RIGHTLIMIT}:${LEFTLIMIT} color='${combined_color}' yLineOnOff=off windowingFunction=mean smoothingWindow=3 maxHeightPixels=100:45:8 bigDataUrl=http://waxmanlabvm.bu.edu/TRACKS/${server_dir_name}/${fname}"
+	    
+	else # unstranded
+	    
+	    echo "track type=bigWig name='${fname}' description='${group_name} (unstranded)' db=mm9 visibility=${BWVISUAL} autoScale=${AUTOSCALE} viewLimits=${LEFTLIMIT}:${RIGHTLIMIT} color='${combined_color}' yLineOnOff=off windowingFunction=mean smoothingWindow=3 maxHeightPixels=100:45:8 bigDataUrl=http://waxmanlabvm.bu.edu/TRACKS/${server_dir_name}/${fname}"
+	    
 	fi
 	
     done < COMBINED_PAIRS.txt >> ${COMBINED_OUTPUT}

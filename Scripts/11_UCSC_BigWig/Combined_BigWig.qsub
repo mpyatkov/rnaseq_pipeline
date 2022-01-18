@@ -43,14 +43,18 @@ for group in "${groups[@]}"; do
     # create new array contains path to Forward and Reverse bigwig files
     forward=()
     reverse=()
+    unstrained=()
+    
     # need to extract sample names and combine them together (ex: M1M2M3)
     suffix=()
 
     group_name=""
+
     for ((i=0;i< ${#samples[@]} ;i+=3));
     do
 	SAMPLE_ID=${samples[i]}
 	CONDNAME=${samples[i+1]}
+	
 	# color for combined track should be the same for all samples
 	COLOR=${samples[i+2]}
 	
@@ -64,11 +68,30 @@ for group in "${groups[@]}"; do
 	# 01_Pipeline_Setup.py give us condition_name column instead
 	# of description column. Condition_name should be the same for all
 	# members of one group
-	
 	group_name=$CONDNAME
+
+	# we suppose that each group of samples has the same
+	# strandedness, otherwise it does not make sense to combine
+	# them, so I omit this checking below. Last sample in the group gives
+	# us a final strandedness
 	
+	# automated strand detection
+	if [ ${STRANDEDNESS} -eq 3 ]; then
+	    export_file="${DATASET_DIR}/${SAMPLE_ID}/Read_Strandness/${SAMPLE_ID}_export.sh"
+	    if [[ -f "${export_file}" ]]; then
+		# re-export STRANDEDNESS
+		source ${export_file}
+		echo "Auto: $STRANDEDNESS"
+	    else
+		echo "Error: cannot find file: ${export_file}"
+		echo "To use automatic strand detection, you must complete step 01_Read_Strandness first"
+		exit 1
+	    fi
+	fi
+
 	forward+=("${VM_DIR_UCSC}/INDEXED_PROJECTS/${project_name}/${SAMPLE_ID}.Forward.bw")
 	reverse+=("${VM_DIR_UCSC}/INDEXED_PROJECTS/${project_name}/${SAMPLE_ID}.Reverse.bw")
+	unstranded+=("${VM_DIR_UCSC}/INDEXED_PROJECTS/${project_name}/${SAMPLE_ID}.Unstranded.bw")
     done
 
     combined_name_project=($("${SETUP_PIPELINE_DIR}"/01_Pipeline_Setup.py --combined_name_by_group ${group}))
@@ -83,47 +106,79 @@ for group in "${groups[@]}"; do
     
     SERVER_DIR_NAME="INDEXED_PROJECTS/${output_project_name}"
 
-    # skip the rest if combined file already exist in ${VM_DIR_UCSC}/COMMON/
-    FORWARD_BW="${suffix_combined}.Forward.combined.bw"
-    REVERSE_BW="${suffix_combined}.Reverse.combined.bw"
+    if [ ${STRANDEDNESS} -ne 0 ]
+    then
+	# for stranded data
 
-    # if both files created skip calculation
-    if [ ! -f "${PATH_ON_SERVER}/${FORWARD_BW}" -o ! -f "${PATH_ON_SERVER}/${REVERSE_BW}" ]; then
-	echo "${PATH_ON_SERVER}/${FORWARD_BW}"
-	echo "${PATH_ON_SERVER}/${REVERSE_BW}"
-	echo "processing ${SAMPLE_ID}"
+	# skip the rest if combined file already exist in ${VM_DIR_UCSC}/COMMON/
+	FORWARD_BW="${suffix_combined}.Forward.combined.bw"
+	REVERSE_BW="${suffix_combined}.Reverse.combined.bw"
 
-	# run wiggletools to calculate average for bigwig files and
-	# convert them back to bigwig again
-	echo "Forward reads ${suffix_combined}"
-	# Forward reads
-	wiggletools mean ${forward[@]} > tmp_forward.wig
-	wigToBigWig tmp_forward.wig "./Chrom_Sizes/mm9.chrom.sizes" ${FORWARD_BW}
-	rm tmp_forward.wig
+	# if both files created skip calculation
+	if [ ! -f "${PATH_ON_SERVER}/${FORWARD_BW}" -o ! -f "${PATH_ON_SERVER}/${REVERSE_BW}" ]; then
+	    echo "${PATH_ON_SERVER}/${FORWARD_BW}"
+	    echo "${PATH_ON_SERVER}/${REVERSE_BW}"
+	    echo "processing ${SAMPLE_ID}"
 
-	echo "Reverse reads ${suffix_combined}"
-	wiggletools mean ${reverse[@]} > tmp_reverse.wig
-	wigToBigWig tmp_reverse.wig "./Chrom_Sizes/mm9.chrom.sizes" ${REVERSE_BW}
-	rm tmp_reverse.wig
+	    # run wiggletools to calculate average for bigwig files and
+	    # convert them back to bigwig again
+	    echo "Forward reads ${suffix_combined}"
+	    # Forward reads
+	    wiggletools mean ${forward[@]} > tmp_forward.wig
+	    wigToBigWig tmp_forward.wig "./Chrom_Sizes/mm9.chrom.sizes" ${FORWARD_BW}
+	    rm tmp_forward.wig
 
-	set +eu
-	
-	echo "Trying to copy combined forward bigwig"
-	cp ${FORWARD_BW} ${PATH_ON_SERVER}/
-	if [ $? -ne 0 ]; then
-	    echo "WARNING: cannot copy Forward combined BIGWIG files to the ${PATH_ON_SERVER}."
+	    echo "Reverse reads ${suffix_combined}"
+	    wiggletools mean ${reverse[@]} > tmp_reverse.wig
+	    wigToBigWig tmp_reverse.wig "./Chrom_Sizes/mm9.chrom.sizes" ${REVERSE_BW}
+	    rm tmp_reverse.wig
 	fi
-	
-	echo "Trying to copy combined reverse bigwig"
-	cp ${REVERSE_BW} ${PATH_ON_SERVER}/
-	if [ $? -ne 0 ]; then
-	    echo "WARNING: cannot copy Reverse combined BIGWIG files to the ${PATH_ON_SERVER}."
+
+    else
+	# for unstranded data
+
+	# skip the rest if combined file already exist in ${VM_DIR_UCSC}/COMMON/
+	UNSTRANDED_BW="${suffix_combined}.Unstranded.combined.bw"
+
+	# if both files created skip calculation
+	if [ ! -f "${PATH_ON_SERVER}/${UNSTRANDED_BW}" ]; then
+	    echo "${PATH_ON_SERVER}/${UNSTRANDED_BW}"
+	    echo "processing ${SAMPLE_ID}"
+
+	    # run wiggletools to calculate average for bigwig files and
+	    # convert them back to bigwig again
+	    echo "Unstranded reads ${suffix_combined}"
+	    wiggletools mean ${unstranded[@]} > tmp_unstranded.wig
+	    wigToBigWig tmp_unstranded.wig "./Chrom_Sizes/mm9.chrom.sizes" ${UNSTRANDED_BW}
+	    rm tmp_unstranded.wig
 	fi
-	rm ${FORWARD_BW} ${REVERSE_BW}
-	
-	set -eu
+
+    fi
+    
+    set +eu
+    
+    echo "Trying to copy combined forward bigwig"
+    cp ${FORWARD_BW} ${PATH_ON_SERVER}/
+    if [ $? -ne 0 ]; then
+	echo "WARNING: cannot copy Forward combined BIGWIG files to the ${PATH_ON_SERVER}."
+    fi
+    
+    echo "Trying to copy combined reverse bigwig"
+    cp ${REVERSE_BW} ${PATH_ON_SERVER}/
+    if [ $? -ne 0 ]; then
+	echo "WARNING: cannot copy Reverse combined BIGWIG files to the ${PATH_ON_SERVER}."
     fi
 
+    echo "Trying to copy combined unstrained bigwig"
+    cp ${UNSTRANDED_BW} ${PATH_ON_SERVER}/
+    if [ $? -ne 0 ]; then
+	echo "WARNING: cannot copy Unstranded combined BIGWIG files to the ${PATH_ON_SERVER}."
+    fi
+    
+    rm ${FORWARD_BW} ${REVERSE_BW} ${UNSTRANDED_BW}
+    
+    set -eu    
+    
 done
 
 echo "-----"

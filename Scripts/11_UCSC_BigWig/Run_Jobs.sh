@@ -49,10 +49,12 @@ do
     # get path to the sample
     path_to_sample="${VM_DIR_UCSC}/INDEXED_PROJECTS/${sample_info[0]}/"
 
-    # if Forward or Backward bigwig files do not exist - start calculation
-    if [ ! -f "${path_to_sample}/${sample_id}.Forward.bw" -o ! -f "${path_to_sample}/${sample_id}.Reverse.bw" ]; then
+    # if Forward or Backward or Unstranded bigwig files do not exist - start calculation
+    # if [ ! -f "${path_to_sample}/${sample_id}.Forward.bw" -o ! -f "${path_to_sample}/${sample_id}.Reverse.bw" -a ! -f "${path_to_sample}/${sample_id}.Unstranded.bw" ]; then
+    if [[ (! -f "${path_to_sample}/${sample_id}.Forward.bw" || ! -f "${path_to_sample}/${sample_id}.Reverse.bw") && ! -f "${path_to_sample}/${sample_id}.Unstranded.bw" ]]; then
 	echo "start calc for ${sample_id}"
         (set -x; qsub -N "${job_name}_${sample_id}" -P "${PROJECT}" -l h_rt="${TIME_LIMIT}" Individual_BigWig.qsub ${sample_id})
+	
     fi
 done
 
@@ -76,21 +78,51 @@ for group in "${groups[@]}"; do
     description=${combined_name_project[2]}
     color=${combined_name_project[3]}
     path_on_server="${VM_DIR_UCSC}/INDEXED_PROJECTS/${project}"
+    
     forward_bw="${combined_name}.Forward.combined.bw"
     reverse_bw="${combined_name}.Reverse.combined.bw"
+    unstranded_bw="${combined_name}.Unstranded.combined.bw"
+
+    # The last group SAMPLE_ID indicates strandedness (implicit param
+    # STRANDEDNESS). Param STRANDEDNESS will be rewrited on each
+    # iteration by group cycle
+    samples=($("${SETUP_PIPELINE_DIR}"/01_Pipeline_Setup.py --samples_by_group ${group} "color_enable"))
+    for ((i=0;i< ${#samples[@]} ;i+=3));
+    do
+	SAMPLE_ID=${samples[i]}
+	# automated strand detection
+	if [ ${STRANDEDNESS} -eq 3 ]; then
+	    export_file="${DATASET_DIR}/${SAMPLE_ID}/Read_Strandness/${SAMPLE_ID}_export.sh"
+	    if [[ -f "${export_file}" ]]; then
+		# re-export STRANDEDNESS
+		source ${export_file}
+		echo "Auto: $STRANDEDNESS"
+	    else
+		echo "Error: cannot find file: ${export_file}"
+		echo "To use automatic strand detection, you must complete step 01_Read_Strandness first"
+		exit 1
+	    fi
+	fi
+    done
+    
     echo "Checking availability of ${combined_name} combined files inside the ${VM_DIR_UCSC}/INDEXED_PROJECTS/${project}"
-    if [ ! -f "${path_on_server}/${forward_bw}" -o ! -f "${path_on_server}/${reverse_bw}" ]; then
+    if [[ (! -f "${path_on_server}/${forward_bw}" || ! -f "${path_on_server}/${reverse_bw}") && ! -f "${path_on_server}/${unstranded_bw}" ]]; then
 	echo "${combined_name} not found. Recalculation is required."
 	recalculate_combined=1
     fi
-
-    server_dir_name="INDEXED_PROJECTS/${project}"
-    # print "filename \t group_name for forward reads"
-    printf "%s\t%s\t%s\t%s\n" "${forward_bw}" "${description}" "${server_dir_name}" "${color}" >> COMBINED_PAIRS.txt
-
-    # print "filename \t group_name for reverse reads"
-    printf "%s\t%s\t%s\t%s\n" "${reverse_bw}" "${description}" "${server_dir_name}" "${color}">> COMBINED_PAIRS.txt
     
+    server_dir_name="INDEXED_PROJECTS/${project}"
+    if [[ ${STRANDEDNESS} -ne 0 ]]; then
+	
+	# print "filename \t group_name for forward reads"
+	printf "%s\t%s\t%s\t%s\n" "${forward_bw}" "${description}" "${server_dir_name}" "${color}" >> COMBINED_PAIRS.txt
+	# print "filename \t group_name for reverse reads"
+	printf "%s\t%s\t%s\t%s\n" "${reverse_bw}" "${description}" "${server_dir_name}" "${color}">> COMBINED_PAIRS.txt
+	
+    else
+	# print "filename \t group_name for forward reads"
+	printf "%s\t%s\t%s\t%s\n" "${unstranded_bw}" "${description}" "${server_dir_name}" "${color}" >> COMBINED_PAIRS.txt
+    fi
 done
 
 if [ ${recalculate_combined} -eq 1 ]; then

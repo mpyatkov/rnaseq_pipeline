@@ -375,6 +375,9 @@ function cram_creating(){
     # create server/project dir if it was not created before
     mkdir -p ${server_dir}
 
+    # set correct permissions for server directory (all from wax-es can edit files)
+    setfacl -Rm g:wax-es:rwx ${server_dir}
+
     # convert to CRAM if file is not created
     # if [ ! -f "${server_dir}/${cram_out}" ]; then
     echo "Generate CRAM files..."
