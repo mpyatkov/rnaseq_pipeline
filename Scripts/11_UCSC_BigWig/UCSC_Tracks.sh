@@ -173,7 +173,7 @@ function generate_tracks() {
 	    #For un-stranded data we get a single *.bw file
 	    #---------------------------------------------------------------------------------
 	    
-            echo "track type=bigWig name='${Sample_ID}_norm' description='${Description}' db=mm9 visibility=${BWVISUAL} autoScale=${AUTOSCALE} viewLimits=${LEFTLIMIT}:${RIGHTLIMIT} color='${Color}' yLineOnOff=off windowingFunction=mean smoothingWindow=3 maxHeightPixels=100:45:8 bigDataUrl=http://waxmanlabvm.bu.edu/TRACKS/${SERVER_DIR_NAME}/${Sample_ID}.bw"
+            echo "track type=bigWig name='${Sample_ID}_norm' description='${Description}' db=mm9 visibility=${BWVISUAL} autoScale=${AUTOSCALE} viewLimits=${LEFTLIMIT}:${RIGHTLIMIT} color='${Color}' yLineOnOff=off windowingFunction=mean smoothingWindow=3 maxHeightPixels=100:45:8 bigDataUrl=http://waxmanlabvm.bu.edu/TRACKS/${SERVER_DIR_NAME}/${Sample_ID}.Unstranded.bw"
 	fi
 
 	# Draw BAM tracks if BAMVISUAL not 0
