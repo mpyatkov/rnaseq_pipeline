@@ -73,6 +73,11 @@ if [[ "${START_STEP}" == "FULL" ]]; then
     RESUME=0
     INCLUDE="ALL"
     FULL_RECALC=1
+elif [[ "${START_STEP}" == "ONLYBAM" ]]; then
+    GENERATE=1
+    RESUME=0
+    INCLUDE="01\|02\|03\|04"
+    FULL_RECALC=1
 elif [[ "${START_STEP}" == "START" ]]; then
     GENERATE=1
     RESUME=0
