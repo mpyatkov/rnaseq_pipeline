@@ -58,25 +58,25 @@ collect_size_metrics() {
     MEDIAN_INSERT_SIZE=$(awk '{print $1}' temp1.txt | sed -n 2p)
     
     #echo $MEDIAN_INSERT_SIZE
-    MEDIAN_ABSOLUTE_DEVIATION=$(awk '{print $2}' temp1.txt | sed -n 2p)
+    MEDIAN_ABSOLUTE_DEVIATION=$(awk '{print $3}' temp1.txt | sed -n 2p)
     
     #echo $MEDIAN_ABSOLUTE_DEVIATION
-    MIN_INSERT_SIZE=$(awk '{print $3}' temp1.txt | sed -n 2p)
+    MIN_INSERT_SIZE=$(awk '{print $4}' temp1.txt | sed -n 2p)
     
     #echo $MIN_INSERT_SIZE
-    MAX_INSERT_SIZE=$(awk '{print $4}' temp1.txt | sed -n 2p)
+    MAX_INSERT_SIZE=$(awk '{print $5}' temp1.txt | sed -n 2p)
     
     #echo $MAX_INSERT_SIZE
-    MEAN_INSERT_SIZE=$(awk '{print $5}' temp1.txt | sed -n 2p)
+    MEAN_INSERT_SIZE=$(awk '{print $6}' temp1.txt | sed -n 2p)
     
     #echo $MEAN_INSERT_SIZE
-    STANDARD_DEVIATION=$(awk '{print $6}' temp1.txt | sed -n 2p)
+    STANDARD_DEVIATION=$(awk '{print $7}' temp1.txt | sed -n 2p)
     
     #echo $STANDARD_DEVIATION
-    READ_PAIRS=$(awk '{print $7}' temp1.txt | sed -n 2p)
+    READ_PAIRS=$(awk '{print $8}' temp1.txt | sed -n 2p)
     
     #echo $READ_PAIRS
-    PAIR_ORIENTATION=$(awk '{print $8}' temp1.txt | sed -n 2p)
+    PAIR_ORIENTATION=$(awk '{print $9}' temp1.txt | sed -n 2p)
     
     #echo $PAIR_ORIENTATION
     #Remove temp1.txt
