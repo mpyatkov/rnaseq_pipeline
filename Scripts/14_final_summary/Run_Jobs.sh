@@ -59,8 +59,9 @@ fi
 
 set +eu
 # cp -rf  ${Level_UP}/04_TopHat_Paired_End/Job_Summary/TopHat2_Stats_BestMapped.txt  ./output/
-# cp -rf  ${Level_UP}/02_Read_Strandness/Job_Summary/Read_Strandness_Stats.txt ./output/
-# cp -rf  ${Level_UP}/06_CollectMetrics/Job_Summary/CollectRnaSeqMetrics_Stats.txt  ./output/
+cp -rf  ${Level_UP}/02_Read_Strandness/Job_Summary/Read_Strandness_Stats.txt ./output/
+cp -rf  ${Level_UP}/06_CollectMetrics/Job_Summary/CollectRnaSeqMetrics_Stats.txt  ./output/
+cp -rf  ${Level_UP}/06_CollectMetrics/Job_Summary/CollectInsertSizeMetrics_Stats.txt  ./output/
 cp -rf  ${Level_UP}/06_CollectMetrics/Job_Summary/CollectInsertSizeMetrics_Plots.pdf ./output/
 # cp -rf  ${Level_UP}/08_Extract_Counts/Job_Summary/featureCounts_summary_LncRNA15k_ExonCollapsed_GTF.txt  ./output/
 set -eu
