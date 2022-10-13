@@ -1,0 +1,3 @@
+table_columns_visible:
+  FastQC:
+    percent_duplicates: False

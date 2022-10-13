@@ -242,7 +242,7 @@ function get_fastq_headers(){
 function multiqc_report() {
     mkdir multiqc_report
     pushd multiqc_report
-    multiqc --no-ansi ${DATASET_DIR} ${Level_UP}/03_FASTQC/ ${Level_UP}/06_CollectMetrics/ > multiqc_log.txt
+    multiqc --no-ansi -c ${SCRIPT_DIR}/Scripts/multiqc_config.yaml ${DATASET_DIR} ${Level_UP}/03_FASTQC/ ${Level_UP}/06_CollectMetrics/ > multiqc_log.txt
     popd
 }
 

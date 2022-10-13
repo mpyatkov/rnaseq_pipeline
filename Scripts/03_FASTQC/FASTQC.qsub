@@ -84,6 +84,20 @@ cp $R1 .
 # copy R2 to TMPDIR
 cp $R2 .
 
+
+## FASTP
+fastp_dir="${sample_id}_FASTP"
+mkdir -p "${fastp_dir}"
+
+pushd "${fastp_dir}"
+fastp -i ${R1} -I ${R2}
+popd
+
+cp -r $fastp_dir $output_dir
+
+
+## FASTQC
+
 # Create FASTQC output folder to store files:
 fastqc_dir="${sample_id}_FASTQC"
 mkdir -p "${fastqc_dir}"
