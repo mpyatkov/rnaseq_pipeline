@@ -49,7 +49,8 @@ for group in "${groups[@]}"; do
     suffix=()
 
     group_name=""
-
+    project_name=""
+    
     for ((i=0;i< ${#samples[@]} ;i+=3));
     do
 	SAMPLE_ID=${samples[i]}
@@ -96,15 +97,15 @@ for group in "${groups[@]}"; do
 
     combined_name_project=($("${SETUP_PIPELINE_DIR}"/01_Pipeline_Setup.py --combined_name_by_group ${group}))
     suffix_combined=${combined_name_project[0]}
-    output_project_name=${combined_name_project[1]}
+    # output_project_name=${combined_name_project[1]}
 
     # path will be common for all samples
-    PATH_ON_SERVER="${VM_DIR_UCSC}/INDEXED_PROJECTS/${output_project_name}/"
+    PATH_ON_SERVER="${VM_DIR_UCSC}/INDEXED_PROJECTS/${project_name}/"
 
     # create PATH_ON_SERVER if not exists
     mkdir -p ${PATH_ON_SERVER} 
     
-    SERVER_DIR_NAME="INDEXED_PROJECTS/${output_project_name}"
+    SERVER_DIR_NAME="INDEXED_PROJECTS/${project_name}"
 
     if [ ${STRANDEDNESS} -ne 0 ]
     then
