@@ -307,11 +307,20 @@ do
 
 done
 
+## headers for FASTQ files
 echo "Extracting headers from corresponding FASTQ files"
 get_fastq_headers "FASTQ_headers.csv"
 mv "FASTQ_headers.csv" ./output
 
+## multiqc reports
 multiqc_report
 mv multiqc_report ./output
 
+## create xlsx with summary statistics including counts/tpm/rpkm for each
+## separate sample
+## aggregate_counts.R <directory with steps path> <output filename>
+Rscript ./Scripts/aggregate_counts.R "../" "./output/${DATASET_LABEL}_counts_summary.xlsx"
+
 echo "All files copied. Done "
+
+
