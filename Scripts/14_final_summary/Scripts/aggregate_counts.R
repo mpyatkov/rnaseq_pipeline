@@ -129,5 +129,15 @@ addWorksheet(wb, sheetName = "summary")
 ## colNames false for header because we do not need this information inside xlsx
 writeData(wb, sheet = "summary", binded_samples_header, startRow = 1, startCol = 1, colNames = FALSE)
 writeData(wb, sheet = "summary", binded_samples, startRow = 3, startCol = 1)
+
+## apply bold style for rpkm/tpm columns
+rpkm_tpm_cols <- which(str_detect(colnames(binded_samples), "rpkm|tpm") == TRUE)
+boldStyle <- createStyle(textDecoration = "Bold") ## create bold style
+addStyle(wb, "summary", boldStyle, 3, rpkm_tpm_cols)
+
+## apply number style for column 'total'
+comma_style_format <- createStyle(numFmt = "#,##0") # create thousands format
+addStyle(wb, "summary", comma_style_format, rows = 1, cols = 2:ncol(binded_samples))
+
 saveWorkbook(wb, output_xls, overwrite = T)
 
