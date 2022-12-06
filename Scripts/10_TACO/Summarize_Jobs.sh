@@ -73,6 +73,14 @@ for ref_flag in ${reference_options[@]}; do
 
 	echo "${trackline}" >> ${TRACKS_OUT}
 
+	# PATCH: create project if it does not exist
+	# it is required if combined samples from different projects
+	# ex. G186_M1 and G184_M2 - so new project name will be G186_G184
+	# and this directory will contain only TACO supplementary files
+	if [ ! -d "${VM_DIR_UCSC}/INDEXED_PROJECTS/${project}/" ]; then
+	    mkdir -p "${VM_DIR_UCSC}/INDEXED_PROJECTS/${project}/"
+	fi
+	
 	# copy bigBed and description files if it is required
 	if [ ! -f "${VM_DIR_UCSC}/INDEXED_PROJECTS/${project}/${combined_name}_${ref_flag}.bb" ]; then
 	    echo "copy files to server"
