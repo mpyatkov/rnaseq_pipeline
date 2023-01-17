@@ -48,9 +48,6 @@ for group in "${groups[@]}"; do
     # need to extract sample names and combine them together (ex: M1M2M3)
     suffix=()
 
-    group_name=""
-    project_name=""
-    
     for ((i=0;i< ${#samples[@]} ;i+=3));
     do
 	SAMPLE_ID=${samples[i]}
@@ -62,14 +59,8 @@ for group in "${groups[@]}"; do
 	# check if sample in db
 	sample_info=($("${SETUP_PIPELINE_DIR}"/01_Pipeline_Setup.py --get_sample_info ${SAMPLE_ID}))
 
-	# project name should be the same for all combined samples
+	# project name for each individual sample
 	project_name=${sample_info[0]}
-
-	# because we use --samples_by_group with a group name
-	# 01_Pipeline_Setup.py give us condition_name column instead
-	# of description column. Condition_name should be the same for all
-	# members of one group
-	group_name=$CONDNAME
 
 	# we suppose that each group of samples has the same
 	# strandedness, otherwise it does not make sense to combine
@@ -97,15 +88,19 @@ for group in "${groups[@]}"; do
 
     combined_name_project=($("${SETUP_PIPELINE_DIR}"/01_Pipeline_Setup.py --combined_name_by_group ${group}))
     suffix_combined=${combined_name_project[0]}
-    # output_project_name=${combined_name_project[1]}
+
+    ## for some combined samples output name will be not only just one
+    ## G### but combination of multiple G###_G###_G### if they
+    ## represent one group
+    output_project_name=${combined_name_project[1]}
 
     # path will be common for all samples
-    PATH_ON_SERVER="${VM_DIR_UCSC}/INDEXED_PROJECTS/${project_name}/"
+    PATH_ON_SERVER="${VM_DIR_UCSC}/INDEXED_PROJECTS/${output_project_name}/"
 
     # create PATH_ON_SERVER if not exists
     mkdir -p ${PATH_ON_SERVER} 
     
-    SERVER_DIR_NAME="INDEXED_PROJECTS/${project_name}"
+    SERVER_DIR_NAME="INDEXED_PROJECTS/${output_project_name}"
 
     if [ ${STRANDEDNESS} -ne 0 ]
     then
@@ -159,19 +154,19 @@ for group in "${groups[@]}"; do
     set +eu
     
     echo "Trying to copy combined forward bigwig"
-    cp ${FORWARD_BW} ${PATH_ON_SERVER}/
+    (set -x; cp ${FORWARD_BW} ${PATH_ON_SERVER}/)
     if [ $? -ne 0 ]; then
 	echo "WARNING: cannot copy Forward combined BIGWIG files to the ${PATH_ON_SERVER}."
     fi
     
     echo "Trying to copy combined reverse bigwig"
-    cp ${REVERSE_BW} ${PATH_ON_SERVER}/
+    (set -x; cp ${REVERSE_BW} ${PATH_ON_SERVER}/)
     if [ $? -ne 0 ]; then
 	echo "WARNING: cannot copy Reverse combined BIGWIG files to the ${PATH_ON_SERVER}."
     fi
 
     echo "Trying to copy combined unstrained bigwig"
-    cp ${UNSTRANDED_BW} ${PATH_ON_SERVER}/
+    (set -x; cp ${UNSTRANDED_BW} ${PATH_ON_SERVER}/)
     if [ $? -ne 0 ]; then
 	echo "WARNING: cannot copy Unstranded combined BIGWIG files to the ${PATH_ON_SERVER}."
     fi
