@@ -48,7 +48,7 @@ set +eu
 module load miniconda
 conda activate --stack ${CONDA_DIR}/rseqc
 conda activate --stack ${CONDA_DIR}/samtools
-conda activate --stack ${CONDA_DIR}/hisat2
+conda activate --stack ${CONDA_DIR}/minimap2
 set -eu
 
 # module load samtools
@@ -90,7 +90,11 @@ zcat $R2 | head -n100000 > R2.fq
 set -o pipefail
 
 # create small bam file using R1 and R2
-hisat2 -x ${HISAT2INDEX_DIR}/mm9.primary_assembly -1 R1.fq -2 R2.fq | samtools view -Sb - > "${SAMPLE_ID}_primary_unique.bam"
+
+## (HISAT2 DEPRECATED, replaced with minimap2)
+# hisat2 -x ${HISAT2INDEX_DIR}/mm9.primary_assembly -1 R1.fq -2 R2.fq | samtools view -Sb - > "${SAMPLE_ID}_primary_unique.bam"
+
+time minimap2 -ax sr "${FASTA_DIR}/genome_mm9.fa" R1.fq R2.fq | samtools view -Sb - > "${SAMPLE_ID}_primary_unique.bam"
 ls -l
 
 # return: 0/1/2 - strandedness as it described in config file
