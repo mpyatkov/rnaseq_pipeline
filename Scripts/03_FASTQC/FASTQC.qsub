@@ -66,11 +66,13 @@ set -eu
 # get_sample_info return (PRJ_NAME, READ1, READ2) or EXCEPTION
 sample_info=($("${SETUP_PIPELINE_DIR}"/01_Pipeline_Setup.py --get_sample_info ${sample_id}))
 
+## it will work for PAIRED/SINGLE-END data
 R1=${sample_info[1]}
 R2=${sample_info[2]}
 
 # if fastq files do not exist the following commands should raise
 # an error and script will be interrupted
+# (for SINGLE_END R1==R2)
 for f in $R1; do
     [ -e "$f" ] && echo "R1 file $f exists" || (echo "ERROR: R1 file $f does not exist"; exit 1)
 done
@@ -79,21 +81,25 @@ for f in $R2; do
     [ -e "$f" ] && echo "R2 file $f exists" || (echo "ERROR: R2 file $f does not exist"; exit 1) 
 done
 
+# for SINGLE-END it just copies one file twice
 # copy R1 to TMPDIR
 cp $R1 .
 # copy R2 to TMPDIR
 cp $R2 .
 
+# Run the following for paired-end data only
+if [[ "${R1}" != "${R2}" ]]; then
+    
+    ## FASTP
+    fastp_dir="${sample_id}_FASTP"
+    mkdir -p "${fastp_dir}"
 
-## FASTP
-fastp_dir="${sample_id}_FASTP"
-mkdir -p "${fastp_dir}"
+    pushd "${fastp_dir}"
+    fastp -i ${R1} -I ${R2}
+    popd
 
-pushd "${fastp_dir}"
-fastp -i ${R1} -I ${R2}
-popd
-
-cp -r $fastp_dir $output_dir
+    cp -r $fastp_dir $output_dir
+fi
 
 
 ## FASTQC

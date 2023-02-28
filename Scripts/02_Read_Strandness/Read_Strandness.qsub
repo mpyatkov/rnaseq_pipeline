@@ -94,7 +94,15 @@ set -o pipefail
 ## (HISAT2 DEPRECATED, replaced with minimap2)
 # hisat2 -x ${HISAT2INDEX_DIR}/mm9.primary_assembly -1 R1.fq -2 R2.fq | samtools view -Sb - > "${SAMPLE_ID}_primary_unique.bam"
 
-time minimap2 -ax sr "${FASTA_DIR}/genome_mm9.fa" R1.fq R2.fq | samtools view -Sb - > "${SAMPLE_ID}_primary_unique.bam"
+
+if [[ "${R1}" == "${R2}" ]]; then
+    echo "SINGLE-END processing"
+    time minimap2 -ax sr "${FASTA_DIR}/genome_mm9.fa" R1.fq | samtools view -Sb - > "${SAMPLE_ID}_primary_unique.bam"
+else
+    echo "PAIRED-END processing"
+    time minimap2 -ax sr "${FASTA_DIR}/genome_mm9.fa" R1.fq R2.fq | samtools view -Sb - > "${SAMPLE_ID}_primary_unique.bam"
+fi
+
 ls -l
 
 # return: 0/1/2 - strandedness as it described in config file

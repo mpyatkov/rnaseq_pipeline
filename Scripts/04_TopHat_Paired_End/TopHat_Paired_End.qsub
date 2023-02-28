@@ -193,8 +193,13 @@ echo 'Starting tophat'
 #Jobs are taking too long to complete
 #Need the option: --no-coverage-search
 #------------------------------------------------------------------------------
+if [[ "${R1}" == "${R2}" ]]; then
+    (set -x; tophat --no-coverage-search -o ${output_dir} -G ${TOPHAT_ANNOTATION_FILE} -p $NSLOTS --library-type ${tophat_strandedness} -r ${DISTANCE_BT_READ_PAIR} --mate-std-dev ${param_std} Bowtie2Index/genome ${left_list})
 
-(set -x; tophat --no-coverage-search -o ${output_dir} -G ${TOPHAT_ANNOTATION_FILE} -p $NSLOTS --library-type ${tophat_strandedness} -r ${DISTANCE_BT_READ_PAIR} --mate-std-dev ${param_std} Bowtie2Index/genome ${left_list} ${right_list})
+else
+    (set -x; tophat --no-coverage-search -o ${output_dir} -G ${TOPHAT_ANNOTATION_FILE} -p $NSLOTS --library-type ${tophat_strandedness} -r ${DISTANCE_BT_READ_PAIR} --mate-std-dev ${param_std} Bowtie2Index/genome ${left_list} ${right_list})
+
+fi
 
 echo 'Ending tophat'
 

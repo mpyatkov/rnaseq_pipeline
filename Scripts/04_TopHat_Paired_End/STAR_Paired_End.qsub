@@ -107,15 +107,31 @@ ls -alh
 
 echo 'Starting STAR'
 
-(set -x; \
- STAR --runThreadN ${NSLOTS} \
-      --genomeDir ${STARINDEX_DIR} \
-      --readFilesCommand gunzip -c \
-      --readFilesIn ${left_list} ${right_list} \
-      --outSAMtype BAM SortedByCoordinate \
-      --outSAMstrandField intronMotif \
-      --outFileNamePrefix ./"${SAMPLE_ID}_"
-)
+if [[ "${R1}" == "${R2}" ]]; then
+    echo "Start SINGLE-END alignment"
+    (set -x; \
+     STAR --runThreadN ${NSLOTS} \
+	  --genomeDir ${STARINDEX_DIR} \
+	  --readFilesCommand gunzip -c \
+	  --readFilesIn ${left_list} \
+	  --outSAMtype BAM SortedByCoordinate \
+	  --outSAMstrandField intronMotif \
+	  --outFileNamePrefix ./"${SAMPLE_ID}_"
+    )    
+else
+    echo "Start PAIRED-END alignment"
+    (set -x; \
+     STAR --runThreadN ${NSLOTS} \
+	  --genomeDir ${STARINDEX_DIR} \
+	  --readFilesCommand gunzip -c \
+	  --readFilesIn ${left_list} ${right_list} \
+	  --outSAMtype BAM SortedByCoordinate \
+	  --outSAMstrandField intronMotif \
+	  --outFileNamePrefix ./"${SAMPLE_ID}_"
+    )    
+fi
+
+
 echo 'Ending STAR'
 
 # by default STAR create file with name Aligned.sortedByCoord.out.bam

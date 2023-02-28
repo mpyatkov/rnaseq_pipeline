@@ -215,6 +215,18 @@ _________________
   | 
   `----
 
+  For SINGLE-END data, just use the same fastq file for READ1 and
+  READ2. The pipeline will automatically change the necessary
+  parameters for downstream programs.
+
+  ,----
+  | PRJ, GNNN, /path/to/single-end/fastq/files/directory/
+  | GNNN_M1, GNNN_M1_single_end.fq.gz, GNNN_M1_single_end.fq.gz
+  | GNNN_M2, GNNN_M2_single_end.fq.gz, GNNN_M2_single_end.fq.gz
+  | ...
+  | 
+  `----
+
 
 1.4 Before starting the pipeline
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

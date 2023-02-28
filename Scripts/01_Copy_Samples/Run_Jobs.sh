@@ -49,7 +49,7 @@ do
     number_of_fastq=$(find . -maxdepth 1 -name "*.f*q.gz" | wc -l)
 
     ## if sample in db and it is required to refresh fastq files
-    if [ ${number_of_fastq} -ne 2 ]; then
+    if [[ "${number_of_fastq}" -eq "0" ]]; then
 	echo "Recreating FASTQ links"
 	## remove previous FASTQ files
 	rm -rf ${SAMPLE_DIR}/*.f*q.gz
@@ -57,12 +57,19 @@ do
 	## get reads from index and make links to fastq files
 	read1=${sample_info[1]}
 	read2=${sample_info[2]}
-	
+
 	if [ ! -f ${read1} -o ! -f ${read2} ]; then
 	    echo "ERROR: cannot find one of the files with reads which specified in the index file for the sample ${SAMPLE_ID}:\n${read1}\n${read2}\n"
 	    exit 1
 	fi
-	ln -s $read1 ./ && ln -s $read2 ./
+
+	## copying single/paired end reads
+	if [[ "${read1}" == "${read2}" ]]; then
+	    echo "WARNING: READ1 is equal to READ2, copying SINGLE_END data"
+	    ln -s $read1 ./
+	else
+	    ln -s $read1 ./ && ln -s $read2 ./
+	fi
     fi
 
     ### CHECK IF WE CAN COPY PRECALCULATED BAM FILE FROM THE SERVER

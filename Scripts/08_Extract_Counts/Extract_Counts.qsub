@@ -101,6 +101,22 @@ then
     strandedness_featurecount="2"
 fi
 
+# get_sample_info return (PRJ_NAME, READ1, READ2) or EXCEPTION
+LIBRARY=1 # 0 - single-end, 1- paired-end
+sample_info=($("${SETUP_PIPELINE_DIR}"/01_Pipeline_Setup.py --get_sample_info ${SAMPLE_ID}))
+R1=${sample_info[1]}
+R2=${sample_info[2]}
+## if read1 == read2 -> single-end
+if [[ "${R1}" == "${R2}" ]]; then
+    LIBRARY=0
+fi
+
+FEATURECOUNTS_LIBRARY="-p"
+if [[ ${LIBRARY} == 0 ]]; then
+    echo "FEATURECOUNTS_LIBRARY -> SINGLE_END"
+    FEATURECOUNTS_LIBRARY=""
+fi
+
 ## export GTF files variables
 ## should export for (genes.gtf, featureCounts) something like that (in future should contain more variables)
 # export ANNOTATION_FILE=genes.gtf
@@ -202,12 +218,12 @@ else
     if [[ "${DBL_CNT}" == "0" ]]
     then
 	echo "DBL_CNT=0 option is activated"
-        (set -x; featureCounts -p -T $NSLOTS -s ${strandedness_featurecount} -g ${FEATURE_ID} -t ${FEATURE_TYPE} -a ${ANNOTATION_FILE} -o ${output_file} "${SAMPLE_ID}_sorted.bam")
+        (set -x; featureCounts ${FEATURECOUNTS_LIBRARY} -T $NSLOTS -s ${strandedness_featurecount} -g ${FEATURE_ID} -t ${FEATURE_TYPE} -a ${ANNOTATION_FILE} -o ${output_file} "${SAMPLE_ID}_sorted.bam")
         
     elif [[ "${DBL_CNT}" == "1" ]]; then
 	echo "DBL_CNT=1 option is activated"
         
-        (set -x; featureCounts -O -p -T $NSLOTS -s ${strandedness_featurecount} -g ${FEATURE_ID} -t ${FEATURE_TYPE} -a ${ANNOTATION_FILE} -o ${output_file} "${SAMPLE_ID}_sorted.bam")
+        (set -x; featureCounts -O ${FEATURECOUNTS_LIBRARY} -T $NSLOTS -s ${strandedness_featurecount} -g ${FEATURE_ID} -t ${FEATURE_TYPE} -a ${ANNOTATION_FILE} -o ${output_file} "${SAMPLE_ID}_sorted.bam")
         
     else
 	echo "DBL_CNT=2 option is activated"
@@ -222,10 +238,10 @@ else
 
         # Running assign_all_features counting"
         
-        (set -x; featureCounts -O -p -T $NSLOTS -s ${strandedness_featurecount} -g ${FEATURE_ID} -t ${FEATURE_TYPE} -a GeneSym_assign_all_features.gtf -o "${SAMPLE_ID}_assign_all_features.out" "${SAMPLE_ID}_sorted.bam")
+        (set -x; featureCounts -O ${FEATURECOUNTS_LIBRARY} -T $NSLOTS -s ${strandedness_featurecount} -g ${FEATURE_ID} -t ${FEATURE_TYPE} -a GeneSym_assign_all_features.gtf -o "${SAMPLE_ID}_assign_all_features.out" "${SAMPLE_ID}_sorted.bam")
         
         # Running assign_only1_feature counting"
-        (set -x; featureCounts -p -T $NSLOTS -s ${strandedness_featurecount} -g ${FEATURE_ID} -t ${FEATURE_TYPE} -a GeneSym_assign_only1_feature.gtf -o ${SAMPLE_ID}"_assign_only1_feature.out" ${SAMPLE_ID}'_sorted'.bam)
+        (set -x; featureCounts ${FEATURECOUNTS_LIBRARY} -T $NSLOTS -s ${strandedness_featurecount} -g ${FEATURE_ID} -t ${FEATURE_TYPE} -a GeneSym_assign_only1_feature.gtf -o ${SAMPLE_ID}"_assign_only1_feature.out" ${SAMPLE_ID}'_sorted'.bam)
     fi
 
     # post processing is different for 0,1 and 2
