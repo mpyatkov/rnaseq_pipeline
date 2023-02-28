@@ -20,7 +20,7 @@ output_xls <- args[2]
 samples_path <- paste0(path, "00_Setup_Pipeline/Sample_Labels.txt")
 
 ## return group, rpkm, tpm, vector of samples
-samples_new <- read_delim(samples_path, delim = ";", col_names = T, comment = "#") %>% 
+samples_new <- read_delim(samples_path, delim = ";", col_names = T, comment = "#", trim_ws = TRUE) %>% 
   select(group = 1, condition = 2, sample_id = 3) %>% 
   rowwise() %>% 
   mutate(name = paste0(condition,"_",sample_id),
