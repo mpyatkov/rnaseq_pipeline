@@ -10,7 +10,10 @@ set -o nounset
 # FULL_RECALC equal to number after ':-' if parameter was not provided
 FULL_RECALC=${1:-0}
 
-rm -rf ./logs && mkdir -p ./logs
+## keep logs 
+if [[ ${FULL_RECALC} -eq 1 ]]; then
+    rm -rf ./logs && mkdir -p ./logs
+fi
 
 # export all variables from Pipeline_Setup.conf
 eval "$(../00_Setup_Pipeline/01_Pipeline_Setup.py --export)"
