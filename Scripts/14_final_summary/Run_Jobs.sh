@@ -321,6 +321,26 @@ mv multiqc_report ./output
 ## aggregate_counts.R <directory with steps path> <output filename>
 Rscript ./Scripts/aggregate_counts.R "../" "./output/${DATASET_LABEL}_counts_summary.xlsx"
 
+## Create Volcano plots
+echo "Creating Volcano plots"
+set +eu
+conda deactivate
+set -eu
+module load R/4.2.1
+
+## for each segex directory with exoncollapsed files create volcano plots
+cp ./Scripts/volcano_plots.R ./
+for dpath in `find . -type d -name "Segex*Exon*"`; do
+    dname=`basename $dpath`
+    (set -x; Rscript volcano_plots.R\
+		     --segex_files_path "${dpath}" \
+		     --sample_labels "../00_Setup_Pipeline/Sample_Labels.txt" \
+		     --comparisons "../00_Setup_Pipeline/Comparisons.txt" \
+		     --output_prefix "./output/${dname}")
+done
+rm volcano_plots.R
+
+module unload R
 echo "All files copied. Done "
 
 
