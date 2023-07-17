@@ -38,8 +38,14 @@ do
     sample_id=${samples[i]}
     # description=${samples[i+2]}
 
-    # skip recalculation if FULL_RECALC=0
     result_path="${DATASET_DIR}/${sample_id}/Read_Strandness/${sample_id}_export.sh"
+    if [ ${STRANDEDNESS} -ne 3 ]; then
+	echo "Skip checking strandedness. User already specified this parameters manually (STRANDEDNESS=${STRANDEDNESS})"
+	continue
+    fi
+    
+    # skip recalculation if FULL_RECALC=0
+    
     if [ -f ${result_path} -a ${FULL_RECALC} -eq 0 ]; then
 	echo "Skip recalculation for ${sample_id} sample. Results already obtained and FULL_RECALC flag set to 0."
 	continue
