@@ -34,6 +34,14 @@ set -eu
 
 groups=($("${SETUP_PIPELINE_DIR}"/01_Pipeline_Setup.py --groups))
 
+## backup strandedness is required if we process multiple groups with
+## different strandedness, by default we export STRANDEDNESS and that
+## overwrite the system one. For example if we had strandedness=3
+## (auto) and we iterate by group of samples with different
+## strandedness (for example strandedness=1) the following condition
+## "if [ ${STRANDEDNESS} -eq 3 ]; will not work anymore
+CONFIG_STRANDEDNESS=${STRANDEDNESS}
+
 # for each group
 for group in "${groups[@]}"; do
 
@@ -41,10 +49,10 @@ for group in "${groups[@]}"; do
     samples=($("${SETUP_PIPELINE_DIR}"/01_Pipeline_Setup.py --samples_by_group ${group} "color_enable"))
 
     # create new array contains path to Forward and Reverse bigwig files
-    forward=()
-    reverse=()
-    unstrained=()
-    
+    declare -a forward=()
+    declare -a reverse=()
+    declare -a unstranded=()
+
     # need to extract sample names and combine them together (ex: M1M2M3)
     suffix=()
 
@@ -68,7 +76,7 @@ for group in "${groups[@]}"; do
 	# us a final strandedness
 	
 	# automated strand detection
-	if [ ${STRANDEDNESS} -eq 3 ]; then
+	if [ ${CONFIG_STRANDEDNESS} -eq 3 ]; then
 	    export_file="${DATASET_DIR}/${SAMPLE_ID}/Read_Strandness/${SAMPLE_ID}_export.sh"
 	    if [[ -f "${export_file}" ]]; then
 		# re-export STRANDEDNESS

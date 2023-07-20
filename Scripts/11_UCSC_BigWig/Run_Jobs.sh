@@ -69,6 +69,8 @@ done
 # and recalculates required combined files
 recalculate_combined=0
 
+CONFIG_STRANDEDNESS=${STRANDEDNESS}
+
 groups=($("${SETUP_PIPELINE_DIR}"/01_Pipeline_Setup.py --groups))
 for group in "${groups[@]}"; do
 
@@ -91,7 +93,7 @@ for group in "${groups[@]}"; do
     do
 	SAMPLE_ID=${samples[i]}
 	# automated strand detection
-	if [ ${STRANDEDNESS} -eq 3 ]; then
+	if [ ${CONFIG_STRANDEDNESS} -eq 3 ]; then
 	    export_file="${DATASET_DIR}/${SAMPLE_ID}/Read_Strandness/${SAMPLE_ID}_export.sh"
 	    if [[ -f "${export_file}" ]]; then
 		# re-export STRANDEDNESS
