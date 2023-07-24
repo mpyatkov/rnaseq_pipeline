@@ -15,13 +15,15 @@ set -o nounset
 # export all variables from Pipeline_Setup.conf
 eval "$(../00_Setup_Pipeline/01_Pipeline_Setup.py --export)"
 
+CONFIG_STRANDEDNESS=${STRANDEDNESS}
+
 ## check the strandedness and export it to the global scope
 function get_strand_rule() {
     local STRANDEDNESS=$1
     local DDIR=$2
     local SID=$3
     
-    if [ ${STRANDEDNESS} -eq 3 ]; then
+    if [ ${CONFIG_STRANDEDNESS} -eq 3 ]; then
 	export_file="${DDIR}/${SID}/Read_Strandness/${SID}_export.sh"
 	if [[ -f "${export_file}" ]]; then
 	    # re-export STRANDEDNESS
