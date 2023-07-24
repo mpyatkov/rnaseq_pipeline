@@ -2,6 +2,11 @@
 
 DEBUG <- FALSE
 
+## To make pdf smaller, I just reduce number of non-significant genes (dots) and 
+## the following fraction parameter represents what fraction of non-significant genes
+## is required to render (usually we have ~76k of genes, and only ~1-2K could be significant)
+NONSIGNIF_FRACTION <- 0.1
+
 ## First specify the packages of interest
 packages <- c("argparser")
 
@@ -76,6 +81,12 @@ get_df <- function(fname, log2fc_thr, adjpval_thr, drop_not_signif = FALSE) {
            label = case_when(diffexpressed == "NO" ~ NA,
                              TRUE ~ id))
   
+  ## subsampling not significant, to reduce pdf size
+  df1_signif <- df1 %>% filter(!is.na(label))
+  df1_nonsignif <- df1 %>% filter(is.na(label)) %>% 
+    sample_frac(NONSIGNIF_FRACTION)
+  df1 <- bind_rows(df1_signif, df1_nonsignif)
+  
   if (drop_not_signif){
     df1 <- df1 %>% 
       filter(!is.na(label))
@@ -110,6 +121,8 @@ create_plot <- function(fname, log2fc_thr, adjpval_thr, title){
     notationConverter(., from = "segex", to = "mm10") %>% 
     select(everything(),label = gname) %>% 
     relocate(label, .after = everything())
+  
+  print(dim(df_tmp))
   
   genes <- table(df_tmp$diffexpressed)
   up_genes <- genes['UP']
@@ -175,7 +188,7 @@ cmp_smp <- left_join(cmp, samples, by = c("Condition_1" = "Group")) %>%
   select(everything(), Condition2_label = Condition_Name)  %>% 
   mutate(title = str_glue("{comparison}. {Condition2_label} vs {Condition1_label}")) %>% 
   select(comparison, title) %>% 
-  deframe() ## convert to named vector
+  deframe() ## convert to a named vector
 
 # ## Just for test
 # tt <- list.files(path = argv$segex_files_path, pattern = "txt", full.names = T)
@@ -218,3 +231,4 @@ system.time(plots_same_scale %>%
   map(function(p){plot_grid(wrap_plots(p))}) %>% 
   marrangeGrob(nrow = 2, ncol = 1) %>%
   ggsave(filename = str_glue("{argv$output_prefix}_common_scale_volcano.pdf"), width = 20, height = 15.50))
+
