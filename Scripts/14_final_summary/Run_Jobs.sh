@@ -330,14 +330,28 @@ module load R/4.2.1
 
 ## for each segex directory with exoncollapsed files create volcano plots
 cp ./Scripts/volcano_plots.R ./
+
+## echo alldots volcano plots
 for dpath in `find . -type d -name "Segex*Exon*"`; do
     dname=`basename $dpath`
     (set -x; Rscript volcano_plots.R\
 		     --segex_files_path "${dpath}" \
 		     --sample_labels "../00_Setup_Pipeline/Sample_Labels.txt" \
 		     --comparisons "../00_Setup_Pipeline/Comparisons.txt" \
-		     --output_prefix "./output/${dname}")
+		     --output_prefix "./output/alldots_${dname}")
 done
+
+## echo 10 percent volcano plots (for fast view)
+for dpath in `find . -type d -name "Segex*Exon*"`; do
+    dname=`basename $dpath`
+    (set -x; Rscript volcano_plots.R\
+		     --segex_files_path "${dpath}" \
+		     --sample_labels "../00_Setup_Pipeline/Sample_Labels.txt" \
+		     --comparisons "../00_Setup_Pipeline/Comparisons.txt" \
+		     --nonsignif_fraction 0.1 \
+		     --output_prefix "./output/10percent_${dname}")
+done
+
 rm volcano_plots.R
 
 module unload R

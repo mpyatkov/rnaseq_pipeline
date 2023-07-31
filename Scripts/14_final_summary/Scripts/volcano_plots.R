@@ -2,11 +2,6 @@
 
 DEBUG <- FALSE
 
-## To make pdf smaller, I just reduce number of non-significant genes (dots) and 
-## the following fraction parameter represents what fraction of non-significant genes
-## is required to render (usually we have ~76k of genes, and only ~1-2K could be significant)
-NONSIGNIF_FRACTION <- 0.1
-
 ## First specify the packages of interest
 packages <- c("argparser")
 
@@ -29,6 +24,12 @@ ParseArguments <- function() {
   p <- add_argument(p, '--sample_labels', help='File with sample labels', default="Sample_Labels.txt")
   p <- add_argument(p, "--comparisons", help = "file with comparisons", default = "Comparisons.txt")
   p <- add_argument(p, "--output_prefix", help = "output prefix for each pdf file", default = "tmp")
+  
+  ## To make pdf smaller, I just reduce number of non-significant genes (dots) and 
+  ## the following fraction parameter represents what fraction of non-significant genes
+  ## is required to render (usually we have ~76k of genes, and only ~1-2K could be significant)
+  p <- add_argument(p, "--nonsignif_fraction", help = "fraction of non-signif genes in resulted pdfs", default = 1.0)
+  
   return(parse_args(p))
 }
 
@@ -68,7 +69,7 @@ library(gridExtra)
 library(cowplot)
 library(patchwork)
 
-get_df <- function(fname, log2fc_thr, adjpval_thr, drop_not_signif = FALSE) {
+get_df <- function(fname, log2fc_thr, adjpval_thr, nonsignif_fraction = 1.0, drop_not_signif = FALSE) {
   df <- read_tsv(fname, col_names = T, show_col_types = F) %>% 
     select(id = 1, ratio = 2, fc = 3, padj = 6) %>% 
     mutate(log2fc = log2(ratio))
@@ -80,12 +81,15 @@ get_df <- function(fname, log2fc_thr, adjpval_thr, drop_not_signif = FALSE) {
                                      TRUE ~ "NO"),
            label = case_when(diffexpressed == "NO" ~ NA,
                              TRUE ~ id))
-  
-  ## subsampling not significant, to reduce pdf size
-  df1_signif <- df1 %>% filter(!is.na(label))
-  df1_nonsignif <- df1 %>% filter(is.na(label)) %>% 
-    sample_frac(NONSIGNIF_FRACTION)
-  df1 <- bind_rows(df1_signif, df1_nonsignif)
+
+    if(nonsignif_fraction != 1.0) {
+        ## subsampling not significant, to reduce pdf size
+      df1_signif <- df1 %>% filter(!is.na(label))
+      df1_nonsignif <- df1 %>% filter(is.na(label)) %>% 
+          sample_frac(nonsignif_fraction)
+      df1 <- bind_rows(df1_signif, df1_nonsignif)
+      
+  }
   
   if (drop_not_signif){
     df1 <- df1 %>% 
@@ -95,17 +99,16 @@ get_df <- function(fname, log2fc_thr, adjpval_thr, drop_not_signif = FALSE) {
   df1
 }
 
-
 ## find min pvalue and max log2fc for all datasets to create correct limits for ggplot plots
 get_minmax_for_all_df <- function(segex_path = "."){
   files <- list.files(path = segex_path, pattern = "txt", full.names = T)  
   
   tmp <- map_dfr(files, function(fname){
-    inner_tmp <- get_df(fname, 1, 0.05)
-    tibble(padj = min(inner_tmp$padj),
+      inner_tmp <- get_df(fname, 1, 0.05)
+      tibble(padj = min(inner_tmp$padj),
            log2fc = max(abs(inner_tmp$log2fc)))
   })
-  
+
   min_pvalue <- min(tmp$padj)
   max_abs_x <- ceiling(max(tmp$log2fc))
   
@@ -116,13 +119,11 @@ get_minmax_for_all_df <- function(segex_path = "."){
 create_plot <- function(fname, log2fc_thr, adjpval_thr, title){
   
   # df_tmp <- get_df(fname, log2fc_thr = log2fc_thr, adjpval_thr = adjpval_thr)
-  df_tmp <- get_df(fname, log2fc_thr = log2fc_thr, adjpval_thr = adjpval_thr) %>% 
+  df_tmp <- get_df(fname, log2fc_thr = log2fc_thr, adjpval_thr = adjpval_thr, nonsignif_fraction = as.numeric(argv$nonsignif_fraction)) %>% 
     select(everything(),gname = label) %>% 
     notationConverter(., from = "segex", to = "mm10") %>% 
     select(everything(),label = gname) %>% 
     relocate(label, .after = everything())
-  
-  print(dim(df_tmp))
   
   genes <- table(df_tmp$diffexpressed)
   up_genes <- genes['UP']
