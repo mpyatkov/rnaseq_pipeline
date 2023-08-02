@@ -10,12 +10,12 @@ set -o nounset
 # Specify which shell to use
 #$ -S /bin/bash
 #$ -cwd
-#$ -pe omp 16
+#$ -pe omp 8
 #$ -j y
 #$ -e ./logs/
 #$ -o ./logs/
 #$ -l scratch_free=200G
-#$ -l mem_per_core=4G
+#$ -l mem_per_core=8G
 ##################################################################################
 
 # export all variables from Pipeline_Setup.conf
