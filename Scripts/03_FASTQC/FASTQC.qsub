@@ -12,7 +12,6 @@ set -o nounset
 #$ -S /bin/bash
 # current working directory option
 #$ -cwd
-# 
 #$ -j y
 #$ -e ./logs/
 #$ -o ./logs/
@@ -110,16 +109,6 @@ mkdir -p "${fastqc_dir}"
 
 printf "\nList files in scratch directory:\n"
 ls -alh
-printf "\nStarting to run my commands\n"
-printf "Unzip files:"
-
-time gzip -d *.gz
-
-printf "\nFinished unzipping\n"
-printf "\nPrint first 20 lines of fastq file:\n"
-
-head -20 *.f*q
-
 
 printf "\nStarting 03_Read_Length command\n"
 
@@ -149,30 +138,27 @@ rm -rf "${output_file}" && touch "${output_file}"
 #-----------------------------------------------------------------------------------
 
 # run this awk command for each fastq file:
-fastq_list=*.f*q
-for fastq_file in ${fastq_list}
-do
-    echo
-    echo "Processing "${fastq_file}
-    echo
+# fastq_list=*.gz
+# for fastq_file in ${fastq_list}
+# do
+#     echo
+#     echo "Processing "${fastq_file}
+#     echo
 
-    #Need a "-v" for every variable
-    awk -v sample_id=${sample_id} -v fastq_file=${fastq_file} 'NR%4 == 2 {lengths[length($0)]++} END {for (L in lengths) {print sample_id "\t" fastq_file "\t" L "\t" lengths[L]}}' ${fastq_file} >> $output_file
-done
-# step 03_Read_Length end
+#     #Need a "-v" for every variable
+#     zcat ${fastq_file} | awk -v sample_id=${sample_id} -v fastq_file=${fastq_file} 'NR%4 == 2 {lengths[length($0)]++} END {for (L in lengths) {print sample_id "\t" fastq_file "\t" L "\t" lengths[L]}}' >> $output_file
+# done
+# # step 03_Read_Length end
 
 printf "\nend 03_Read_Length command\n"
-
-
 printf "\nStarting fastqC command\n"
 
 # Run the command for each fastq file:
-fastq_list=*.f*q
+fastq_list=*.gz
 for fastq_file in ${fastq_list}
 do
-    printf "fastqc --outdir %s %s" "${fastqc_dir}" "${fastq_file}"
-
-    fastqc --outdir ${fastqc_dir} ${fastq_file}
+    # printf "fastqc --outdir %s %s" "${fastqc_dir}" "${fastq_file}"
+    (set -x; fastqc --outdir ${fastqc_dir} ${fastq_file})
 done
 #--------------------------------------------------------------------------------
 printf '\nFinished FASTQC command\n'
