@@ -288,7 +288,7 @@ do
     ## postprocessing files for SEGEX, adding index
     pushd "./output/Segex_${de_ix}"
     cp "../../Scripts/add_segex_index.R" ./
-    Rscript add_segex_index.R ${SEGEX_EXPT_IX} ${SEGEX_FEATURE_SORT_IX}
+    (set -x; Rscript add_segex_index.R ${SEGEX_EXPT_IX} ${SEGEX_FEATURE_SORT_IX})
     rm add_segex_index.R
     # TODO: rename "Upload_SEGEX_table.tsv" to dir name
     popd
@@ -319,7 +319,7 @@ mv multiqc_report ./output
 ## create xlsx with summary statistics including counts/tpm/rpkm for each
 ## separate sample
 ## aggregate_counts.R <directory with steps path> <output filename>
-Rscript ./Scripts/aggregate_counts.R "../" "./output/${DATASET_LABEL}_counts_summary.xlsx"
+(set -x; Rscript ./Scripts/aggregate_counts.R "../" "./output/${DATASET_LABEL}_counts_summary.xlsx")
 
 ## Create Volcano plots
 echo "Creating Volcano plots"
