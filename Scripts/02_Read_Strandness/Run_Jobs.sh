@@ -29,7 +29,7 @@ samples=($("${SETUP_PIPELINE_DIR}"/01_Pipeline_Setup.py --samples))
 # dir_name and job_name are required in the next steps
 dir_name=$(basename $(pwd))
 step_num=$(echo ${dir_name} | cut -d'_' -f 1)
-job_name="Step_${step_num}"
+job_name="Step_${step_num}_${DATASET_LABEL}"
 
 # rename directories from sample_dir to sample_id
 for ((i=0;i< ${#samples[@]} ;i+=2));

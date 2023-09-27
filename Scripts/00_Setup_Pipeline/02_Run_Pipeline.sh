@@ -179,7 +179,7 @@ execute_wait_summarize_job(){
 	popd
     done
     
-    job_name="Step_${STEP_NUMBER}"
+    job_name="Step_${STEP_NUMBER}_${DATASET_LABEL}"
     
     # check cluster queue until the step completes
     wait_until_completed ${job_name}

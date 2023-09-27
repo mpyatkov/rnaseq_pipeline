@@ -100,7 +100,7 @@ function calculate_taco_output() {
 MAIN_DIR="$(pwd)"
 dir_name=$(basename $(pwd))
 step_num=$(echo ${dir_name} | cut -d'_' -f 1)
-job_name="Step_${step_num}"
+job_name="Step_${step_num}_${DATASET_LABEL}"
 
 # There are two ways how we can calculate STRINGTIE GTF files (with
 # reference GTF and without). Both cases lead to different isoforms

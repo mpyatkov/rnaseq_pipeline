@@ -34,7 +34,7 @@ eval "$(../00_Setup_Pipeline/01_Pipeline_Setup.py --export)"
 # dir_name and job_name are required in the next steps
 dir_name=$(basename $(pwd))
 step_num=$(echo ${dir_name} | cut -d'_' -f 1)
-job_name="Step_${step_num}"
+job_name="Step_${step_num}_${DATASET_LABEL}"
 
 # output dir to store text files:
 output_dir="$(pwd)/Job_Summary"

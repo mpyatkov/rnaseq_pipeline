@@ -39,7 +39,7 @@ LENGTHS_DIR="${GTF_FILES_DIR}/lengths"
 # dir_name and job_name are required in the next steps
 dir_name=$(basename $(pwd))
 step_num=$(echo ${dir_name} | cut -d'_' -f 1)
-job_name="Step_${step_num}"
+job_name="Step_${step_num}_${DATASET_LABEL}"
 
 for ((i=0;i< ${#gtflist[@]} ;i+=2));
 do
