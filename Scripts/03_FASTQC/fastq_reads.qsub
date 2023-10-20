@@ -1,0 +1,32 @@
+#!/bin/bash -l
+#$ -cwd
+#$ -P wax-dk
+#$ -j y
+#$ -e ./logs/
+#$ -o ./logs/
+#$ -pe omp 16
+#$ -l mem_per_core=4G
+#$ -l h_rt=04:00:00
+
+echo "=========================================================="
+Start_Time=$(date +"%s")
+echo "Starting on : $(date)"
+echo "Running on node   : $(hostname)"
+echo "Current job ID    : $JOB_ID"
+echo "Current job name  : $JOB_NAME"
+echo "Task index number : $TASK_ID"
+echo "=========================================================="
+
+set -eu
+
+module load parallel
+
+PATH_TO_FASTQ=$1
+echo "filename total_reads unique_reads percent_unique_to_total" > Job_Summary/number_of_unique_reads.tsv
+find ${PATH_TO_FASTQ} -name "*fastq.gz" | parallel -j 16 'FNAME=`basename {}`; zcat {} | awk -v fname=$FNAME -f scripts/num_unique_reads.awk' >> Job_Summary/number_of_unique_reads.tsv
+
+End_Time=$(date +"%s")
+diff=$(($End_Time-$Start_Time))
+echo "$(($diff / 3600)) hours, $((($diff / 60) % 60)) minutes and $(($diff % 60)) seconds elapsed."
+echo "=========================================================="
+echo "IAMOK"

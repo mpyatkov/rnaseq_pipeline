@@ -53,6 +53,8 @@ do
     (set -x; qsub -N "${job_name}_${sample_id}" -P "${PROJECT}" -l h_rt="04:00:00" FASTQC.qsub "${sample_id}" "${output_dir}")
 done
 
+# calculate unique reads as a separate job
+(set -x; qsub -N "${job_name}_unique_reads" -P wax-es fastq_reads.qsub ${DATASET_DIR})
+
 echo "End of FASTQC commands"
 echo "-----------------------"
-##################################################################################
