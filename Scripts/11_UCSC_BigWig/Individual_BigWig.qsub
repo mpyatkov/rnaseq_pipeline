@@ -70,14 +70,37 @@ fi
 # calculate STRAND_RULE from STRANDEDNESS
 if [ ${STRANDEDNESS} -eq 0 ]
 then
-STRAND_RULE="none"
+    STRAND_RULE="none"
 elif [ ${STRANDEDNESS} -eq 2 ]
 then
-STRAND_RULE="1++,1--,2+-,2-+"
+    STRAND_RULE="1++,1--,2+-,2-+"
 elif [ ${STRANDEDNESS} -eq 1 ]
 then
-STRAND_RULE="1+-,1-+,2++,2--"
+    STRAND_RULE="1+-,1-+,2++,2--"
 fi
+
+
+## if sample is single end, change STRANDEDNESS
+R1=${sample_info[1]}
+R2=${sample_info[2]}
+
+# checking path for R1,R2
+echo "${R1}"
+echo "${R2}"
+
+if [ "$R1" = "$R2" ]; then
+    if [ ${STRANDEDNESS} -eq 0 ]
+    then
+        STRAND_RULE="none"
+    elif [ ${STRANDEDNESS} -eq 2 ]
+    then
+        STRAND_RULE="++,--"
+    elif [ ${STRANDEDNESS} -eq 1 ]
+    then
+        STRAND_RULE="+-,-+"
+    fi
+fi
+
 
 #Print variables (make sure they appear correctly):
 echo "-----------------------"
