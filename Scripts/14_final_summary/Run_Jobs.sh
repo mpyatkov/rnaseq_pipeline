@@ -1,10 +1,4 @@
 #!/usr/bin/bash -l
-######################################################################################
-# Kritika Karri, 08.04.2017
-# Way to run script:
-#Usage: ./Run_Jobs.sh
-#Example:
-#./Run_Jobs.sh
 
 # This script summarizes data from the directories located above:
 # - Copy "combined" pdf files from step 13
@@ -23,9 +17,6 @@ module load miniconda
 conda activate --stack ${CONDA_DIR}/rlang361
 conda activate --stack ${CONDA_DIR}/multiqc
 set -eu
-
-# module load gcc/8.1.0
-# module load R/3.6.0
 
 rm -rf *.txt
 rm -rf *.pdf
@@ -241,8 +232,8 @@ function get_fastq_headers(){
 }
 
 function multiqc_report() {
-    mkdir multiqc_report
-    pushd multiqc_report
+    local local_dir=$1
+    mkdir -p ${local_dir} && pushd ${local_dir}
     multiqc --no-ansi -c ${SCRIPT_DIR}/Scripts/multiqc_config.yaml ${DATASET_DIR} ${Level_UP}/03_FASTQC/ ${Level_UP}/06_CollectMetrics/ > multiqc_log.txt
     popd
 }
@@ -314,7 +305,8 @@ get_fastq_headers "FASTQ_headers.csv"
 mv "FASTQ_headers.csv" ./output
 
 ## multiqc reports
-multiqc_report
+multiqc_report "${DATASET_LABEL}_multiqc_report"
+cp -a "${DATASET_LABEL}_multiqc_report" ${VM_DIR_UCSC}/MULTIQC_REPORTS/
 mv multiqc_report ./output
 
 ## create xlsx with summary statistics including counts/tpm/rpkm for each
