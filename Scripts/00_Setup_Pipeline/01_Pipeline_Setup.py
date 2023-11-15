@@ -752,7 +752,7 @@ def find_in_index(index_file, sample_id_param):
                 continue
             
             # if header line
-            if line.startswith("PRJ"):
+            if line.strip().startswith("PRJ,"):
                 header = line.strip().split(",")
                 header = list(filter(lambda x: x != '', header))
                 project_name, project_path = header[1], header[2]
