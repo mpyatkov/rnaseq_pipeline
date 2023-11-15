@@ -307,7 +307,7 @@ mv "FASTQ_headers.csv" ./output
 ## multiqc reports
 multiqc_report "${DATASET_LABEL}_multiqc_report"
 cp -a "${DATASET_LABEL}_multiqc_report" ${VM_DIR_UCSC}/MULTIQC_REPORTS/
-mv multiqc_report ./output
+mv "${DATASET_LABEL}_multiqc_report" ./output
 
 ## create xlsx with summary statistics including counts/tpm/rpkm for each
 ## separate sample
