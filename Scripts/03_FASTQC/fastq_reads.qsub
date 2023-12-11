@@ -23,7 +23,7 @@ module load parallel
 
 PATH_TO_FASTQ=$1
 echo "filename total_reads unique_reads percent_unique_to_total" > Job_Summary/number_of_unique_reads.tsv
-find ${PATH_TO_FASTQ} -name "*fastq.gz" | parallel -j 16 'FNAME=`basename {}`; zcat {} | awk -v fname=$FNAME -f scripts/num_unique_reads.awk' >> Job_Summary/number_of_unique_reads.tsv
+find ${PATH_TO_FASTQ} -name "*f*q.gz" | parallel -j 16 'FNAME=`basename {}`; zcat {} | awk -v fname=$FNAME -f scripts/num_unique_reads.awk' >> Job_Summary/number_of_unique_reads.tsv
 
 End_Time=$(date +"%s")
 diff=$(($End_Time-$Start_Time))
