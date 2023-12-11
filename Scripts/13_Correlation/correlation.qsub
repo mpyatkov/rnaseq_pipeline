@@ -18,6 +18,7 @@ eval "$(../00_Setup_Pipeline/01_Pipeline_Setup.py --export)"
 set +eu
 module load miniconda
 conda activate --stack ${CONDA_DIR}/rlang361
+module load poppler ## default pdfunite(20.11) crops pdfs, version in module 21.03
 set -eu
 
 DEDIR=$1 # 09a, 09b, 09c,...
