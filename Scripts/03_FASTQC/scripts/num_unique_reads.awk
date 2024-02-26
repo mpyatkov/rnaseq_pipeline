@@ -1,3 +1,4 @@
+BEGIN {OFS=","}
 ((NR-2)%4==0) {
   read=$1;
   total++;
