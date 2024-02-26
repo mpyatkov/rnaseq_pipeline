@@ -85,23 +85,23 @@ plot_cor <- function(df, title, method, out_name)
       mn <- round(min(td, na.rm = T), 3) - 0.01
       mx <- round(max(td, na.rm = T), 3)
       
-      # adaptive font size
+      # adaptive font size for tiles
       font_size <- function(x) {
          f <- floor(-0.34*x+11.36)-1
          ifelse(f<2,2,f)
       }
-      
+
       # plot correlation
       rpkm_plot <- ggplot(data = td_melt, aes(Var1, Var2, fill = value))+
          ggtitle(title)+
          geom_tile(aes(fill = value)) +
-         geom_text(aes(label = round(value, 2)), size = font_size(dim(td)[1]))+
+         geom_text(aes(label = str_remove(round(value, 2), "^0+")), size = font_size(dim(td)[1]))+
          scale_fill_gradientn(colours = rainbow(4),limits=c(mn,mx), space= "Lab",
                               name=paste0(method,"\ncorrelation")) +
          theme_minimal()+ 
-         theme(axis.text.x = element_text(angle = 90, vjust = 1, 
-                                          size = 13, hjust = 1),
-               axis.text.y = element_text(size=13),
+         theme(axis.text.x = element_text(angle = 90, vjust = 0.5, 
+                                          size = ifelse(dim(td)[1] > 35, 7,13), hjust = 1),
+               axis.text.y = element_text(size=ifelse(dim(td)[1] > 35, 7,13)),
                text = element_text(size=12),
                legend.title = element_text(size=14),
                legend.text=element_text(size=14))+
