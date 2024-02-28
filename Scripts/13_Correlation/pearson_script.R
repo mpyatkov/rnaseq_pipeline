@@ -40,6 +40,14 @@ library(tictoc)
 library(DESeq2)
 ############################## FUNCTIONS ######################################
 
+## fast patch to replace prefixes for filenames
+## 1_file -> 001_filename
+replace_prefix <- function(s){
+  prefix <- str_extract(s,"\\d+")
+  new_prefix <- str_pad(prefix, pad = "0", width = 3)
+  str_replace(s, prefix, new_prefix)
+}
+
 # save correlation plot and table
 plot_cor <- function(df, title, method, out_name)
 {
@@ -364,6 +372,7 @@ pca_3plot <- function(filename, plot_type, group_names, extargs, number, meanonl
    # dataset without condition
    ds <- read_dataset(filename, group_names, meanonly = meanonly)
    out_fname <- paste0(number, paste0("_",plot_type,"_All_"), get_out_names(out_names))
+   out_fname<-replace_prefix(out_fname)
    header <- paste0(extargs$dataset_label, ", ", out_fname, ", ", "\nAll genes (without filter), ",extargs$detitle,"_Genes: ", length(ds$gene_names))
    ggplot_obj <- pcatsne_init_ggplot(df_pca = ds, plot_type)
    plot_pca(ds$df_pca, header, out_fname, ggplot_obj)
@@ -371,6 +380,7 @@ pca_3plot <- function(filename, plot_type, group_names, extargs, number, meanonl
    # dataset with significant genes
    ds <- read_dataset(filename, group_names, filter_condition = cond$signif, meanonly = meanonly)
    out_fname <- paste0(number, paste0("_",plot_type,"_Significant_"), get_out_names(out_names, cond$signif$text))
+   out_fname<-replace_prefix(out_fname)
    header <- paste0(extargs$dataset_label, ", ", out_fname, ", ", "\nSignificant genes (|FC|>",extargs$CUSTOM_FC," and FDR<", extargs$CUSTOM_FDR,"), ",extargs$detitle,"_Genes: ", length(ds$gene_names))
    ggplot_obj <- pcatsne_init_ggplot(df_pca = ds, plot_type)
    plot_pca(ds$df_pca, header, out_fname, ggplot_obj)
@@ -378,6 +388,7 @@ pca_3plot <- function(filename, plot_type, group_names, extargs, number, meanonl
    # dataset with non-significant genes
    ds <- read_dataset(filename, group_names, filter_condition = cond$nonsignif, meanonly = meanonly)
    out_fname <- paste0(number, paste0("_",plot_type,"_Non-significant_"), get_out_names(out_names, cond$nonsignif$text))
+   out_fname<-replace_prefix(out_fname)
    header <- paste0(extargs$dataset_label, ", ",  out_fname, ", ", "\nNon-significant genes (1.2 < |FC| < 1/|1.2|  and FDR >0.1, RPKM >1), ",extargs$detitle,"_Genes: ", length(ds$gene_names))
    if (plot_type == "PCA") {
       write_csv(tibble(id = ds$gene_names), paste0(out_fname,"_GeneNames",".csv"))
@@ -412,6 +423,7 @@ cor_3plot <- function(filename, group_names, method, extargs, number, meanonly =
    # dataset without condition
    ds <- read_dataset(filename, group_names, meanonly = meanonly)
    out_fname <- paste0(number, "_", mname, "_All_", get_out_names(out_names))
+   out_fname<-replace_prefix(out_fname)
    out_fname <- double_number(out_fname, meanonly)
    header <- paste0(extargs$dataset_label, ", ", out_fname, ", ", "\nAll genes (without filter), ",extargs$detitle,"_Genes: ", dim(ds$df_cor)[[1]])
    plot_cor(ds$df_cor, header, method, out_fname)
@@ -419,6 +431,7 @@ cor_3plot <- function(filename, group_names, method, extargs, number, meanonly =
    # dataset with significant genes
    ds <- read_dataset(filename, group_names, filter_condition = cond$signif, meanonly = meanonly)
    out_fname <- paste0(number, "_", mname, "_Significant_", get_out_names(out_names, cond$signif$text))
+   out_fname<-replace_prefix(out_fname)
    out_fname <- double_number(out_fname, meanonly)
    header <- paste0(extargs$dataset_label, ", ", out_fname, ", ", "\nSignificant genes (|FC|>",extargs$CUSTOM_FC," and FDR<",extargs$CUSTOM_FDR,"), ",extargs$detitle,"_Genes: ", dim(ds$df_cor)[[1]])
    plot_cor(ds$df_cor, header, method, out_fname)
@@ -426,6 +439,7 @@ cor_3plot <- function(filename, group_names, method, extargs, number, meanonly =
    # dataset with non-significant genes
    ds <- read_dataset(filename, group_names, filter_condition = cond$nonsignif, meanonly = meanonly)
    out_fname <- paste0(number, "_", mname, "_Non-significant_", get_out_names(out_names, cond$nonsignif$text))
+   out_fname<-replace_prefix(out_fname)
    out_fname <- double_number(out_fname, meanonly)
    header <- paste0(extargs$dataset_label, ", ",  out_fname, ", ", "\nNon-significant genes (1.2 < |FC| < 1/|1.2|  and FDR >0.1, RPKM >1), ",extargs$detitle,"_Genes: ", dim(ds$df_cor)[[1]])
    plot_cor(ds$df_cor, header, method, out_fname)
