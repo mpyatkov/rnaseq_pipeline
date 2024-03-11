@@ -78,9 +78,12 @@ get_df <- function(fname, log2fc_thr, adjpval_thr, nonsignif_fraction = 1.0, dro
     ## filter(!str_starts(id,"nc_")) %>% ## drop all lnc genes
     mutate(diffexpressed = case_when(log2fc > log2fc_thr & padj < adjpval_thr ~ "UP",
                                      log2fc < -log2fc_thr & padj < adjpval_thr ~ "DOWN",
-                                     TRUE ~ "NO"),
-           label = case_when(diffexpressed == "NO" ~ NA,
-                             TRUE ~ id))
+                                     TRUE ~ "NO"))
+
+    # mutate(label = case_when(diffexpressed == "NO" ~ NA,
+    #                          TRUE ~ id)) %>%
+    
+    df1$label<-ifelse(df1$diffexpressed == "NO", NA, df1$id)
 
     if(nonsignif_fraction != 1.0) {
         ## subsampling not significant, to reduce pdf size
