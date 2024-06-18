@@ -1,0 +1,50 @@
+#!/bin/bash -l
+#$ -cwd
+#$ -j y
+#$ -e ./logs/
+#$ -o ./logs/
+#$ -pe omp 8
+#$ -l mem_per_core=4G
+
+echo "=========================================================="
+Start_Time=$(date +"%s")
+echo "Starting on : $(date)"
+echo "Running on node   : $(hostname)"
+echo "Current job ID    : $JOB_ID"
+echo "Current job name  : $JOB_NAME"
+echo "Task index number : $TASK_ID"
+echo "=========================================================="
+
+set -eu
+module load R/4.2.3
+
+set +eu
+find ../09* -name "*.txt" | grep -E "Up|Down" | grep -vE "DESeq|SEGEX" | xargs -n1 -P8 -I{} bash -c "Rscript ./Scripts/clusterProfiler_enrichment.R --input_path {}"
+set -eu
+
+mkdir -p Job_Summary/clusterProfiler_ExonCollapsed
+mv *ExonCollapsed*.{pdf,xlsx} ./Job_Summary/clusterProfiler_ExonCollapsed/
+mkdir -p Job_Summary/clusterProfiler_FullGeneBody
+mv *FullGeneBody*.{pdf,xlsx} ./Job_Summary/clusterProfiler_FullGeneBody/
+rm *.pdf
+
+Rscript ./Scripts/david_downloader.R --input_path "../" # main script dir
+
+Rscript ./Scripts/mx_david_aggregator.R --input_path ./ \
+    --sample_labels ../00_Setup_Pipeline/Sample_Labels.txt \
+    --comparisons ../00_Setup_Pipeline/Comparisons.txt
+
+Rscript ./Scripts/alan_david_aggregator.R --input_path "./" # current dir
+
+## move all DAVID aggregated results to summary directory
+mkdir -p Job_Summary/DAVID_results/ExonCollapsed/
+mkdir -p Job_Summary/DAVID_results/FullGeneBody/
+mv *ExonCollapsed*.txt Job_Summary/DAVID_results/ExonCollapsed/
+mv *FullGeneBody*.txt Job_Summary/DAVID_results/FullGeneBody/
+mv *.xlsx Job_Summary/DAVID_results/
+
+End_Time=$(date +"%s")
+diff=$((End_Time - Start_Time))
+echo "$((diff / 3600)) hours, $(((diff / 60) % 60)) minutes and $((diff % 60)) seconds elapsed."
+echo "=========================================================="
+echo "IAMOK"
