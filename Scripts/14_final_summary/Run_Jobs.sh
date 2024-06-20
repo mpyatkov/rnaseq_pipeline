@@ -59,28 +59,8 @@ cp -rf  ${Level_UP}/12_Venn/Job_Summary/*.pdf ./output/
 # cp -rf  ${Level_UP}/08_Extract_Counts/Job_Summary/featureCounts_summary_LncRNA15k_ExonCollapsed_GTF.txt  ./output/
 set -eu
 
-cp -rf ${Level_UP}/13_Correlation/Job_Summary/* ./output/
-
-# The whole directory is copied to preserve subdirectories
-# it is much easy to copy whole dir and after that remove unnecessary
-# files than recreate the subdirectories from the beginning.
-# remove all files which does not contain "combined" in the name
-set +eu
-find ./output/13* -name "*" -type f | grep -iv "combined" | xargs rm -rf
-set -eu
-
-# copy all STEP13 combined files to upper level directory
-s13_combined_files=($(find ./output -iname "*Comb*" | grep 13))
-for f in ${s13_combined_files[@]}; do
-    dname=$(dirname $f)
-    dist=$(dirname ${dname})
-    fname=$(basename $f)
-    
-    # move file to upper dir
-    mv $f ${dist}
-    # remove dir
-    rm -rf ${dname}
-done
+mkdir -p output/Step13_Combined_Outputs
+find ${Level_UP}/13_Correlation/Job_Summary/ -name "*.pdf" | grep -E "Combined|SignificantOnly" | xargs -n1 -I{} cp {} ./output/Step13_Combined_Outputs/
 
 ## SPECIFY FUNCTIONS
 

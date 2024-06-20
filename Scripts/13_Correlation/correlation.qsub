@@ -207,5 +207,9 @@ calc_correlation "../../../${DEDIR}_DE_* -name 'DiffEx*ExonCollapsed*txt'" "./Jo
 echo "Start montaging the PCA plots"
 montage_pca_plots "./Job_Summary/${OUTDIR_DICT[$DEDIR]}"
 
+## create extra plots which will contain only plots with 
+## significant genes
+./significant_only_plots.sh
+
 ## Special symbol that step is ok (do not remove it)
 echo "IAMOK"
