@@ -11,12 +11,10 @@ argv <- parse_args(p)
 print(argv)
 
 
-## extract comparisons names from configuration files
-# argv_sample_labels <- "/projectnb/wax-dk/david/G224_Shashi_Pipe/Scripts/00_Setup_Pipeline/Sample_Labels.txt"
-# argv_comparisons <- "/projectnb/wax-dk/david/G224_Shashi_Pipe/Scripts/00_Setup_Pipeline/Comparisons.txt"
-
-# argv$sample_labels <- "../00_Setup_Pipeline/Sample_Labels.txt"
-# argv$comparisons <- "../00_Setup_Pipeline/Comparisons.txt"
+## ONLY FOR DEBUGs
+# argv$input_path <- "../Job_Summary/DAVID_results/ExonCollapsed/"
+# argv$sample_labels <- "../../00_Setup_Pipeline/Sample_Labels.txt"
+# argv$comparisons <- "../../00_Setup_Pipeline/Comparisons.txt"
 
 ## named vector with comparison names
 simplified_comparisons <- function(argv_sample_labels, argv_comparisons){
@@ -53,6 +51,17 @@ extract_table_from_david <- function(line){
   body
 }
 
+## aggregate unique genes
+## c("a,b,c", "b,c,d") -> "a,b,c,d"
+agg_uniq_genes_in_group <- function(ll){
+  str_c(ll, collapse = ",") %>% 
+    str_split(",") %>% 
+    unlist(.) %>% 
+    str_trim() %>% 
+    unique() %>% 
+    str_c(., collapse = ", ")
+}
+
 process_file <- function(f){
   
   fname <- basename(f)
@@ -61,7 +70,7 @@ process_file <- function(f){
   comparison_num_num <- str_extract(fname,"([[:alnum:]]+)(?=_)") %>% as.numeric()
   
   body <- ifelse(str_detect(fname, "FullGeneBody"), "FullGeneBody", "ExonCollapsed")
-  updown <- ifelse(str_detect(fname, "^Up"), "Up","Down")
+  updown <- ifelse(str_detect(fname, "Up_"), "Up","Down")
   
   comparison_name <- COMPAR_NAMES[[comparison_num_num]]
   
@@ -76,17 +85,14 @@ process_file <- function(f){
            Regulation = updown,
            Coverage = body,
            Comparison_Name = comparison_name) %>% 
+    mutate(All_unique_genes_in_annotation_cluster = agg_uniq_genes_in_group(Genes), .by = c(Regulation, Comparison_Num, Comparison_Name, Annotation_Cluster)) %>% 
+    mutate(Annotation_Position = row_number(), .by = c(Comparison_Num,Regulation,Coverage,Comparison_Name, Annotation_Cluster)) %>% 
+    relocate(Annotation_Position,.after = Annotation_Cluster) %>% 
     relocate(Comparison_Name,.before =Annotation_Cluster) %>% 
     relocate(Coverage,.before =Comparison_Name) %>% 
     relocate(Regulation,.before =Coverage) %>% 
     relocate(Comparison_Num,.before = Regulation)
 }
-
-res <- list.files(path = "./Job_Summary/DAVID_results/", pattern = "txt", full.names = T) %>% 
-  map(\(f) process_file(f)) %>% 
-  list_rbind()
-  
-#argv$input_path <-"./Job_Summary/DAVID_results/" 
 
 excollapsed <- list.files(path = argv$input_path, pattern = "ExonCollapsed", full.names = T) %>% 
   map(\(f) process_file(f)) %>% 
