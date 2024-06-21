@@ -58,20 +58,25 @@ file_process <- function(file,delim='[_.]',pos=2){
     print(file)
     dat <- read_lines(file, progress = F)
     if(length(dat) > 1){
-      GeneSetID <- str_split(basename(file),delim,simplify = T)[pos]
+      fname <- basename(file)
+      
+      comparison_num_str <- str_extract(fname,"([[:alnum:]]+)(?=_)")
+      comparison_num_num <- str_extract(fname,"([[:alnum:]]+)(?=_)") %>% as.numeric()
+      
+      body <- ifelse(str_detect(fname, "FullGeneBody"), "FullGeneBody", "ExonCollapsed")
+      updown <- ifelse(str_detect(fname, "Up_"), "Up","Down")
+      
+      comparison_name <- COMPAR_NAMES[[comparison_num_num]]
       
       ## Select cluster and enrichment information ##
       dat_annotation <- grep('Annotation',dat,value = T)
       cluster <- data.frame(str_split(dat_annotation,'\t| ',simplify = T))
       cluster_label <- data.frame(Annotation_Cluster=as.numeric(cluster$X3),Cluster_Score=as.numeric(cluster$X6))
-      #cluster$X2 <- as.numeric(str_split(cluster$X2," ",simplify = T)[,3])
-      
+
       ## Processing category / term data
       c_sum <- clusters_process(dat,file)
       
-      y <- cbind(GeneSetID,cluster_label,c_sum)
-      
-      y <- y %>%
+      y <- cbind(cluster_label,c_sum) %>%
         mutate(All_Unique_Terms_Name_Copy=All_Unique_Terms_Name) %>%
         relocate(All_Unique_Terms_Name_Copy,.after = All_Unique_Terms_ID) %>%
         relocate(Top_Genes,.after = Cluster_Score) %>%
@@ -79,6 +84,13 @@ file_process <- function(file,delim='[_.]',pos=2){
         relocate(Top_FDR,.after = Cluster_Score) %>%
         relocate(All_Unique_Terms_Name,.after = Cluster_Score) %>%
         relocate(Top_Term,.after = Cluster_Score)
+      
+      y <- y %>% mutate(Comparison_Num = comparison_num_str,
+                  Regulation = updown,
+                  Coverage = body,
+                  Comparison_Name = comparison_name) %>% 
+        select(Comparison_Num, Regulation, Coverage, Comparison_Name, everything())
+      
     }else{y <- NULL}
 
     return(y)
@@ -133,6 +145,25 @@ clusters_process <- function(dat,file){
   return(y)
 }
 
+## named vector with comparison names
+simplified_comparisons <- function(argv_sample_labels, argv_comparisons){
+  sample_labels <- read_delim(argv_sample_labels, delim = ";", col_names=T, show_col_types = F) %>% 
+    select(Group,Condition_Name) %>% 
+    distinct()
+  
+  ## named vector, v[['1']] -- extract first comparison name
+  comparisons <- read_delim(argv_comparisons, delim = ";", col_names=T, show_col_types = F) %>% 
+    pivot_longer(!Comparison_Number, names_to = "condition", values_to = "Group") %>% 
+    left_join(., sample_labels, by = join_by(Group)) %>% 
+    select(-Group) %>% 
+    pivot_wider(names_from = condition, values_from = Condition_Name) %>% 
+    mutate(Comparision_Name = str_glue("{Condition_2}_vs_{Condition_1}")) %>% 
+    select(-Condition_1, -Condition_2) %>% 
+    deframe()
+  
+  comparisons
+}
+
 ########################
 ##### User Input #######
 ########################
@@ -145,8 +176,16 @@ library(argparser)
 
 p <- arg_parser('DAVID GO enrichment combining')
 p <- add_argument(p,'--input_path', default="./", help="DAVID files, usually txt files")
+p <- add_argument(p,'--sample_labels', default="../00_Setup_Pipeline/Sample_Labels.txt", help="Sample_Labels.txt file")
+p <- add_argument(p,'--comparisons', default="../00_Setup_Pipeline/Comparisons.txt", help="Comparisons.txt file")
 argv <- parse_args(p)
 print(argv)
+
+# argv$input_path <- "../Job_Summary/DAVID_results/ExonCollapsed/"
+# argv$sample_labels <- "../../00_Setup_Pipeline/Sample_Labels.txt"
+# argv$comparisons <- "../../00_Setup_Pipeline/Comparisons.txt"
+
+COMPAR_NAMES <- simplified_comparisons(argv$sample_labels, argv$comparisons)
 
 ### Parse multiple files
 # Provide vector of file paths for each DAVID output file

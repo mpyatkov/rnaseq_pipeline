@@ -34,7 +34,10 @@ Rscript ./Scripts/mx_david_aggregator.R --input_path ./ \
     --sample_labels ../00_Setup_Pipeline/Sample_Labels.txt \
     --comparisons ../00_Setup_Pipeline/Comparisons.txt
 
-Rscript ./Scripts/alan_david_aggregator.R --input_path "./" # current dir
+Rscript ./Scripts/alan_david_aggregator.R --input_path "./" \
+    --sample_labels ../00_Setup_Pipeline/Sample_Labels.txt \
+    --comparisons ../00_Setup_Pipeline/Comparisons.txt
+
 
 ## move all DAVID aggregated results to summary directory
 mkdir -p Job_Summary/DAVID_results/ExonCollapsed/
