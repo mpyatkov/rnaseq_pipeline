@@ -5,6 +5,8 @@
 ##################################################################################
 
 args <- commandArgs(T)
+RPKM_TPM_PARAM<-"rpkm" ## could be rpkm or tpm only, default rpkm
+RPKM_TPM_PARAM <- ifelse(RPKM_TPM_PARAM == "tpm", "tpm", "rpkm")
 
 EXTARGS=list(dataset_label=args[1],
              detitle=args[2],
@@ -264,7 +266,7 @@ read_dataset <- function(filenames, group_names, filter_condition = NULL, meanon
    
    # choose only required columns (dataset for pca)
    dataset_grep_filter <- dataset %>%
-      select(matches("_edgeRFDR|_edgeRlogFC|rpkm")) 
+      select(matches(str_glue("_edgeRFDR|_edgeRlogFC|{RPKM_TPM_PARAM}"))) 
    
    # assign the gene names to rownames
    rownames(dataset_grep_filter) <- dataset$id
@@ -314,7 +316,7 @@ read_dataset <- function(filenames, group_names, filter_condition = NULL, meanon
    
    # dataset for correlation
    dataset_grep_filter <- dataset_grep_filter %>% 
-      select(matches("rpkm_")) 
+      select(matches(str_glue("{RPKM_TPM_PARAM}_"))) 
    
    # select columns with "_mean_" only
    if (meanonly == T) {
@@ -328,9 +330,9 @@ read_dataset <- function(filenames, group_names, filter_condition = NULL, meanon
    for_pca <- dataset_grep_filter %>%
       select(-contains("_mean_"))
    
-   # extract only RPKM columns 
+   # extract only RPKM/TPM columns 
    df_pca <- t(for_pca)
-   rownames(df_pca) <- str_remove(rownames(df_pca), "rpkm_")
+   rownames(df_pca) <- str_remove(rownames(df_pca), str_glue("{RPKM_TPM_PARAM}_"))
    
    # associate rownames(condname_sample) and groups by id(condname_sample)
    groups <- tibble(id = rownames(df_pca)) %>% 
@@ -389,7 +391,7 @@ pca_3plot <- function(filename, plot_type, group_names, extargs, number, meanonl
    ds <- read_dataset(filename, group_names, filter_condition = cond$nonsignif, meanonly = meanonly)
    out_fname <- paste0(number, paste0("_",plot_type,"_Non-significant_"), get_out_names(out_names, cond$nonsignif$text))
    out_fname<-replace_prefix(out_fname)
-   header <- paste0(extargs$dataset_label, ", ",  out_fname, ", ", "\nNon-significant genes (1.2 < |FC| < 1/|1.2|  and FDR >0.1, RPKM >1), ",extargs$detitle,"_Genes: ", length(ds$gene_names))
+   header <- paste0(extargs$dataset_label, ", ",  out_fname, ", ", "\nNon-significant genes (1.2 < |FC| < 1/|1.2|  and FDR >0.1, ",str_to_upper(RPKM_TPM_PARAM),">1), ",extargs$detitle,"_Genes: ", length(ds$gene_names))
    if (plot_type == "PCA") {
       write_csv(tibble(id = ds$gene_names), paste0(out_fname,"_GeneNames",".csv"))
    }
@@ -441,7 +443,7 @@ cor_3plot <- function(filename, group_names, method, extargs, number, meanonly =
    out_fname <- paste0(number, "_", mname, "_Non-significant_", get_out_names(out_names, cond$nonsignif$text))
    out_fname<-replace_prefix(out_fname)
    out_fname <- double_number(out_fname, meanonly)
-   header <- paste0(extargs$dataset_label, ", ",  out_fname, ", ", "\nNon-significant genes (1.2 < |FC| < 1/|1.2|  and FDR >0.1, RPKM >1), ",extargs$detitle,"_Genes: ", dim(ds$df_cor)[[1]])
+   header <- paste0(extargs$dataset_label, ", ",  out_fname, ", ", "\nNon-significant genes (1.2 < |FC| < 1/|1.2|  and FDR >0.1, ",str_to_upper(RPKM_TPM_PARAM)," >1), ",extargs$detitle,"_Genes: ", dim(ds$df_cor)[[1]])
    plot_cor(ds$df_cor, header, method, out_fname)
 }
 
