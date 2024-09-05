@@ -54,11 +54,14 @@ david_get_results <- function(genes, outname) {
   
   ## example of download link: https://david.ncifcrf.gov/data/download/t2t_4057F39AA8F01718198056989.txt
   
-  download.file(url = download_link, destfile = outname)
+  tryCatch(
+    download.file(url = download_link, destfile = outname), 
+    error = function(e) print(paste('NO COMMON PATHWAYS: ', outname))
+  ) 
 }
 
 ### test
-## argv$input_path <- "/projectnb/wax-dk/david/G224_Shashi_Pipe/Scripts/"
+## argv$input_path <- "/projectnb/wax-dk/max/G221_RNASEQ_XE96/"
 
 ## TODO: check keep expression below, because I am not sure
 ## that one term will work with for calculating enrichment score
@@ -71,15 +74,13 @@ walk(lf, \(fname){
   
   print(fname)
   
-  compar_num <- str_extract(fname,"(?<=09d_DE_)([[:alnum:]])(?=_Ref)") %>%
+  compar_num <- str_extract(fname,"(?<=09d_DE_)([[:alnum:]]+)(?=_Ref)") %>%
     str_pad(., width = 2, side = "left", pad="0")
   
   output_fname <- basename(fname) %>% tools::file_path_sans_ext()  %>%  paste0(".txt") %>% paste0(compar_num,"_",.)
+  print(output_fname)
   
-  # f <- tools::file_path_sans_ext(basename(fname))
-  # f <- paste0(f,".txt")
-
-  genes <- read_tsv(fname,col_names = T) %>% 
+  genes <- read_tsv(fname,col_names = T, show_col_types = F) %>% 
     select(id = 1) %>% 
     filter(!str_detect(id,"nc_")) %>% 
     pull(id)
@@ -87,7 +88,7 @@ walk(lf, \(fname){
   paste0("Genes: ",length(genes)) %>% print()
   
   david_get_results(genes, output_fname)
-  Sys.sleep(10)
+  Sys.sleep(5)
 })
 
 ## save html for debug purpose

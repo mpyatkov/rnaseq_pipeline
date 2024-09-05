@@ -339,7 +339,7 @@ treeplots <- list(
   keep(\(l){zz <- pairwise_termsim(l$obj); nrow(zz@termsim) > 5}) %>% 
   map(create_treeplot)
 
-compar_num <- str_extract(fname,"(?<=09d_DE_)([[:alnum:]])(?=_Ref)") %>%
+compar_num <- str_extract(fname,"(?<=09d_DE_)([[:alnum:]]+)(?=_Ref)") %>%
   str_pad(., width = 2, side = "left", pad="0")
 
 output_fname <- basename(fname) %>% tools::file_path_sans_ext()  %>%  paste0(".pdf") %>% paste0(compar_num,"_",.)
