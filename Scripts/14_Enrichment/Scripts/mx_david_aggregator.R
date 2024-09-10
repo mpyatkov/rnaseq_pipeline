@@ -67,12 +67,12 @@ process_file <- function(f){
   fname <- basename(f)
 
   comparison_num_str <- str_extract(fname,"([[:alnum:]]+)(?=_)")
-  comparison_num_num <- str_extract(fname,"([[:alnum:]]+)(?=_)") %>% as.numeric()
+  #comparison_num_num <- str_extract(fname,"([[:alnum:]]+)(?=_)") %>% as.numeric()
   
   body <- ifelse(str_detect(fname, "FullGeneBody"), "FullGeneBody", "ExonCollapsed")
   updown <- ifelse(str_detect(fname, "Up_"), "Up","Down")
   
-  comparison_name <- COMPAR_NAMES[[comparison_num_num]]
+  comparison_name <- COMPAR_NAMES[[comparison_num_str]]
   
   tmp <- read_file(f)
   cluster_chunks <- str_split(tmp, "\\n\\n", simplify = T) %>% 

@@ -61,12 +61,12 @@ file_process <- function(file,delim='[_.]',pos=2){
       fname <- basename(file)
       
       comparison_num_str <- str_extract(fname,"([[:alnum:]]+)(?=_)")
-      comparison_num_num <- str_extract(fname,"([[:alnum:]]+)(?=_)") %>% as.numeric()
+      #comparison_num_num <- str_extract(fname,"([[:alnum:]]+)(?=_)") %>% as.numeric()
       
       body <- ifelse(str_detect(fname, "FullGeneBody"), "FullGeneBody", "ExonCollapsed")
       updown <- ifelse(str_detect(fname, "Up_"), "Up","Down")
       
-      comparison_name <- COMPAR_NAMES[[comparison_num_num]]
+      comparison_name <- COMPAR_NAMES[[comparison_num_str]]
       
       ## Select cluster and enrichment information ##
       dat_annotation <- grep('Annotation',dat,value = T)
