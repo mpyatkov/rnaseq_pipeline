@@ -116,7 +116,10 @@ if [[ "${R1}" == "${R2}" ]]; then
 	  --readFilesIn ${left_list} \
 	  --outSAMtype BAM SortedByCoordinate \
 	  --outSAMstrandField intronMotif \
-	  --outFileNamePrefix ./"${SAMPLE_ID}_"
+	  --outFileNamePrefix ./"${SAMPLE_ID}_" \
+	  --quantMode GeneCounts \
+	  --outFilterScoreMinOverLread 0 \
+	  --outFilterMatchNminOverLread 0
     )    
 else
     echo "Start PAIRED-END alignment"
@@ -127,7 +130,10 @@ else
 	  --readFilesIn ${left_list} ${right_list} \
 	  --outSAMtype BAM SortedByCoordinate \
 	  --outSAMstrandField intronMotif \
-	  --outFileNamePrefix ./"${SAMPLE_ID}_"
+	  --outFileNamePrefix ./"${SAMPLE_ID}_" \
+	  --quantMode GeneCounts \
+	  --outFilterScoreMinOverLread 0 \
+	  --outFilterMatchNminOverLread 0
     )    
 fi
 
@@ -235,6 +241,7 @@ echo 'Ending spliced_read_counts'
 
 # copy the output files to users storage dir
 cp *.txt ${output_dir}
+cp *.tab ${output_dir}
 cp -r ${output_dir} ${storage_dir}
 
 # generate cram files and move them to the waxmanlabvm project
