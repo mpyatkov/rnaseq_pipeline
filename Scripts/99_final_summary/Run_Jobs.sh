@@ -29,7 +29,7 @@ cd ..
 
 Level_UP=$(pwd)
 
-mkdir ${Level_UP}/14_final_summary/output
+mkdir ${Level_UP}/99_final_summary/output
 
 cd ${SCRIPT_DIR}
 echo "Script_Directory"
@@ -77,7 +77,7 @@ copy_feature(){
 }
 
 
-# copy segex files from DE directories to step 14 output
+# copy segex files from DE directories to step 99 output
 copy_all_segex_files() {
     local de_index=$1
 
