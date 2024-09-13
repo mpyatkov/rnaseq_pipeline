@@ -117,9 +117,9 @@ if [[ "${R1}" == "${R2}" ]]; then
 	  --outSAMtype BAM SortedByCoordinate \
 	  --outSAMstrandField intronMotif \
 	  --outFileNamePrefix ./"${SAMPLE_ID}_" \
-	  --quantMode GeneCounts \
-	  --outFilterScoreMinOverLread 0 \
-	  --outFilterMatchNminOverLread 0
+	  --quantMode GeneCounts 
+	  # --outFilterScoreMinOverLread 0 \
+	  # --outFilterMatchNminOverLread 0
     )    
 else
     echo "Start PAIRED-END alignment"
@@ -131,9 +131,9 @@ else
 	  --outSAMtype BAM SortedByCoordinate \
 	  --outSAMstrandField intronMotif \
 	  --outFileNamePrefix ./"${SAMPLE_ID}_" \
-	  --quantMode GeneCounts \
-	  --outFilterScoreMinOverLread 0 \
-	  --outFilterMatchNminOverLread 0
+	  --quantMode GeneCounts 
+	  # --outFilterScoreMinOverLread 0 \
+	  # --outFilterMatchNminOverLread 0
     )    
 fi
 
