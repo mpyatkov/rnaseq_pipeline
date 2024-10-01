@@ -30,6 +30,7 @@ simplified_comparisons <- function(argv_sample_labels, argv_comparisons){
     pivot_wider(names_from = condition, values_from = Condition_Name) %>% 
     mutate(Comparision_Name = str_glue("{Condition_2}_vs_{Condition_1}")) %>% 
     select(-Condition_1, -Condition_2) %>% 
+    mutate(Comparison_Number = str_pad(Comparison_Number, width = 2, pad = "0")) %>% 
     deframe()
   
   comparisons
@@ -68,7 +69,6 @@ process_file <- function(f){
 
   comparison_num_str <- str_extract(fname,"([[:alnum:]]+)(?=_)")
   #comparison_num_num <- str_extract(fname,"([[:alnum:]]+)(?=_)") %>% as.numeric()
-  
   body <- ifelse(str_detect(fname, "FullGeneBody"), "FullGeneBody", "ExonCollapsed")
   updown <- ifelse(str_detect(fname, "Up_"), "Up","Down")
   

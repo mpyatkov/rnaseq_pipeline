@@ -158,6 +158,7 @@ simplified_comparisons <- function(argv_sample_labels, argv_comparisons){
     select(-Group) %>% 
     pivot_wider(names_from = condition, values_from = Condition_Name) %>% 
     mutate(Comparision_Name = str_glue("{Condition_2}_vs_{Condition_1}")) %>% 
+    mutate(Comparison_Number = str_pad(Comparison_Number, width = 2, pad = "0")) %>% 
     select(-Condition_1, -Condition_2) %>% 
     deframe()
   
