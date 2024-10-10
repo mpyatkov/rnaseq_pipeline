@@ -131,6 +131,14 @@ mkdir -p "${output_dir}"
 
 cp -r ${output_dir} ${storage_dir}
 
+
+echo "CollectDuplicatesInfo"
+output_dir="CollectDuplicates"
+mkdir -p "${output_dir}"
+(set -x; picard MarkDuplicates I=${input_bam} O=${output_dir}/${SAMPLE_ID}_nodup.bam M=${SAMPLE_ID}_marked_dup_metrics.txt)
+rm -rf ${output_dir}/*.bam ## we do not need BAM file without duplicates, just removing
+cp -r ${output_dir} ${storage_dir}
+
 echo "=========================================================="
 echo "Finished on : $(date)"
 
