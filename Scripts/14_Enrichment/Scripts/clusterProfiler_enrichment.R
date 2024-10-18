@@ -14,6 +14,7 @@ if (DEBUG){
   #argv$input_path <- "/projectnb2/wax-dk/david/G224_Shashi_Pipe/Scripts/"
   argv$input_path <- "/projectnb/wax-dk/max/G221_RNASEQ_MS316/Scripts/"
 }
+
 print(argv)
 
 remotes::install_cran("patchwork", upgrade = "never")
@@ -81,6 +82,12 @@ construct_title <- function(filename, top, stats_title) {
            "{updown}, {stats_title}\n",
            "{body}")
 }
+
+extract_updown_and_body <- function(filename){
+  fname <- basename(filename)
+  str_extract(fname,"([[:alnum:]|[_]]+)(?<=_ExonCollapsed|_FullGeneBody)")
+}
+
 
 ## treeplot
 create_treeplot <- function(lst){
@@ -194,6 +201,10 @@ genes_stat_title <- str_glue("total # of genes: {genes_stat$total}, PCG: {genes_
 
 title1 <- construct_title(fname, "GO enrichment top20 by ontologies", genes_stat_title)
 title2 <- construct_title(fname, "GO enrichment top60 any ontology", genes_stat_title)
+mf_title <- construct_title(fname, "MF Ontology (only PCG)", genes_stat_title)
+bp_title <- construct_title(fname, "BP Ontology (only PCG)", genes_stat_title)
+cc_title <- construct_title(fname, "CC Ontology (only PCG)", genes_stat_title)
+all_ontologies_title <- construct_title(fname, "All Ontologies together (only PCG)", genes_stat_title)
 
 ## top20 by ONTOLOGY
 res1 <- res %>%
@@ -330,25 +341,61 @@ plots <- list(plot_grid(p1),plot_grid(p11),plot_grid(p2),plot_grid(p22))
 # pairwise_termsim(goterm_analysis_cc)
 # sum(goterm_analysis_cc@result$p.adjust < 0.05) %>% filter(p.adjust < 0.05)
 
-treeplots <- list(
-  list(obj = goterm_analysis_mf, title = "MF Ontology"),
-  list(obj = goterm_analysis_bp, title = "BP Ontology"),
-  list(obj = goterm_analysis_cc, title = "CC Ontology"),
-  list(obj = goterm_analysis, title = "All Ontologies together")) %>%
-  keep(\(l){sum(l$obj@result$p.adjust<0.05) > 1}) %>% 
-  keep(\(l){zz <- pairwise_termsim(l$obj); nrow(zz@termsim) > 5}) %>% 
-  map(create_treeplot)
+# output_fname <- basename(fname) %>% tools::file_path_sans_ext()  %>%  paste0(".pdf") %>% paste0(compar_num,"_",.)
 
 compar_num <- str_extract(fname,"(?<=09d_DE_)([[:alnum:]]+)(?=_Ref)") %>%
   str_pad(., width = 2, side = "left", pad="0")
 
-output_fname <- basename(fname) %>% tools::file_path_sans_ext()  %>%  paste0(".pdf") %>% paste0(compar_num,"_",.)
+outputnames_enrichment <- paste0(str_pad(1:4, width = 2, side = "left", pad = "0"),
+                      "_",
+                      compar_num,
+                      "_",
+                      c("top20_bar", "top60_bar", "top20_dot", "top60_dot"),
+                      extract_updown_and_body(fname),
+                      ".pdf")
+
+plots_with_name <- plots %>% set_names(outputnames_enrichment)
+outputnames_ontologies <- paste0(str_pad(5:8, width = 2, side = "left", pad = "0"),
+                      "_",
+                      compar_num,
+                      "_",
+                      c("MF", "BP", "CC", "ALLONT"),
+                      extract_updown_and_body(fname),
+                      ".pdf")
+
+
+# treeplots <- list(
+#   list(obj = goterm_analysis_mf, title = mf_title),
+#   list(obj = goterm_analysis_bp, title = bp_title),
+#   list(obj = goterm_analysis_cc, title = cc_title),
+#   list(obj = goterm_analysis, title = all_ontologies_title)) %>%
+#   keep(\(l){sum(l$obj@result$p.adjust<0.05) > 1}) %>% 
+#   keep(\(l){zz <- pairwise_termsim(l$obj); nrow(zz@termsim) > 5}) %>% 
+#   map(create_treeplot)
+## output into one file
+# flatten(list(plots,treeplots)) %>%
+#   marrangeGrob(nrow = 1, ncol = 1) %>%
+#   ggsave(filename = output_fname, width = 13, height = 15.19)
+
+treeplots <- list(
+  list(obj = goterm_analysis_mf, title = mf_title),
+  list(obj = goterm_analysis_bp, title = bp_title),
+  list(obj = goterm_analysis_cc, title = cc_title),
+  list(obj = goterm_analysis, title = all_ontologies_title)
+) %>% set_names(outputnames_ontologies) %>% 
+  keep(\(l){sum(l$obj@result$p.adjust<0.05) > 1}) %>%
+  keep(\(l){zz <- pairwise_termsim(l$obj); nrow(zz@termsim) > 5}) %>%
+  map(create_treeplot)
+  
+all_plots <- flatten(list(plots_with_name,treeplots))
+
+## output into separate files
+walk2(flatten(list(plots,treeplots)), names(all_plots), \(p,name) {
+  ggsave(plot = p, filename = name, width = 13, height = 15.19)
+})
+
+
 output_fname_xlsx <- basename(fname) %>% tools::file_path_sans_ext()  %>%  paste0(".xlsx") %>% paste0(compar_num,"_",.)
-
-flatten(list(plots,treeplots)) %>%
-  marrangeGrob(nrow = 1, ncol = 1) %>%
-  ggsave(filename = output_fname, width = 13, height = 15.19)
-
 write_xlsx(res, path = output_fname_xlsx, col_names = T)
 
 ##}))) ## end of purrr::walk
