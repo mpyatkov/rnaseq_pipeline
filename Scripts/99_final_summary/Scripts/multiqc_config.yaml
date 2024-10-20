@@ -2,5 +2,5 @@ table_columns_visible:
   FastQC:
     percent_duplicates: False
 
-ignore:
-  - fastqc:sequence_duplication_levels
+remove_sections:
+  - fastqc_sequence_counts
