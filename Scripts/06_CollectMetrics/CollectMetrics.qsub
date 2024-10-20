@@ -1,19 +1,9 @@
 #!/bin/bash -l
-
-##################################################################################
-#Andy Rampersaud, 02.22.16
-#This script is called by setup_CollectInsertSizeMetrics.sh
-##################################################################################
-# Specify which shell to use
-#$ -S /bin/bash
 #$ -cwd
 #$ -j y
 #$ -e ./logs/
 #$ -o ./logs/
-##################################################################################
-#Initialize variables from CollectInsertSizeMetrics.sh
-##################################################################################
-
+#$ -l scratch_free=200G
 
 set -o errexit
 set -o pipefail
@@ -22,17 +12,11 @@ set -o nounset
 # export all variables from Pipeline_Setup.conf
 eval "$(../00_Setup_Pipeline/01_Pipeline_Setup.py --export)"
 
-# load anaconda environment
-set +eu
-module load miniconda
-conda activate --stack ${CONDA_DIR}/picard
-set -eu
+module load picard/2.25.2
 
-#checking the command line arg
-#-ne : "is not equal to"
-if [ $# -ne 1 ] ; then
-      echo "Need 1 argument for the qsub command: SAMPLE_ID: {$1}"
-      exit 0
+if [ $# -ne 1 ]; then
+    echo "Need 1 argument for the qsub command: SAMPLE_ID: {$1}"
+    exit 0
 fi
 
 SAMPLE_ID=$1
@@ -40,38 +24,31 @@ SAMPLE_ID=$1
 # automated strand detection
 if [ ${STRANDEDNESS} -eq 3 ]; then
     export_file="${DATASET_DIR}/${SAMPLE_ID}/Read_Strandness/${SAMPLE_ID}_export.sh"
-    if [[ -f "${export_file}" ]]; then
-	# re-export STRANDEDNESS
-	source ${export_file}
-	echo "Auto: $STRANDEDNESS"
+    if [[ -f ${export_file} ]]; then
+        # re-export STRANDEDNESS
+        source ${export_file}
+        echo "Auto: $STRANDEDNESS"
     else
-	echo "Error: cannot find file: ${export_file}"
-	echo "To use automatic strand detection, you must complete step 01_Read_Strandness"
-	exit 1
+        echo "Error: cannot find file: ${export_file}"
+        echo "To use automatic strand detection, you must complete step 01_Read_Strandness"
+        exit 1
     fi
 fi
 
 # Calculate strand_specificity from STRANDEDNESS
 #CollectRnaSeqMetrics: strand_specificity
-if [ ${STRANDEDNESS} -eq 0 ]
-then
-strand_specificity="NONE"
+if [ ${STRANDEDNESS} -eq 0 ]; then
+    strand_specificity="NONE"
 
-elif [ ${STRANDEDNESS} -eq 2 ]
-then
-strand_specificity="FIRST_READ_TRANSCRIPTION_STRAND"
+elif [ ${STRANDEDNESS} -eq 2 ]; then
+    strand_specificity="FIRST_READ_TRANSCRIPTION_STRAND"
 
-elif [ ${STRANDEDNESS} -eq 1 ]
-then
-strand_specificity="SECOND_READ_TRANSCRIPTION_STRAND"
+elif [ ${STRANDEDNESS} -eq 1 ]; then
+    strand_specificity="SECOND_READ_TRANSCRIPTION_STRAND"
 fi
-
 
 script_dir="$(pwd)"
 
-# Now let's keep track of some information just in case anything goes wrong
-#Use to calculate job time:
-#Start_Time in seconds
 start_time=$(date +"%s")
 echo "Starting on : $(date)"
 echo "Running on node : $(hostname)"
@@ -83,67 +60,49 @@ echo "Parameter for multiple cores : $NSLOTS"
 echo "=========================================================="
 
 # Go to local scratch directory
-
-cd "${TMPDIR}"
-cp "${DATASET_DIR}/${SAMPLE_ID}/aligner/${SAMPLE_ID}_primary_unique.bam" .
-
-#Initialize INPUT_BAM:
-input_bam="${SAMPLE_ID}_primary_unique.bam"
-
-# copy CollectRnaSeqMetrics required files:
-cp "${script_dir}/Input_Regions/genes_refFlat" .
-
-# aligners produces little different headers for BAM files, we need to
-# copy correct one.
-
-# To get the correct header use the following:
-# samtools view -H file.bam > header.txt
+input_bam="${DATASET_DIR}/${SAMPLE_ID}/aligner/${SAMPLE_ID}_primary_unique.bam"
 
 if [ ${DEFAULT_ALIGNER} -eq 1 ]; then
-    echo "Copy STAR intervalList"
-    cp "${script_dir}/Input_Regions/rRNA_intervalList_sorted.STAR" ./rRNA_intervalList_sorted
+    aligner="STAR"
 else
-    echo "Copy TOPHAT2 intervalList"
-    cp "${script_dir}/Input_Regions/rRNA_intervalList_sorted.TOPHAT" ./rRNA_intervalList_sorted
+    aligner="TOPHAT"
 fi
-
-# cp "${script_dir}/Input_Regions/rRNA_intervalList_sorted" .
 
 storage_dir=${DATASET_DIR}/${SAMPLE_ID}/
 
-echo "CollectInsertSizeMetrics"
 # create CollectInsertSizeMetrics output folder to store files:
-output_dir="CollectInsertSizeMetrics"
-mkdir -p "$output_dir"
-(set -x; picard CollectInsertSizeMetrics HISTOGRAM_FILE="${output_dir}/${SAMPLE_ID}_hist.pdf" INPUT="${input_bam}" OUTPUT="${output_dir}/${SAMPLE_ID}_metrics")
+output_dir="${storage_dir}CollectInsertSizeMetrics"
+mkdir -p "${output_dir}"
+(
+    set -x
+    picard CollectInsertSizeMetrics HISTOGRAM_FILE="${output_dir}/${SAMPLE_ID}_hist.pdf" INPUT="${input_bam}" OUTPUT="${output_dir}/${SAMPLE_ID}_metrics"
+)
 echo 'Finished CollectInsertSizeMetrics command'
-cp -r "$output_dir" "$storage_dir"
 
-# ----------
-
-echo "CollectRnaSeqMetrics"
-# create CollectRnaSeqMetrics output folder to store files:
-output_dir="CollectRnaSeqMetrics"
+# create CollectRnaSeqMetrics
+output_dir="${storage_dir}CollectRnaSeqMetrics"
 mkdir -p "${output_dir}"
+(
+    set -x
+    picard CollectRnaSeqMetrics REF_FLAT="${script_dir}/Input_Regions/genes_refFlat" RIBOSOMAL_INTERVALS="${script_dir}/Input_Regions/rRNA_intervalList_sorted.${aligner}" STRAND="${strand_specificity}" INPUT="${input_bam}" OUTPUT="${output_dir}/${SAMPLE_ID}_metrics"
+)
+echo 'Finished CollectRnaSeqMetrics command'
 
-# # old syntax
-(set -x; picard CollectRnaSeqMetrics REF_FLAT=genes_refFlat RIBOSOMAL_INTERVALS=rRNA_intervalList_sorted STRAND="${strand_specificity}" INPUT="${input_bam}" OUTPUT="${output_dir}/${SAMPLE_ID}_metrics")
-
-cp -r ${output_dir} ${storage_dir}
-
-
-echo "CollectDuplicatesInfo"
-output_dir="CollectDuplicates"
+# create CollectDuplicates
+output_dir="${storage_dir}CollectDuplicates"
 mkdir -p "${output_dir}"
-(set -x; picard MarkDuplicates I=${input_bam} O=${output_dir}/${SAMPLE_ID}_nodup.bam M=${SAMPLE_ID}_marked_dup_metrics.txt)
-rm -rf ${output_dir}/*.bam ## we do not need BAM file without duplicates, just removing
-cp -r ${output_dir} ${storage_dir}
+(
+    set -x
+    picard MarkDuplicates I=${input_bam} O=/dev/null M=${output_dir}/${SAMPLE_ID}_marked_dup_metrics.txt VALIDATION_STRINGENCY=SILENT MAX_FILE_HANDLES_FOR_READ_ENDS_MAP=1000
+)
+
+echo 'Finished CollectDuplicates command'
 
 echo "=========================================================="
 echo "Finished on : $(date)"
 
 end_time=$(date +"%s")
-diff=$((end_time-start_time))
+diff=$((end_time - start_time))
 echo "$((diff / 3600)) hours, $(((diff / 60) % 60)) minutes and $((diff % 60)) seconds elapsed."
 echo "=========================================================="
 echo "IAMOK"
