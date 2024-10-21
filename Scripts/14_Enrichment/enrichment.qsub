@@ -55,10 +55,13 @@ set -eu
 find . -name "*.pdf" | grep -v 'Combined' | xargs rm
 
 ## move to Job_Summary
-mkdir -p Job_Summary/clusterProfiler_ExonCollapsed
-mv *ExonCollapsed*.{pdf,xlsx} ./Job_Summary/clusterProfiler_ExonCollapsed/
-mkdir -p Job_Summary/clusterProfiler_FullGeneBody
-mv *FullGeneBody*.{pdf,xlsx} ./Job_Summary/clusterProfiler_FullGeneBody/
+mkdir -p Job_Summary/clusterProfiler_ExonCollapsed/xlsx_reports
+mv *ExonCollapsed*.pdf ./Job_Summary/clusterProfiler_ExonCollapsed/
+mv *ExonCollapsed*.xlsx ./Job_Summary/clusterProfiler_ExonCollapsed/xlsx_reports/
+
+mkdir -p Job_Summary/clusterProfiler_FullGeneBody/xlsx_reports
+mv *FullGeneBody*.pdf ./Job_Summary/clusterProfiler_FullGeneBody/
+mv *FullGeneBody*.xlsx Job_Summary/clusterProfiler_FullGeneBody/xlsx_reports/
 
 ## DAVID downloader and aggregator
 echo "Start DAVID downloader"
