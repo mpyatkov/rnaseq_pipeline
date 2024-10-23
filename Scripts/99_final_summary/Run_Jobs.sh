@@ -63,8 +63,8 @@ cp -rf ${Level_UP}/14_Enrichment/Job_Summary/* ./output/EnrichmentAnalysis/
 # cp -rf  ${Level_UP}/08_Extract_Counts/Job_Summary/featureCounts_summary_LncRNA15k_ExonCollapsed_GTF.txt  ./output/
 set -eu
 
-mkdir -p output/Step13_Combined_Outputs
-find ${Level_UP}/13_Correlation/Job_Summary/ -name "*.pdf" | grep -E "Combined|SignificantOnly" | xargs -n1 -I{} cp {} ./output/Step13_Combined_Outputs/
+mkdir -p output/Combined_PCA_and_Correlation_plots
+find ${Level_UP}/13_Correlation/Job_Summary/ -name "*.pdf" | grep -E "Combined|SignificantOnly" | xargs -n1 -I{} cp {} ./output/Combined_PCA_and_Correlation_plots/
 
 ## SPECIFY FUNCTIONS
 
