@@ -13,6 +13,7 @@ set -o nounset
 eval "$(../00_Setup_Pipeline/01_Pipeline_Setup.py --export)"
 
 module load picard/2.25.2
+module load R
 
 if [ $# -ne 1 ]; then
     echo "Need 1 argument for the qsub command: SAMPLE_ID: {$1}"
