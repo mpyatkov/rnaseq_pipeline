@@ -86,8 +86,9 @@ walk(lf, \(fname){
     pull(id)
   
   paste0("Genes: ",length(genes)) %>% print()
-  
-  david_get_results(genes, output_fname)
+  if (as.numeric(length(genes)) > 0) {
+    david_get_results(genes, output_fname)
+  }
   Sys.sleep(5)
 })
 
