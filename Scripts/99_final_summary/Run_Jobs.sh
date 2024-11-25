@@ -56,6 +56,7 @@ cp -rf  ${Level_UP}/06_CollectMetrics/Job_Summary/CollectRnaSeqMetrics_Stats.txt
 cp -rf  ${Level_UP}/06_CollectMetrics/Job_Summary/CollectInsertSizeMetrics_Stats.txt  ./output/
 cp -rf  ${Level_UP}/06_CollectMetrics/Job_Summary/CollectInsertSizeMetrics_Plots.pdf ./output/
 cp -rf  ${Level_UP}/12_Venn/Job_Summary/*.pdf ./output/
+cp -rf ${Level_UP}/00_Setup_Pipeline/*.xlsx ./output/
 
 mkdir -p ./output/EnrichmentAnalysis
 cp -rf ${Level_UP}/14_Enrichment/Job_Summary/* ./output/EnrichmentAnalysis/
