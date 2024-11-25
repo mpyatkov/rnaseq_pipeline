@@ -10,6 +10,18 @@
 ########################################## Functions #####################################################
 ##########################################################################################################
 
+library(tidyverse)
+
+if (!require("writexl", quietly = TRUE)) {
+  remotes::install_cran("writexl", upgrade = "never", quiet = T)
+  library(writexl)
+}
+
+if (!require("argparser", quietly = TRUE)) {
+  remotes::install_cran("argparser", upgrade = "never", quiet = T)
+  library(argparser)
+}
+
 # NOTE: Make sure to initialize all functions prior to running the main functions above.
 
 ##########################
@@ -169,11 +181,6 @@ simplified_comparisons <- function(argv_sample_labels, argv_comparisons){
 ##### User Input #######
 ########################
 
-library(tidyverse)
-remotes::install_cran("writexl", upgrade = "never")
-library(writexl)
-remotes::install_cran("argparser", upgrade = "never", quiet = T)
-library(argparser)
 
 p <- arg_parser('DAVID GO enrichment combining')
 p <- add_argument(p,'--input_path', default="./", help="DAVID files, usually txt files")

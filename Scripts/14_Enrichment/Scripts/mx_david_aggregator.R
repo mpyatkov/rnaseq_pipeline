@@ -1,7 +1,14 @@
 suppressMessages(library(tidyverse))
 
-remotes::install_cran("argparser", upgrade = "never", quiet = T)
-library(argparser)
+if (!require("writexl", quietly = TRUE)) {
+  remotes::install_cran("writexl", upgrade = "never", quiet = T)
+  library(writexl)
+}
+
+if (!require("argparser", quietly = TRUE)) {
+  remotes::install_cran("argparser", upgrade = "never", quiet = T)
+  library(argparser)
+}
 
 p <- arg_parser('DAVID GO enrichment combining')
 p <- add_argument(p,'--input_path', default="./", help="DAVID files, usually txt files")
@@ -9,7 +16,6 @@ p <- add_argument(p,'--sample_labels', default="../00_Setup_Pipeline/Sample_Labe
 p <- add_argument(p,'--comparisons', default="../00_Setup_Pipeline/Comparisons.txt", help="Comparisons.txt file")
 argv <- parse_args(p)
 print(argv)
-
 
 ## ONLY FOR DEBUGs
 # argv$input_path <- "../Job_Summary/DAVID_results/ExonCollapsed/"

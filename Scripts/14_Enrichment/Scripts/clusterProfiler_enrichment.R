@@ -1,8 +1,10 @@
 #!/usr/bin/env Rscript
 
-remotes::install_cran("argparser", upgrade = "never", quiet = T)
-library(argparser)
 
+if (!require("argparser", quietly = TRUE)) {
+  remotes::install_cran("argparser", upgrade = "never", quiet = T)
+  library(argparser)
+}
 
 p <- arg_parser('GO enrichment analysis')
 p <- add_argument(p,'--input_path', default="./", help="Up/Down files path")
