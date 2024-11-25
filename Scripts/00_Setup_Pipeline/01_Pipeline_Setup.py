@@ -349,6 +349,12 @@ class SampleConfig:
             
         for sample in SAMPLES:
             # result.append(sample.Sample_DIR)
+
+            ## same sample can be a member of multiple groups
+            ## ignore it to exclude recalculation
+            if sample.Sample_ID in result:
+                continue
+
             result.append(sample.Sample_ID)
             if group:
                 result.append(sample.Condition_Name)
@@ -362,6 +368,12 @@ class SampleConfig:
         #only Sample_ID, Description, Color
         result = []
         for sample in self.samples:
+
+            ## same sample can be a member of multiple groups
+            ## ignore it to exclude recalculation
+            if sample.Sample_ID in result:
+                continue
+
             # result.append(sample.Sample_DIR)
             result.append(sample.Sample_ID)
             result.append(sample.Description)
