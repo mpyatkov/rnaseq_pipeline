@@ -304,7 +304,7 @@ echo "Creating Volcano plots"
 set +eu
 conda deactivate
 set -eu
-module load R/4.2.1
+module load R/4.2.3
 
 ## for each segex directory with exoncollapsed files create volcano plots
 cp ./Scripts/volcano_plots.R ./

@@ -2,22 +2,11 @@
 
 DEBUG <- FALSE
 
-## First specify the packages of interest
-packages <- c("argparser")
+if (!require("argparser", quietly = TRUE)) {
+  remotes::install_cran("argparser", upgrade = "never", quiet = T)
+  library(argparser)
+}
 
-## Now load or install&load all
-package.check <- lapply(
-  packages,
-  FUN = function(x) {
-    if (!require(x, character.only = TRUE)) {
-      install.packages(x, dependencies = TRUE)
-      library(x, character.only = TRUE)
-    }
-  }
-)
-
-## library(argparser)
- 
 ParseArguments <- function() {
   p <- arg_parser('Volcano plots')
   p <- add_argument(p,'--segex_files_path', default=".", help="directory with segex output files")
@@ -44,7 +33,7 @@ if (DEBUG){
 print(argv)
 
 ## install lab libs
-library(devtools)
+# library(devtools)
 # devtools::install_github("mpyatkov/NotationConverter", upgrade = "never", dependencies = FALSE)
 # 
 # devtools::install_github could produce the following error:
@@ -59,8 +48,11 @@ library(devtools)
 #   - Use `usethis::create_github_token()` to create a Personal Access Token.
 #   - Use `usethis::edit_r_environ()` and add the token as `GITHUB_PAT`.
 
-devtools::install_local("/projectnb/wax-es/WAXMANLAB_SOFT/NotationConverter", upgrade = "never", dependencies = FALSE)
-library(NotationConverter)
+if (!require("NotationConverter", quietly = TRUE)) {
+  library(devtools)
+  devtools::install_local("/projectnb/wax-es/WAXMANLAB_SOFT/NotationConverter", upgrade = "never", dependencies = FALSE)
+  library(NotationConverter)
+}
 
 library(tidyverse)
 library(ggplot2)
