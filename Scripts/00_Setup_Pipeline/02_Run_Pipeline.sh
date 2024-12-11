@@ -99,6 +99,7 @@ else
     GENERATE=0
     RESUME=1
     INCLUDE="NONE"
+    FULL_RECALC=1
 fi
 
 # generate 09abcd directories
