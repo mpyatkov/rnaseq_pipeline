@@ -24,12 +24,12 @@ print(argv)
 
 ## named vector with comparison names
 simplified_comparisons <- function(argv_sample_labels, argv_comparisons){
-  sample_labels <- read_delim(argv_sample_labels, delim = ";", col_names=T, show_col_types = F) %>% 
+  sample_labels <- read_delim(argv_sample_labels, delim = ";", col_names=T, show_col_types = F, trim_ws = T) %>% 
     select(Group,Condition_Name) %>% 
     distinct()
   
   ## named vector, v[['1']] -- extract first comparison name
-  comparisons <- read_delim(argv_comparisons, delim = ";", col_names=T, show_col_types = F) %>% 
+  comparisons <- read_delim(argv_comparisons, delim = ";", col_names=T, show_col_types = F, trim_ws = T) %>% 
     pivot_longer(!Comparison_Number, names_to = "condition", values_to = "Group") %>% 
     left_join(., sample_labels, by = join_by(Group)) %>% 
     select(-Group) %>% 
