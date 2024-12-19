@@ -1,3 +1,15 @@
+# Waxmanlab RNAseq pipeline
+
+This versatile RNA-seq pipeline begins with quality-checking the raw sequence reads to ensure data reliability. These reads are aligned to a reference genome using STAR aligner. Expression levels are quantified using featureCounts. For differential expression analysis, the pipeline employs statistical tools EdgeR and DESeq2 to identify genes with significant changes in expression. Downstream analysis includes Principal Component Analysis (PCA) and different correlation plots to assess the overall quality and relationships between samples, followed by functional enrichment to reveal relevant biological pathways and processes.
+
+---
+### Acknowledgements
+
+Creators: Originaly created by Andy Rampresaud, completely redesigned and optimized by Maxim Pyatkov, laboratory of David Waxman, Dept. of Biology, Boston University
+
+Grant support: Development of this script was carried out in the laboratory of David J Waxman, Boston University, supported in part by NIH grants R01-DK121998 (Growth Hormone Regulation of Sex Differences in Liver Metabolism) and R01-ES024421 (Epigenetic Actions of Environmental Chemicals) to DJW.
+
+
 Table of Contents
 _________________
 
