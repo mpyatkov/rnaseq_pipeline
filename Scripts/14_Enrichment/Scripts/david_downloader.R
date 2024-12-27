@@ -87,8 +87,12 @@ walk(lf, \(fname){
   
   paste0("Genes: ",length(genes)) %>% print()
   if (as.numeric(length(genes)) > 0) {
-    david_get_results(genes, output_fname)
+    tryCatch(
+      david_get_results(genes, output_fname),
+      error = function(e) print(paste('NO COMMON PATHWAYS: ', output_fname))
+    ) 
   }
+
   Sys.sleep(5)
 })
 
