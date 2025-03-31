@@ -216,12 +216,6 @@ FASTA_DIR=/projectnb2/wax-es/routines/FASTA
 # scripts and configs and qsub file for setting up environments
 CONDA_DIR=/projectnb/wax-es/routines/condaenv
 
-# (DEPRECATED) pipeline using minimap2 instead of hisat2
-# The location of the HISAT indexes, used to detect STRANDEDNESS in
-# STEP 02, at present time, this only includes indexes for mouse mm9
-# assembly
-HISAT2INDEX_DIR=/projectnb/wax-es/routines/hisat2index
-
 # The location of the STAR indexes, at present time, this only
 # includes indexes for mouse mm9 assembly (ExonCollapsed_76k GTF file)
 STARINDEX_DIR=/projectnb/wax-es/routines/starindex_EC76K
