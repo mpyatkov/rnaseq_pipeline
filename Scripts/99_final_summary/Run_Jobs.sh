@@ -61,6 +61,9 @@ cp -rf ${Level_UP}/00_Setup_Pipeline/*.xlsx ./output/
 mkdir -p ./output/EnrichmentAnalysis
 cp -rf ${Level_UP}/14_Enrichment/Job_Summary/* ./output/EnrichmentAnalysis/
 
+mkdir -p ./output/Heatmaps
+cp -rf ${Level_UP}/15_Heatmaps/Job_Summary/* ./output/Heatmaps/
+
 # cp -rf  ${Level_UP}/08_Extract_Counts/Job_Summary/featureCounts_summary_LncRNA15k_ExonCollapsed_GTF.txt  ./output/
 set -eu
 
