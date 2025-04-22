@@ -6,6 +6,7 @@ library(gridExtra) #2.3
 library(openxlsx) #4.2.8
 library(grid)
 
+
 read_data <- function(input) {
   if (!file.exists(input)) {
     stop("Error: The file does not exist. Please check the file path.")
@@ -218,21 +219,26 @@ pair_heatmap <- function(input,
                           treeheight_row = 200,
                           treeheight_col = 100,
                           angle_col = 90, 
-                          color = custom_color
+                          color = custom_color,
+                          silent = TRUE
     )
     
     row_order_origin <- HM_origin$tree_row$order
     col_order_origin <- HM_origin$tree_col$order
+    row_clusters <- cutree(HM_origin$tree_row, k = cluster_number_row)
+    col_clusters <- cutree(HM_origin$tree_col, k = cluster_number_col)
     
     #save col order
     col_order_table <- data.frame(
-      COL_NUMBER = seq_along(col_order_origin),  
+      COL_NUMBER = seq_along(col_order_origin),
+      CLUSTER_NUMBER = col_clusters[col_order_origin],
       COL_NAME = colnames(df)[col_order_origin],
       stringsAsFactors = FALSE
     )
+    
     col_order_table$Group <- annotation_col[col_order_table$COL_NAME, "Group"]
     col_order_table <- col_order_table %>%
-      select(COL_NUMBER,Group,COL_NAME)
+      select(COL_NUMBER,CLUSTER_NUMBER,Group,COL_NAME)
     
     heatmap_width_ratio <- 0.75  
     heatmap_height_ratio <- 0.9 
@@ -263,16 +269,18 @@ pair_heatmap <- function(input,
                          angle_col = 90, 
                          show_colnames = if(ncol(df)>50){FALSE}else{TRUE},
                          show_rownames = FALSE,
-                         color = custom_color)
+                         color = custom_color,
+                         silent = TRUE)
     
     origin_pdf_width <- (ncol(df) * 20) / 72 + 6    
     origin_pdf_height <- (nrow(df) * 2) / 72 + 7 + if(!is.na(cluster_number_row)){cluster_number_row}else{0}
     
     #add row order to data
     data_filtered <- data_filtered %>%
-      mutate(heatmap_order = match(1:nrow(data_filtered), row_order_origin)) %>%
-      arrange(heatmap_order)
+      mutate(heatmap_order = match(1:nrow(data_filtered), row_order_origin)) 
     first_columns <- c("heatmap_order", "id")
+    data_filtered$cluster_number <- row_clusters
+    first_columns <- c(first_columns, "cluster_number")
     tpm_columns <- grep("^tpm_", colnames(data_filtered), value = TRUE)  
     scale_columns <- grep("^scale_", colnames(data_filtered), value = TRUE)
     
@@ -484,20 +492,26 @@ heatmap_integrated <- function(union_id_list,
                         treeheight_row = 200,
                         treeheight_col = 80,
                         angle_col = 90, 
-                        color = custom_color
+                        color = custom_color,
+                        silent = TRUE
   )
   
   row_order_origin <- HM_origin$tree_row$order
   col_order_origin <- HM_origin$tree_col$order
+  row_clusters <- cutree(HM_origin$tree_row, k = cluster_number_row)
+  col_clusters <- cutree(HM_origin$tree_col, k = cluster_number_col)
+  
   #save col order
   col_order_table <- data.frame(
-    COL_NUMBER = seq_along(col_order_origin),  
+    COL_NUMBER = seq_along(col_order_origin),
+    CLUSTER_NUMBER = col_clusters[col_order_origin],
     COL_NAME = colnames(df)[col_order_origin],
     stringsAsFactors = FALSE
   )
+  
   col_order_table$Group <- annotation_col[col_order_table$COL_NAME, "Group"]
   col_order_table <- col_order_table %>%
-    select(COL_NUMBER,Group,COL_NAME)
+    select(COL_NUMBER,CLUSTER_NUMBER,Group,COL_NAME)
   
   heatmap_width_ratio <- 0.75  
   heatmap_height_ratio <- 0.9 
@@ -525,7 +539,8 @@ heatmap_integrated <- function(union_id_list,
                                      annotation_colors = annotation_colors,
                                      treeheight_row = 200,
                                      angle_col = 90, 
-                                     color = custom_color
+                                     color = custom_color,
+                                     silent = TRUE
   )
   
   col_order_table_noclustering <- data.frame(
@@ -557,7 +572,8 @@ heatmap_integrated <- function(union_id_list,
                                     angle_col = 90, 
                                     show_colnames = if(ncol(df)>50){FALSE}else{TRUE},
                                     show_rownames = FALSE,
-                                    color = custom_color)
+                                    color = custom_color,
+                                    silent = TRUE)
   
   df <- df[, col_order_origin] 
   annotation_col <- annotation_col[col_order_origin, , drop = FALSE]
@@ -579,16 +595,19 @@ heatmap_integrated <- function(union_id_list,
                        angle_col = 90, 
                        show_colnames = if(ncol(df)>50){FALSE}else{TRUE},
                        show_rownames = FALSE,
-                       color = custom_color)
+                       color = custom_color,
+                       silent = TRUE)
   
-  
+
+
   
   #PROCESSING FOR DATA_INTEGRATED
   if(sample_type == "individuals"){
     data_integrated <- data_integrated %>%
-      mutate(heatmap_order = match(1:nrow(data_integrated), row_order_origin)) %>%
-      arrange(heatmap_order)
+      mutate(heatmap_order = match(1:nrow(data_integrated), row_order_origin)) 
     first_columns <- c("heatmap_order", "id")  
+    data_integrated$cluster_number <- row_clusters
+    first_columns <- c(first_columns, "cluster_number")
     scale_columns <- grep("^scale_", colnames(data_integrated), value = TRUE)  
     tpm_columns <- grep("^tpm_", colnames(data_integrated), value = TRUE)  
     all_other_columns <- colnames(data_integrated)
@@ -615,9 +634,10 @@ heatmap_integrated <- function(union_id_list,
   
   else if(sample_type == "groups"){
     data_integrated <- data_integrated %>%
-      mutate(heatmap_order = match(1:nrow(data_integrated), row_order_origin)) %>%
-      arrange(heatmap_order)
-    first_columns <- c("heatmap_order", "id")  
+      mutate(heatmap_order = match(1:nrow(data_integrated), row_order_origin)) 
+    first_columns <- c("heatmap_order", "id") 
+    data_integrated$cluster_number <- row_clusters
+    first_columns <- c(first_columns, "cluster_number")
     scale_columns <- grep("^scale_", colnames(data_integrated), value = TRUE)  
     tpm_columns <- grep("^tpm_", colnames(data_integrated), value = TRUE) 
     
@@ -1240,13 +1260,14 @@ do_heatmap(
 writeLines(content, file.path(output_folder,"README.txt"))
 }
 
+
 # Get variable from terminal
 args <- commandArgs(trailingOnly = TRUE)
 
 if (length(args) >= 2) {
   input_folders <- args[1]
   output_folder <- args[2]
-  
+
   do_heatmap(
     input_folders = input_folders,
     output_folder = output_folder
@@ -1255,4 +1276,6 @@ if (length(args) >= 2) {
   stop("Please provide input_folders and output_folder as command line arguments")
 }
 
-file.remove(file.path(output_folder, "Rplots.pdf"))
+if(file.exists("Rplots.pdf")) {
+  file.remove(file.path(output_folder, "Rplots.pdf"))
+}
