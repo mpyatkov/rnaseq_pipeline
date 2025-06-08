@@ -60,6 +60,7 @@ process_file <- function(group_vec_names, file_df){
 
 ## scan files in path directory, extract only DiffExp_v2 + ExonCollapsed
 all_files <- list.files(path = path, recursive = T, pattern = "^DiffExp_v2") %>% 
+  keep(~str_detect(.x, "09d")) %>%
   tibble(file = .) %>% 
   filter(str_detect(file, "ExonCollapsed")) %>% 
   mutate(file = paste0(path,file)) %>% pull(file)
