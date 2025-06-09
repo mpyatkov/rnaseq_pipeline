@@ -156,8 +156,23 @@ pair_heatmap <- function(input,
           )}
   
     if (nrow(data_filtered) == 0) {
-      stop("Error: No data left after filtering. Consider adjusting log2FC, FDR or tpm_cutoff thresholds.")
+      print(paste0("No genes left after filtering for file: ", input))
+      return(list(
+        data = NULL,
+        group_data = NULL,
+        id_list = character(0),
+        upregulated_count = 0,
+        downregulated_count = 0,
+        col_order_table = data.frame(),
+        long_filepath = NULL,
+        short_filepath = NULL
+      ))
+    }else if(nrow(data_filtered) < cluster_number_row){
+      print("data record after filtering is less than cluster number for row. Set cluster number for row as 1.")
+      cluster_number_row <- 1
     }
+    
+    
     
     if (scale_function == "maxscale") {
       norm_factor <- apply(select(data_filtered, starts_with("tpm")), 1, function(x) max(abs(x), na.rm = TRUE))
@@ -188,9 +203,8 @@ pair_heatmap <- function(input,
                       )))
     }
     
-    upregulated_count <- sum(data_filtered %>% select(starts_with(using_package_f)) %>% apply(1, function(x) any(x > 1)))
-    downregulated_count <- sum(data_filtered %>% select( starts_with(using_package_f)) %>% apply(1, function(x) any(x < -1)))
-    
+    upregulated_count <- sum(data_filtered %>% select(starts_with(using_package_f)) %>% apply(1, function(x) any(x > log2FC)))
+    downregulated_count <- sum(data_filtered %>% select(starts_with(using_package_f)) %>% apply(1, function(x) any(x < -log2FC)))
     
     df <- data_filtered %>%
       select("id", starts_with("scale_"))
@@ -577,6 +591,9 @@ heatmap_integrated <- function(union_id_list,
   
   df <- df[, col_order_origin] 
   annotation_col <- annotation_col[col_order_origin, , drop = FALSE]
+  #FIX HERE
+  colnames(df) <- seq_len(ncol(df))
+  rownames(annotation_col) <- as.character(seq_len(ncol(df)))
   
   HM_scale <- pheatmap(df, 
                        cellwidth = cellwidth, 
@@ -707,6 +724,9 @@ heatmap_integrated <- function(union_id_list,
   # SAVE integrated short noclustering
   pdf(file.path(output_folder, nocluster_short_path), width = 8.27, height = 11.69)
   title <- paste0(save_name,"_NoSampleClustering_",sample_type)
+  if (nchar(title) > 80) {
+    title <- paste0(substr(title, 1, 80), "-\n", substr(title, 81, nchar(title)))
+  }
   info <- paste0("\nSCALE FUNCTION: ", scale_function,",\nTPM CUTOFF: ", tpm_cutoff, 
                  "\nLOG2FC: ", log2FC,",\nFDR: ", FDR,
                  "\nGENE NUMBER: ", nrow(df))
@@ -732,6 +752,9 @@ heatmap_integrated <- function(union_id_list,
   # short clustered
   pdf(file.path(output_folder, cluster_short_path), width = 8.27, height = 11.69)
   title <- paste0(save_name,"_SampleClustered_",sample_type)
+  if (nchar(title) > 80) {
+    title <- paste0(substr(title, 1, 80), "-\n", substr(title, 81, nchar(title)))
+  }
   info <- paste0("\nSCALE FUNCTION: ", scale_function,",\nTPM CUTOFF: ", tpm_cutoff, 
                  "\nLOG2FC: ", log2FC,",\nFDR: ", FDR,
                  "\nGENE NUMBER: ", nrow(df))
@@ -812,13 +835,13 @@ heatmap_analysis <- function(
   if (is.null(cluster_number_row) || length(cluster_number_row) == 0) {
     cluster_number_row <- rep(1, length(input_list) + 2)
   } else if (length(cluster_number_row) != length(input_list) + 2) {
-    stop("'cluster_number_row' must be a numeric vector of length equal to the number of input_list files +1.\n e.g: cluster_number_row = c(input1_ClusterNumber, input2_ClusterNumber, ..., integrated_ClusterNumber)")
+    stop("'cluster_number_row' must be a numeric vector of length equal to the number of input_list files +2.\n e.g: cluster_number_row = c(input1_ClusterNumber, input2_ClusterNumber, ..., integrated_ClusterNumber)")
   }
   # CHECK cluster_number_col
   if (is.null(cluster_number_col) || length(cluster_number_col) == 0) {
     cluster_number_col <- rep(1, length(input_list) + 2)
   } else if (length(cluster_number_col) != length(input_list) + 2) {
-    stop("'cluster_number_col' must be a numeric vector of length equal to the number of input_list files +1.\n e.g: cluster_number_col = c(input1_ClusterNumber, input2_ClusterNumber, ..., integrated_ClusterNumber)")
+    stop("'cluster_number_col' must be a numeric vector of length equal to the number of input_list files +2.\n e.g: cluster_number_col = c(input1_ClusterNumber, input2_ClusterNumber, ..., integrated_ClusterNumber)")
   }
   # default value of custom_color
   if (is.null(custom_color) || length(custom_color) == 0 || length(custom_color) == 1) {
@@ -857,7 +880,10 @@ heatmap_analysis <- function(
       annotation_colors = annotation_colors,
       folder_name = folder_name_list[step] 
     )
-    
+    if (is.null(result$data)) {
+      message(paste("Skip file due to no data after filtering:", input_list[step]))
+      next
+    }
     all_col_order_tables[[folder_name_list[step]]] <- result[[6]]
     long_pdfs <- c(long_pdfs, result[[7]])
     short_pdfs <- c(short_pdfs, result[[8]])
@@ -923,7 +949,7 @@ heatmap_analysis <- function(
                                       cluster_number_col = cluster_number_col,
                                       annotation_colors = annotation_colors,
                                       order_for_noclustering = groups_order_for_noclustering)
-  
+  print("done")
   summary_filepath <- file.path(output_folder, paste0("Summary_DEGs_SampleOrder_", save_name, "_log2FC_", log2FC, "_FDR_", FDR, ".xlsx"))
   excel_sheets <- list(
     summary_DEG = summary_data,  
@@ -986,6 +1012,17 @@ do_heatmap <- function(
     groups_order_for_noclustering <- sample_label %>%
       distinct(Group, Condition_Name) %>%
       arrange(Group)
+    
+    duplicated_names <- groups_order_for_noclustering %>%
+      group_by(Condition_Name) %>%
+      summarise(n_groups = n_distinct(Group), .groups = "drop") %>%
+      filter(n_groups > 1)
+    
+    if (nrow(duplicated_names) > 0) {
+      stop("❌ Error: The following Condition_Name(s) are assigned to multiple groups:\n",
+           paste0(" - ", duplicated_names$Condition_Name, collapse = "\n"))
+    }
+    
     
     #get order for unclustering individuals
     individuals_order_for_noclustering <- sample_label %>%
@@ -1260,8 +1297,7 @@ do_heatmap(
 writeLines(content, file.path(output_folder,"README.txt"))
 }
 
-
-# Get variable from terminal
+# # Get variable from terminal
 args <- commandArgs(trailingOnly = TRUE)
 
 if (length(args) >= 2) {
@@ -1276,6 +1312,6 @@ if (length(args) >= 2) {
   stop("Please provide input_folders and output_folder as command line arguments")
 }
 
-if(file.exists("Rplots.pdf")) {
+if(file.exists(file.path(output_folder, "Rplots.pdf"))) {
   file.remove(file.path(output_folder, "Rplots.pdf"))
 }
