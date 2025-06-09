@@ -85,7 +85,7 @@ elif [[ "${START_STEP}" == "START" ]]; then
 elif [[ "${START_STEP}" == "DEONLY" ]]; then
     GENERATE=1
     RESUME=0
-    INCLUDE="09\|12\|13\|14\|99"
+    INCLUDE="09\|12\|13\|14\|15\|99"
 elif [[ "${START_STEP}" == "TACO" ]]; then
     GENERATE=0
     RESUME=0
