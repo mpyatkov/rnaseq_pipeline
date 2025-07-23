@@ -50,9 +50,9 @@ david_get_results <- function(genes, outname) {
     html_elements(css = "a") %>%          ## extract all links
     html_attr("href") %>%                 ## extract all 'href' attrs
     keep(~str_detect(.x,"t2t")) %>%       ## find only links to download file (starts with "t2t")
-    str_c("https://david.ncifcrf.gov/",.) ## concatenate url and link to file
-  
-  ## example of download link: https://david.ncifcrf.gov/data/download/t2t_4057F39AA8F01718198056989.txt
+    str_c("https://davidbioinformatics.nih.gov/",.) ## concatenate url and link to file
+
+  ## example of download link: https://davidbioinformatics.nih.gov/data/download/t2t_75CC496323361753123927818.txt
   
   tryCatch(
     download.file(url = download_link, destfile = outname), 

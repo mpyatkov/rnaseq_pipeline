@@ -30,7 +30,7 @@ module load R/4.2.3
 module load poppler
 
 set +eu
-find ../09* -name "*.txt" | grep -E "Up|Down" | grep -vE "DESeq|SEGEX" | xargs -n1 -P8 -I{} bash -c "Rscript ./Scripts/clusterProfiler_enrichment.R --input_path {}"
+find ../09* -name "*.txt" | grep -E "Up|Down" | grep -vE "DESeq|SEGEX|FullGeneBody" |xargs -n1 -P8 -I{} bash -c "Rscript ./Scripts/clusterProfiler_enrichment.R --input_path {}"
 
 combine_pdfs "top20_bar" "ExonCollapsed" "Combined_ExonCollapsed_top20_bar_output.pdf"
 combine_pdfs "top20_dot" "ExonCollapsed" "Combined_ExonCollapsed_top20_dot_output.pdf"
@@ -41,14 +41,6 @@ combine_pdfs "CC" "ExonCollapsed" "Combined_ExonCollapsed_CC_ontology_treeview.p
 combine_pdfs "BP" "ExonCollapsed" "Combined_ExonCollapsed_BP_ontology_treeview.pdf"
 combine_pdfs "ALL" "ExonCollapsed" "Combined_ExonCollapsed_ALL_ontologies_treeview.pdf"
 
-combine_pdfs "top20_bar" "FullGeneBody" "Combined_FullGeneBody_top20_bar.pdf"
-combine_pdfs "top20_dot" "FullGeneBody" "Combined_FullGeneBody_top20_dot.pdf"
-combine_pdfs "top60_bar" "FullGeneBody" "Combined_FullGeneBody_top60_bar.pdf"
-combine_pdfs "top60_dot" "FullGeneBody" "Combined_FullGeneBody_top60_dot.pdf"
-combine_pdfs "MF" "FullGeneBody" "Combined_FullGeneBody_MF_ontology_treeveiw.pdf"
-combine_pdfs "CC" "FullGeneBody" "Combined_FullGeneBody_CC_ontology_treeview.pdf"
-combine_pdfs "BP" "FullGeneBody" "Combined_FullGeneBody_BP_ontology_treeview.pdf"
-combine_pdfs "ALL" "FullGeneBody" "Combined_FullGeneBody_ALL_ontologies_treeview.pdf"
 set -eu
 
 ## remove intermediate clusterProfiler files
@@ -58,10 +50,6 @@ find . -name "*.pdf" | grep -v 'Combined' | xargs rm
 mkdir -p Job_Summary/clusterProfiler_ExonCollapsed/xlsx_reports
 mv *ExonCollapsed*.pdf ./Job_Summary/clusterProfiler_ExonCollapsed/
 mv *ExonCollapsed*.xlsx ./Job_Summary/clusterProfiler_ExonCollapsed/xlsx_reports/
-
-mkdir -p Job_Summary/clusterProfiler_FullGeneBody/xlsx_reports
-mv *FullGeneBody*.pdf ./Job_Summary/clusterProfiler_FullGeneBody/
-mv *FullGeneBody*.xlsx Job_Summary/clusterProfiler_FullGeneBody/xlsx_reports/
 
 ## DAVID downloader and aggregator
 echo "Start DAVID downloader"
