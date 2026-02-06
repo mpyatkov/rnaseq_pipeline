@@ -26,7 +26,7 @@ function combine_pdfs() {
     pdfunite ${pdf_list[@]} "${outname}"
 }
 
-module load R/4.2.3
+module load R/4.4.3
 module load poppler
 
 set +eu
@@ -50,6 +50,9 @@ find . -name "*.pdf" | grep -v 'Combined' | xargs rm
 mkdir -p Job_Summary/clusterProfiler_ExonCollapsed/xlsx_reports
 mv *ExonCollapsed*.pdf ./Job_Summary/clusterProfiler_ExonCollapsed/
 mv *ExonCollapsed*.xlsx ./Job_Summary/clusterProfiler_ExonCollapsed/xlsx_reports/
+
+module unload R
+module load R/4.2.3
 
 ## DAVID downloader and aggregator
 echo "Start DAVID downloader"

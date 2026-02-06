@@ -1,10 +1,11 @@
 #!/usr/bin/env Rscript
 
+current_dir=getwd()
+setwd("/projectnb/wax-es/routines/RENV_443_clusterProfiler")
+source("renv/activate.R")
+setwd(current_dir)
 
-if (!require("argparser", quietly = TRUE)) {
-  remotes::install_cran("argparser", upgrade = "never", quiet = T)
-  library(argparser)
-}
+library(argparser)
 
 p <- arg_parser('GO enrichment analysis')
 p <- add_argument(p,'--input_path', default="./", help="Up/Down files path")
@@ -14,39 +15,14 @@ DEBUG <- F
 if (DEBUG){
   #argv$input_file <- "/projectnb/wax-dk/max/SIA_NUS/KC14_RNASEQ/Scripts/09d_DE_1_RefSeqLncRNA76k/Output_DiffExp_1i_featureCounts_RefSeqLncRNA76k_ExonCollapsed/Up_Genes_EdgeR_RefSeqLncRNA76k_ExonCollapsed_MaleLiver_WT_KC14101WT_M01_KC14102WT_M02_KC14103WT_M03_FemaleLiver_WT_KC14119WT_M13_KC14120WT_M14_KC14121WT_M15_featureCounts.txt"
   #argv$input_path <- "/projectnb2/wax-dk/david/G224_Shashi_Pipe/Scripts/"
-  argv$input_path <- "/projectnb/wax-dk/max/G221_RNASEQ_MS316/Scripts/"
+  argv$input_path <- "/projectnb/wax-dk/max/G251_GalunLab/Scripts//09d_DE_1_RefSeqLncRNA76k/Output_DiffExp_1i_featureCounts_RefSeqLncRNA76k_ExonCollapsed/Down_Genes_EdgeR_RefSeqLncRNA76k_ExonCollapsed_mir122_KO_Male_2wk_G251_M04M05M06_WT_Male_2wk_G251_M01M02M03_featureCounts.txt"
 }
-
 print(argv)
 
-remotes::install_cran("patchwork", upgrade = "never")
-library(patchwork)
-
-if (!require("BiocManager", quietly = TRUE))
-  install.packages("BiocManager")
-BiocManager::install("clusterProfiler", update = F)
-BiocManager::install("org.Mm.eg.db", update = F)
 library(clusterProfiler)
 library(org.Mm.eg.db)
-
-remotes::install_cran("devtools", upgrade = "never")
-devtools::install_github("r-lib/conflicted", upgrade = "never")
-library(conflicted)
-tidyverse::tidyverse_conflicts(only = NULL)
-
-#remotes::install_cran("furrr", upgrade = "never")
-#library(furrr)
-#plan(multisession, workers = 4)
-#plan(sequential)
-
-remotes::install_cran("writexl", upgrade = "never")
 library(writexl)
-
-## change default fonts
-# remotes::install_cran("showtext", upgrade = "never")
-# library(showtext)
-# font_add_google("Roboto Mono", "robotomono")
-#showtext_auto()
+library(patchwork)
 
 library(stringr)
 library(ggplot2)
@@ -122,32 +98,11 @@ create_treeplot <- function(lst){
 }
 
 ## MAIN
-conflicts_prefer(dplyr::select())
-conflicts_prefer(dplyr::filter)
-conflicts_prefer(dplyr::desc)
-
-#file_path <- "~/tmp/Joanna/Scripts_KC14_RNASEQ_2024-05-21_1914/"
-# input_files <- list.files(path=argv$input_path, pattern = "^Up|^Down", recursive = T, full.names = T) %>%
-#   discard(~str_detect(.x, "DESeq|SEGEX_Upload_Files|14_final_summary")) %>% 
-#   keep(\(fname){zz <- read_tsv(fname,col_names = T,show_col_types = F); print(nrow(zz)); nrow(zz)>1})
-# print(paste0("Number of files to process:", length(input_files)))
 
 mmdb <- org.Mm.eg.db
 
-# df <- map(input_files[1:1], \(f){
-#   fname <- basename(f) %>% tools::file_path_sans_ext()
-#   read_tsv(file = f, col_names = T)
-# }) %>% list_rbind()
-
-#system.time(walk(input_files,possibly(\(fname){
-#print(fname)
-#
 fname <- argv$input_path
 print(paste0(">>> Processing:", fname))
-#fname <- "/projectnb/wax-dk/max/G221_RNASEQ_MS316/Scripts//09d_DE_1_RefSeqLncRNA76k/Output_DiffExp_1h_featureCounts_RefSeqLncRNA76k_FullGeneBody/Up_Genes_EdgeR_RefSeqLncRNA76k_FullGeneBody_Male_liver_15wk_MS316_G221_M69M70M71M72M73M74_Female_liver_15wk_MS316_G221_M75M76M77M78M79M80_featureCounts.txt"
-#fname <- "/projectnb/wax-dk/max/G221_RNASEQ_MS316/Scripts/09d_DE_2_RefSeqLncRNA76k/Output_DiffExp_2h_featureCounts_RefSeqLncRNA76k_FullGeneBody/Down_Genes_EdgeR_RefSeqLncRNA76k_FullGeneBody_Male_liver_15wk_MS316_G221_M69M70M71M72M73M74_Male_liver_8wk_G216_G216_M61M62M63M64M65M66_featureCounts.txt"
-
-#fname <- "/projectnb/wax-dk/max/G221_RNASEQ_MS316/Scripts/09d_DE_3_RefSeqLncRNA76k/Output_DiffExp_3i_featureCounts_RefSeqLncRNA76k_ExonCollapsed/Up_Genes_EdgeR_RefSeqLncRNA76k_ExonCollapsed_Female_liver_15wk_MS316_G221_M75M76M77M78M79M80_Female_liver_8wk_G216_G216_M67M68M69M70M71M72_featureCounts.txt"
 
 df <- read_tsv(file = fname, col_names = T, show_col_types = F)
 if (nrow(df) < 1){
@@ -365,20 +320,6 @@ outputnames_ontologies <- paste0(str_pad(5:8, width = 2, side = "left", pad = "0
                       extract_updown_and_body(fname),
                       ".pdf")
 
-
-# treeplots <- list(
-#   list(obj = goterm_analysis_mf, title = mf_title),
-#   list(obj = goterm_analysis_bp, title = bp_title),
-#   list(obj = goterm_analysis_cc, title = cc_title),
-#   list(obj = goterm_analysis, title = all_ontologies_title)) %>%
-#   keep(\(l){sum(l$obj@result$p.adjust<0.05) > 1}) %>% 
-#   keep(\(l){zz <- pairwise_termsim(l$obj); nrow(zz@termsim) > 5}) %>% 
-#   map(create_treeplot)
-## output into one file
-# flatten(list(plots,treeplots)) %>%
-#   marrangeGrob(nrow = 1, ncol = 1) %>%
-#   ggsave(filename = output_fname, width = 13, height = 15.19)
-
 treeplots <- list(
   list(obj = goterm_analysis_mf, title = mf_title),
   list(obj = goterm_analysis_bp, title = bp_title),
@@ -399,7 +340,5 @@ walk2(flatten(list(plots,treeplots)), names(all_plots), \(p,name) {
 
 output_fname_xlsx <- basename(fname) %>% tools::file_path_sans_ext()  %>%  paste0(".xlsx") %>% paste0(compar_num,"_",.)
 write_xlsx(res, path = output_fname_xlsx, col_names = T)
-
-##}))) ## end of purrr::walk
 
 # # list("aa" = c(1,2,3)) %>% enframe() %>% unnest_longer(col = "value")
