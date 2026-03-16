@@ -313,7 +313,7 @@ module load R/4.2.3
 cp ./Scripts/volcano_plots.R ./
 
 ## echo alldots volcano plots
-for dpath in `find . -type d -name "Segex*Exon*"`; do
+for dpath in `find ./output -type d -name "Segex*Exon*"`; do
     dname=`basename $dpath`
     (set -x; Rscript volcano_plots.R\
 		     --segex_files_path "${dpath}" \
@@ -323,7 +323,7 @@ for dpath in `find . -type d -name "Segex*Exon*"`; do
 done
 
 ## echo 10 percent volcano plots (for fast view)
-for dpath in `find . -type d -name "Segex*Exon*"`; do
+for dpath in `find ./output -type d -name "Segex*Exon*"`; do
     dname=`basename $dpath`
     (set -x; Rscript volcano_plots.R\
 		     --segex_files_path "${dpath}" \
