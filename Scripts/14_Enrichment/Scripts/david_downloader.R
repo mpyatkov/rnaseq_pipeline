@@ -21,6 +21,8 @@ print(argv)
 ## output file should contain number of pcg/nc/total
 
 david_get_results <- function(genes, outname) {
+  httr::set_config(httr::config(ssl_verifypeer = FALSE, ssl_verifyhost = FALSE))
+  on.exit(httr::reset_config())
   params_list <- list(idType = "OFFICIAL_GENE_SYMBOL",
                       uploadType = "list",
                       Mode = "paste",
@@ -54,10 +56,13 @@ david_get_results <- function(genes, outname) {
 
   ## example of download link: https://davidbioinformatics.nih.gov/data/download/t2t_75CC496323361753123927818.txt
   
-  tryCatch(
-    download.file(url = download_link, destfile = outname), 
-    error = function(e) print(paste('NO COMMON PATHWAYS: ', outname))
-  ) 
+  tryCatch({
+    response <- httr::GET(download_link, httr::write_disk(outname, overwrite = TRUE))
+    if (httr::http_error(response)) stop("HTTP error: ", httr::status_code(response))
+    message("Downloaded successfully: ", outname)
+  }, error = function(e) {
+    print(paste('NO COMMON PATHWAYS: ', outname))
+  })
 }
 
 ### test
@@ -127,6 +132,5 @@ walk(lf, \(fname){
 # Prom2
 # Hao2
 # Ntrk2
-
-## for script
-# genes <- c("Fmo3","Sult3a1","Sult2a1","Sult2a5","Sult3a2","Sult2a6","Sult2a2","Cyp2b13","Sult2a4","Cyp3a41b","Slc22a26","Cyp2b9","Cyp2g1","Cyp3a41a","Atp6v0d2","Prom2","Hao2","Ntrk2")
+#test_genes <- c("Fmo3", "Sult3a1", "Sult2a1", "Sult2a5", "Sult3a2", "Sult2a6", "Sult2a2", "Cyp2b13", "Sult2a4", "Cyp3a41b", "Slc22a26", "Cyp2b9", "Cyp2g1", "Cyp3a41a", "Atp6v0d2", "Prom2", "Hao2", "Ntrk2")
+#david_get_results(test_genes, "ttt.txt")
