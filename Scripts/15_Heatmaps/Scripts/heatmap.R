@@ -155,7 +155,7 @@ pair_heatmap <- function(input,
               (pull(select(., ends_with("FDR"))) < FDR)  
           )}
   
-    if (nrow(data_filtered) == 0) {
+    if (nrow(data_filtered) < 3) {
       print(paste0("No genes left after filtering for file: ", input))
       return(list(
         data = NULL,
