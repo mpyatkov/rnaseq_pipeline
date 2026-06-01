@@ -16,5 +16,5 @@ END {
 	unique++
     }
   };  
-  print fname,total,unique,unique*100/total
+  print sampleid,fname,total,unique,unique*100/total
 }
