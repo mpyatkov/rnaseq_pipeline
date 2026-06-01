@@ -472,19 +472,35 @@ heatmap_integrated <- function(union_id_list,
   df[is.na(df)] <- 0 
   colnames(df) <- gsub("^scale_tpm_", "", colnames(df))
   colnames(df) <- gsub("^mean_", "", colnames(df))
+  
   #sort nonclustering col order
+  ## if (!is.null(order_for_noclustering)) {
+  ##   target_order <- order_for_noclustering$Condition_Name
+  ##   matched_cols <- colnames(df)
+  ##   matched_index <- sapply(target_order, function(cond) {
+  ##     idx <- which(grepl(cond, matched_cols))
+  ##     if (length(idx) == 0) return(NA)
+  ##     idx[1]
+  ##   })
+  ##   matched_index <- matched_index[!is.na(matched_index)]
+  ##   df <- df[, matched_index, drop = FALSE]
+  ## }
+
   if (!is.null(order_for_noclustering)) {
-    target_order <- order_for_noclustering$Condition_Name
-    matched_cols <- colnames(df)
-    matched_index <- sapply(target_order, function(cond) {
-      idx <- which(grepl(cond, matched_cols))
-      if (length(idx) == 0) return(NA)
-      idx[1]
-    })
-    matched_index <- matched_index[!is.na(matched_index)]
-    df <- df[, matched_index, drop = FALSE]
+
+      target_order <- order_for_noclustering$Condition_Name
+      matched_cols <- colnames(df)
+
+      matched_index <- match(target_order, matched_cols)
+      matched_index <- matched_index[!is.na(matched_index)]
+
+      if(anyDuplicated(matched_index)) {
+          stop("Duplicated column match detected.")
+      }
+
+      df <- df[, matched_index, drop = FALSE]
   }
- 
+  
   valid_conditions <- rownames(annotation_col) %in% colnames(df)
   annotation_col <- annotation_col[valid_conditions, , drop = FALSE]
   annotation_colors$Group <- annotation_colors$Group[unique(annotation_col$Group)]
