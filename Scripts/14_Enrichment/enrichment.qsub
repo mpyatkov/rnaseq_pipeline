@@ -21,7 +21,7 @@ function combine_pdfs() {
     local prefix2=$2
     local outname=$3
 
-    pdf_list=($(find . -name "*${prefix}*.pdf" | grep "${prefix2}" | sort))
+    pdf_list=($(find . -name "*${prefix}*.pdf" | grep "${prefix2}" | grep -v Combined | sort))
     echo ${pdf_list}
     pdfunite ${pdf_list[@]} "${outname}"
 }
@@ -42,8 +42,20 @@ combine_pdfs "BP" "ExonCollapsed" "Combined_ExonCollapsed_BP_ontology_treeview.p
 combine_pdfs "ALL" "ExonCollapsed" "Combined_ExonCollapsed_ALL_ontologies_treeview.pdf"
 
 set -eu
+find . -name "*.pdf" | grep -v 'Combined' | xargs rm
 
-## remove intermediate clusterProfiler files
+## Simplified version of clusterProfiler analysis
+set +eu
+find ../09* -name "*.txt" | grep -E "Up|Down" | grep -vE "DESeq|SEGEX|FullGeneBody" |xargs -n1 -P8 -I{} bash -c "Rscript ./Scripts/clusterProfiler_enrichment_simplify.R --input_path {}"
+
+combine_pdfs "top20_bar" "ExonCollapsed" "Combined_ExonCollapsed_top20_bar_output_simplified.pdf"
+combine_pdfs "top20_dot" "ExonCollapsed" "Combined_ExonCollapsed_top20_dot_output_simplified.pdf"
+combine_pdfs "top60_bar" "ExonCollapsed" "Combined_ExonCollapsed_top60_bar_output_simplified.pdf"
+combine_pdfs "top60_dot" "ExonCollapsed" "Combined_ExonCollapsed_top60_dot_output_simplified.pdf"
+combine_pdfs "MF" "ExonCollapsed" "Combined_ExonCollapsed_MF_ontology_treeveiw_simplified.pdf"
+combine_pdfs "CC" "ExonCollapsed" "Combined_ExonCollapsed_CC_ontology_treeview_simplified.pdf"
+combine_pdfs "BP" "ExonCollapsed" "Combined_ExonCollapsed_BP_ontology_treeview_simplified.pdf"
+set -eu
 find . -name "*.pdf" | grep -v 'Combined' | xargs rm
 
 ## move to Job_Summary
