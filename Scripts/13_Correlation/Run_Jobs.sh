@@ -31,7 +31,8 @@ done
 
 
 # extract all 09* dirs which contain ExonCollapsed subfolders
-dedirs=$(find ../09* -iname "output*exoncoll*" | grep -Po '09[a-z]' | sort | uniq)
+# dedirs=$(find ../09* -iname "output*exoncoll*" | grep -Po '09[a-z]' | sort | uniq)
+dedirs=$(find ../09* -iname "output*exoncoll*" | xargs -n1 dirname | xargs -n1 basename | grep -Po '09[a-z]' | sort | uniq)
 
 job_name="Step_13_${DATASET_LABEL}"
 for d in $dedirs
