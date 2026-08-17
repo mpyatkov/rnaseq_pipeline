@@ -230,7 +230,8 @@ function multiqc_report() {
 ## RUN FUNCTIONS
 
 # find all 09a, 09b, 09c, ... directories
-dedirs=$(find ../09* -iname "output*" | grep -Po '09[a-z]' | sort | uniq)
+# dedirs=$(find ../09* -iname "output*" | grep -Po '09[a-z]' | sort | uniq)
+dedirs=$(find ../09* -iname "output*" | xargs -n1 dirname | xargs -n1 basename | grep -Po '09[a-z]' | sort | uniq)
 norm_methods=( "TPM" "FPKM" )
 
 # for each 09a, 09b,...

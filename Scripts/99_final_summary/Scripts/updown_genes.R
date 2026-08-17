@@ -12,16 +12,25 @@ comparisons <- args[1]
 samples_file <- args[2]
 output_name <- args[3]
 dataset_label <- args[4]
-## CUSTOM_FC <- as.double(args[5])
-## CUSTOM_FDR <- as.double(args[6])
-
 CUSTOM_FC <- eval(parse(text=args[5]))
 CUSTOM_FDR <- eval(parse(text=args[6]))
+
+## DEBUG ONLY START
+# comparisons <- "../00_Setup_Pipeline/Comparisons.txt"
+# samples_file <- "../00_Setup_Pipeline/Sample_Labels.txt"
+# output_name <- "OUTPUTP"
+# dataset_label <- "DSLABEL"
+# CUSTOM_FC <- c(2,1,1,4)
+# CUSTOM_FDR <- c(0.05,0.05,0.001,0.0001)
+# files <- list.files(pattern = "forSEGEX", recursive = T)
+## DEBUG ONLY END
 
 files <- list.files(pattern = "forSEGEX")
 
 updown_one <- function(f, FCparam, FDRparam, Dataset_label) {
-  comparison <- as.numeric(str_extract(f, "(\\d)+"))
+  comparison <- str_extract(f, "(\\d)+_") 
+  comparison <- str_replace(comparison, "_","")
+  
   feature <- str_extract(f, "ExonCollapsed|FullGeneBody|ExonOnly|ExonicOnly|IntronOnly|IntronicOnly")
   package <- ifelse(str_detect(str_to_lower(f), "deseq"),"DESeq","edgeR")
   df <- read_tsv(f, col_names = T, trim_ws = T, comment = "#") %>% 
